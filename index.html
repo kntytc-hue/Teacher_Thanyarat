@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>บทเรียนออนไลน์: วิชาพื้นฐานระบบเครือข่ายคอมพิวเตอร์</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-rose-50/30 text-gray-800 antialiased">
+
+    <header class="md:hidden bg-gradient-to-r from-pink-600 to-rose-500 text-white p-4 text-center sticky top-0 z-50 shadow-md">
+        <h1 class="text-lg font-bold">วิชา ระบบเครือข่ายคอมพิวเตอร์เบื้องต้น</h1>
+        <p class="text-xs text-rose-100">เลือกหัวข้อบทเรียนจากเมนูด้านซ้าย (ในคอมพิวเตอร์)</p>
+    </header>
+
+    <div class="flex min-h-screen">
+        
+        <aside class="w-80 bg-white border-r border-rose-100 p-6 hidden md:block sticky top-0 h-screen overflow-y-auto shrink-0">
+            <div class="mb-6 pb-4 border-b border-rose-100">
+                <span class="bg-pink-100 text-pink-700 font-bold text-xs px-2.5 py-1 rounded-full uppercase">E-Learning</span>
+                <h2 class="text-xl font-extrabold text-slate-800 mt-2">สารบัญบทเรียน</h2>
+                <p class="text-xs text-gray-500">คลิกเพื่อกระโดดไปยังหัวข้อ</p>
+            </div>
+
+            <nav class="space-y-6 text-sm">
+                <div>
+                    <p class="font-bold text-pink-600 mb-2 flex items-center">
+                        <span class="w-2 h-2 bg-pink-500 rounded-full mr-2"></span>หน่วยที่ 1: พื้นฐานเครือข่าย
+                    </p>
+                    <ul class="pl-4 space-y-1.5 border-l border-rose-100 ml-1 text-gray-600">
+                        <li><a href="#u1-1" class="hover:text-pink-600 block py-0.5 transition">1.1 ความหมายของเครือข่าย</a></li>
+                        <li><a href="#u1-2" class="hover:text-pink-600 block py-0.5 transition">1.2 ประโยชน์ของเครือข่าย</a></li>
+                        <li><a href="#u1-3" class="hover:text-pink-600 block py-0.5 transition">1.3 หลักการทำงาน (5 ส่วน)</a></li>
+                        <li><a href="#u1-4" class="hover:text-pink-600 block py-0.5 transition">1.4 สถาปัตยกรรม (P2P / Server)</a></li>
+                        <li><a href="#u1-5" class="hover:text-pink-600 block py-0.5 transition">1.5 องค์ประกอบของระบบ</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <p class="font-bold text-pink-600 mb-2 flex items-center">
+                        <span class="w-2 h-2 bg-pink-500 rounded-full mr-2"></span>หน่วยที่ 2: ประเภทเครือข่าย
+                    </p>
+                    <ul class="pl-4 space-y-1.5 border-l border-rose-100 ml-1 text-gray-600">
+                        <li><a href="#u2-0" class="hover:text-pink-600 block py-0.5 transition">2.0 เครือข่าย PAN</a></li>
+                        <li><a href="#u2-1" class="hover:text-pink-600 block py-0.5 transition">2.1 เครือข่าย LAN</a></li>
+                        <li><a href="#u2-2" class="hover:text-pink-600 block py-0.5 transition">2.2 เครือข่าย MAN</a></li>
+                        <li><a href="#u2-3" class="hover:text-pink-600 block py-0.5 transition">2.3 เครือข่าย WAN</a></li>
+                        <li><a href="#u2-4" class="hover:text-pink-600 block py-0.5 transition">2.4 เครือข่าย Internet</a></li>
+                        <li><a href="#u2-5" class="hover:text-pink-600 block py-0.5 transition">2.5 เครือข่าย VLAN</a></li>
+                        <li><a href="#u2-6" class="hover:text-pink-600 block py-0.5 transition">2.6 เครือข่าย VPN</a></li>
+                        <li><a href="#u2-7" class="hover:text-pink-600 block py-0.5 transition">2.7 Intranet / Extranet</a></li>
+                        <li><a href="#u2-8" class="hover:text-pink-600 block py-0.5 transition">⚠️ เทคโนโลยีเครือข่ายในอดีต</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <p class="font-bold text-pink-600 mb-2 flex items-center">
+                        <span class="w-2 h-2 bg-pink-500 rounded-full mr-2"></span>หน่วยที่ 3: อุปกรณ์เครือข่าย
+                    </p>
+                    <ul class="pl-4 space-y-1.5 border-l border-rose-100 ml-1 text-gray-600">
+                        <li><a href="#u3-1" class="hover:text-pink-600 block py-0.5 transition">3.1 อุปกรณ์เชื่อมต่อ</a></li>
+                        <li><a href="#u3-2" class="hover:text-pink-600 block py-0.5 transition">3.2 อุปกรณ์รักษาความปลอดภัย</a></li>
+                        <li><a href="#u3-3" class="hover:text-pink-600 block py-0.5 transition">3.3 อุปกรณ์เครือข่ายไร้สาย</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="flex-1 max-w-4xl mx-auto px-4 py-8 md:p-8 space-y-12">
+            
+            <div class="bg-gradient-to-r from-pink-500 via-rose-500 to-orange-400 text-white rounded-3xl p-6 md:p-8 shadow-sm">
+                <p class="text-xs md:text-sm font-semibold uppercase tracking-wider text-rose-100 mb-1">คลังความรู้ออนไลน์สำหรับนักศึกษา</p>
+                <h1 class="text-2xl md:text-3xl font-extrabold">วิชา ระบบเครือข่ายคอมพิวเตอร์เบื้องต้น</h1>
+                <p class="text-sm text-rose-50/90 font-light mt-2">ศูนย์รวมเนื้อหาพื้นฐาน ประเภท และอุปกรณ์ระบบเครือข่ายคอมพิวเตอร์อย่างครบถ้วน</p>
+            </div>
+
+            <div class="space-y-6">
+                <div class="border-l-4 border-pink-500 pl-3">
+                    <span class="text-xs font-bold text-pink-500 uppercase tracking-wider">UNIT 1</span>
+                    <h2 class="text-xl md:text-2xl font-extrabold text-slate-800">หน่วยที่ 1: พื้นฐานระบบเครือข่ายคอมพิวเตอร์</h2>
+                </div>
+
+                <section id="u1-1" class="bg-white rounded-2xl p-6 shadow-xs border border-rose-100/50 scroll-mt-20">
+                    <h3 class="text-lg font-bold text-slate-900 mb-3 flex items-center">
+                        <span class="bg-pink-100 text-pink-600 text-xs font-bold px-2 py-0.5 rounded-md mr-2">1.1</span> ความหมายของระบบเครือข่ายคอมพิวเตอร์
+                    </h3>
+                    <p class="text-gray-700 leading-relaxed mb-4 text-sm md:text-base">
+                        <strong class="text-pink-600">ระบบเครือข่ายคอมพิวเตอร์ (Computer Network)</strong> คือ การนำคอมพิวเตอร์ตั้งแต่ 2 เครื่องขึ้นไป มาเชื่อมต่อเข้าด้วยกันผ่านช่องทางการสื่อสาร (เช่น สายแลน หรือ Wi-Fi) เพื่อให้สามารถแลกเปลี่ยนข้อมูล และใช้ทรัพยากรร่วมกันได้
+                    </p>
+                    <div class="bg-rose-50/50 border-l-4 border-rose-400 p-4 rounded-r-xl text-xs md:text-sm text-rose-900">
+                        <strong>💡 เปรียบเทียบให้เห็นภาพ:</strong> ให้นึกถึง "ระบบถนนและหมู่บ้าน" คอมพิวเตอร์แต่ละเครื่องเหมือน "บ้านแต่ละหลัง" ส่วนระบบเครือข่ายก็คือ "ถนน" ที่สร้างขึ้นมาเชื่อมต่อบ้านทุกหลังเข้าด้วยกัน ทำให้คนในบ้านเดินไปหาสู่กัน ส่งจดหมาย หรือแบ่งปันสิ่งของกันได้
+                    </div>
+                </section>
+
+                <section id="u1-2" class="bg-white rounded-2xl p-6 shadow-xs border border-rose-100/50 scroll-mt-20">
+                    <h3 class="text-lg font-bold text-slate-900 mb-3 flex items-center">
+                        <span class="bg-pink-100 text-pink-600 text-xs font-bold px-2 py-0.5 rounded-md mr-2">1.2</span> ประโยชน์ของเครือข่ายคอมพิวเตอร์
+                    </h3>
+                    <ul class="space-y-2 text-sm text-gray-700 mb-4 pl-1">
+                        <li>• <strong>การแบ่งปันทรัพยากร (Sharing Resources):</strong> ไม่ต้องซื้อเครื่องพิมพ์ให้คอมทุกเครื่อง ซื้อเครื่องเดียวแชร์ใช้ได้ทั้งออฟฟิศ</li>
+                        <li>• <strong>การสื่อสารที่รวดเร็ว (Communication):</strong> ส่งอีเมล, แชท LINE, หรือประชุมออนไลน์ได้ทันที</li>
+                        <li>• <strong>การแชร์ข้อมูล (Data Sharing):</strong> เก็บไฟล์งานไว้ที่ศูนย์กลาง (Cloud/Server) ให้ทุกคนเข้ามาดึงไปใช้ได้เลย</li>
+                        <li>• <strong>ประหยัดค่าใช้จ่าย (Cost Reduction):</strong> ลดการซื้ออุปกรณ์ซ้ำซ้อน และง่ายต่อการดูแลรักษา</li>
+                    </ul>
+                    <div class="bg-rose-50/50 border-l-4 border-rose-400 p-4 rounded-r-xl text-xs text-rose-900">
+                        <strong>💡 เปรียบเทียบให้เห็นภาพ:</strong> เหมือน "การแชร์หม้อชาบูในร้าน" แทนที่ทุกคนจะต้องสั่งเตาสั่งหม้อมาเป็นของตัวเองคนละชุดให้สิ้นเปลือง เราก็ใช้หม้อตรงกลางร่วมกัน ใครอยากกินอะไรก็คีบลงไปต้มที่หม้อเดียวกันได้เลย
+                    </div>
+                </section>
+
+                <section id="u1-3" class="bg-white rounded-2xl p-6 shadow-xs border border-rose-100/50 scroll-mt-20">
+                    <h3 class="text-lg font-bold text-slate-900 mb-3 flex items-center">
+                        <span class="bg-pink-100 text-pink-600 text-xs font-bold px-2 py-0.5 rounded-md mr-2">1.3</span> หลักการทำงานของระบบเครือข่ายคอมพิวเตอร์
+                    </h3>
+                    <p class="text-sm text-gray-700 mb-3">ยึดหลักการของ "แบบจำลองการสื่อสารข้อมูล" (Data Communication Model) ประกอบด้วย 5 ส่วนสำคัญ:</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs md:text-sm text-gray-700 mb-4">
+                        <div class="p-3 bg-slate-50 rounded-lg"><strong>1. ผู้ส่ง (Sender):</strong> อุปกรณ์จุดประกายคำสั่ง เช่น คอมพิวเตอร์ที่เรากดส่งรูป</div>
+                        <div class="p-3 bg-slate-50 rounded-lg"><strong>2. ผู้รับ (Receiver):</strong> อุปกรณ์ปลายทางที่รับข้อมูล เช่น สมาร์ทโฟนของเพื่อน</div>
+                        <div class="p-3 bg-slate-50 rounded-lg"><strong>3. สื่อกลาง (Medium):</strong> ช่องทางที่ข้อมูลวิ่งผ่าน เช่น สายสัญญาณ (UTP) หรือ Wi-Fi</div>
+                        <div class="p-3 bg-slate-50 rounded-lg"><strong>4. ข้อมูล/ข่าวสาร (Message):</strong> สิ่งที่เราต้องการส่ง เช่น ข้อความ, วิดีโอ</div>
+                        <div class="p-3 bg-slate-50 rounded-lg md:col-span-2"><strong>5. โปรโตคอล (Protocol):</strong> กฎระเบียบหรือภาษากลางที่ใช้คุยกันเพื่อให้คอมพิวเตอร์คุยกันรู้เรื่อง (เช่น TCP/IP)</div>
+                    </div>
+                    <div class="bg-rose-50/50 border-l-4 border-rose-400 p-4 rounded-r-xl text-xs text-rose-900">
+                        <strong>💡 เปรียบเทียบให้เห็นภาพ:</strong> เหมือน "การส่งพัสดุไปรษณีย์" ผู้ส่ง = ตัวเรา | ผู้รับ = เพื่อน | สื่อกลาง = รถขนส่งและถนน | ข้อมูล = ของในกล่องพัสดุ | โปรโตคอล = ภาษาไทยบนจ่าหน้าซองที่บุรุษไปรษณีย์ต้องอ่านออกตรงกัน
+                    </div>
+                </section>
+
+                <section id="u1-4" class="bg-white rounded-2xl p-6 shadow-xs border border-rose-100/50 scroll-mt-20">
+                    <h3 class="text-lg font-bold text-slate-900 mb-3 flex items-center">
+                        <span class="bg-pink-100 text-pink-600 text-xs font-bold px-2 py-0.5 rounded-md mr-2">1.4</span> สถาปัตยกรรมเครือข่ายคอมพิวเตอร์ (Network Architecture)
+                    </h3>
+                    <div class="space-y-3 mb-4 text-sm text-gray-700">
+                        <p><strong>1) เครือข่ายแบบ Peer-to-Peer (P2P):</strong> คอมพิวเตอร์ทุกเครื่องมีสิทธิ์เท่าเทียมกัน เป็นได้ทั้งผู้รับและผู้ส่ง เหมาะกับเครือข่ายขนาดเล็กไม่เกิน 10 เครื่อง เช่น การต่อคอมพิวเตอร์ 2 เครื่องในห้องแล็บเพื่อโอนไฟล์</p>
+                        <p><strong>2) เครือข่ายแบบ Client-Server:</strong> แบ่งหน้าที่ชัดเจน มีเครื่อง Server (เครื่องแม่ข่าย) ประสิทธิภาพสูงคอยเก็บข้อมูลและให้บริการ ส่วนเครื่อง Client (เครื่องลูกข่าย) ส่งคำขอไปดึงข้อมูลมาใช้งาน เช่น เราเปิดหน้าเว็บ Google</p>
+                    </div>
+                    <div class="bg-rose-50/50 border-l-4 border-rose-400 p-4 rounded-r-xl text-xs text-rose-900">
+                        <strong>💡 เปรียบเทียบให้เห็นภาพ:</strong> Peer-to-Peer เหมือน "กลุ่มเพื่อนทำงานกลุ่ม" ทุกคนช่วยกันทำ ไม่มีหัวหน้าชัดเจน คุยแลกเปลี่ยนกันเองโดยตรง | Client-Server เหมือน "ร้านอาหารตามสั่ง" ลูกค้า (Client) สั่งอาหารอย่างเดียว พ่อครัว (Server) มีหน้าที่ทำและเสิร์ฟตามสั่ง
+                    </div>
+                </section>
+
+                <section id="u1-5" class="bg-white rounded-2xl p-6 shadow-xs border border-rose-100/50 scroll-mt-20">
+                    <h3 class="text-lg font-bold text-slate-900 mb-3 flex items-center">
+                        <span class="bg-pink-100 text-pink-600 text-xs font-bold px-2 py-0.5 rounded-md mr-2">1.5</span> องค์ประกอบของระบบเครือข่าย (Network Components)
+                    </h3>
+                    <p class="text-sm text-gray-700 mb-3">องค์ประกอบหลักในการสร้างระบบเครือข่ายประกอบด้วย:</p>
+                    <ul class="space-y-1.5 text-xs md:text-sm text-gray-700 mb-4 pl-1">
+                        <li>• <strong>อุปกรณ์ปลายทาง (End Devices):</strong> คอมพิวเตอร์, โน้ตบุ๊ก, สมาร์ทโฟน, เครื่องพิมพ์</li>
+                        <li>• <strong>การ์ดเครือข่าย (NIC):</strong> หรือ "การ์ดแลน" ประตูทางเข้า-ออกของสัญญาณในคอมพิวเตอร์</li>
+                        <li>• <strong>อุปกรณ์เชื่อมต่อ (Intermediary Devices):</strong> Switch (เชื่อมต่อใน LAN เดียวกัน) และ Router (เชื่อมต่อเครือข่ายคนละวงเข้าด้วยกัน)</li>
+                        <li>• <strong>สื่อนำสัญญาณ (Media):</strong> สาย UTP (สายแลน), สาย Fiber Optic, หรือ คลื่นวิทยุ (Wireless)</li>
+                    </ul>
+                    <div class="bg-rose-50/50 border-l-4 border-rose-400 p-4 rounded-r-xl text-xs text-rose-900">
+                        <strong>💡 เปรียบเทียบให้เห็นภาพ:</strong> การ์ดแลน (NIC) = ประตูบ้าน | สายแลน = ถนนหน้าบ้าน | Switch = วงเวียนในหมู่บ้าน (กระจายรถภายในวงเดียวกัน) | Router = ด่านทางด่วน (คอยพาเราเดินทางออกไปนอกเมือง)
+                    </div>
+                </section>
+            </div>
+
+            <div class="space-y-6">
+                <div class="border-l-4 border-pink-500 pl-3">
+                    <span class="text-xs font-bold text-pink-500 uppercase tracking-wider">UNIT 2</span>
+                    <h2 class="text-xl md:text-2xl font-extrabold text-slate-800">หน่วยที่ 2: ประเภทของระบบเครือข่ายคอมพิวเตอร์</h2>
+                </div>
+
+                <section id="u2-0" class="bg-white rounded-2xl p-6 shadow-xs border border-rose-100/50 scroll-mt-20">
+                    <h3 class="text-lg font-bold text-slate-900 mb-3 flex items-center">
+                        <span class="bg-pink-100 text-pink-600 text-xs font-bold px-2 py-0.5 rounded-md mr-2">2.0</span> เครือข่าย PAN (Personal Area Network)
+                    </h3>
+                    <p class="text-sm text-gray-700 mb-2"><strong>เครือข่ายส่วนบุคคล:</strong> เชื่อมต่ออุปกรณ์ไร้สายรอบตัวเราในระยะใกล้มาก ๆ ไม่เกิน 10 เมตร</p>
+                    <p class="text-xs text-gray-500 mb-3"><strong>ตัวอย่าง:</strong> การต่อหูฟัง Bluetooth กับมือถือ, ต่อเมาส์ไร้สาย หรือส่งรูปผ่าน AirDrop</p>
+                    <div class="bg-rose-50/50 border-l-4 border-rose-400 p-4 rounded-r-xl text-xs text-rose-900">💡 เหมือน "รัศมีของเสียงกระซิบ" คุยกันรู้เรื่องเฉพาะคนอยู่ใกล้ตัวในระยะเอื้อมมือถึงเท่านั้น</div>
+                </section>
+
+                <section id="u2-1" class="bg-white rounded-2xl p-6 shadow-xs border border-rose-100/50 scroll-mt-20">
+                    <h3 class="text-lg font-bold text-slate-900 mb-3 flex items-center">
+                        <span class="bg-pink-100 text-pink-600 text-xs font-bold px-2 py-0.5 rounded-md mr-2">2.1</span> เครือข่ายแลน LAN (Local Area Network)
+                    </h3>
+                    <p class="text-sm text-gray-700 mb-2"><strong>เครือข่ายท้องถิ่น:</strong> เชื่อมต่อคอมพิวเตอร์ในพื้นที่จำกัด เช่น ห้องเรียน บ้าน หรือตึกเดียวกัน</p>
+                    <div class="bg-rose-50/50 border-l-4 border-rose-400 p-4 rounded-r-xl text-xs text-rose-900">💡 เหมือน "ระบบอินเตอร์คอมภายในตึก" ที่คนในตึกเดียวกันสามารถกดโทรหากันได้ฟรีและรวดเร็ว</div>
+                </section>
+
+                <section id="u2-2" class="bg-white rounded-2xl p-6 shadow-xs border border-rose-100/50 scroll-mt-20">
+                    <h3 class="text-lg font-bold text-slate-900 mb-3 flex items-center">
+                        <span class="bg-pink-100 text-pink-600 text-xs font-bold px-2 py-0.5 rounded-md mr-2">2.2</span> เครือข่ายแมน MAN (Metropolitan Area Network)
+                    </h3>
+                    <p class="text-sm text-gray-700 mb-2"><strong>เครือข่ายระดับเมือง:</strong> เชื่อมต่อเครือข่ายครอบคลุมพื้นที่ระดับตัวเมืองหรือจังหวัด (10 - 50 กิโลเมตร)</p>
+                    <div class="bg-rose-50/50 border-l-4 border-rose-400 p-4 rounded-r-xl text-xs text-rose-900">💡 เหมือน "รถสองแถววิ่งรอบเมือง" วิ่งรับส่งคนตามจุดสำคัญในจังหวัด แต่ไม่วิ่งข้ามไปจังหวัดอื่น</div>
+                </section>
+
+                <section id="u2-3" class="bg-white rounded-2xl p-6 shadow-xs border border-rose-100/50 scroll-mt-20">
+                    <h3 class="text-lg font-bold text-slate-900 mb-3 flex items-center">
+                        <span class="bg-pink-100 text-pink-600 text-xs font-bold px-2 py-0.5 rounded-md mr-2">2.3</span> เครือข่ายแวน WAN (Wide Area Network)
+                    </h3>
+                    <p class="text-sm text-gray-700 mb-2"><strong>เครือข่ายบริเวณกว้าง:</strong> เชื่อมต่อระดับภูมิภาค ข้ามจังหวัด ข้ามประเทศ หรือข้ามทวีป ผ่านเคเบิลใต้น้ำหรือดาวเทียม</p>
+                    <div class="bg-rose-50/50 border-l-4 border-rose-400 p-4 rounded-r-xl text-xs text-rose-900">💡 เหมือน "สายการบินนานาชาติ" ที่คอยรับส่งผู้โดยสารเดินทางข้ามประเทศไกล ๆ</div>
+                </section>
+
+                <section id="u2-4" class="bg-white rounded-2xl p-6 shadow-xs border border-rose-100/50 scroll-mt-20">
+                    <h3 class="text-lg font-bold text-slate-900 mb-3 flex items-center">
+                        <span class="bg-pink-100 text-pink-600 text-xs font-bold px-2 py-0.5 rounded-md mr-2">2.4</span> เครือข่ายอินเตอร์เน็ต (Internet)
+                    </h3>
+                    <p class="text-sm text-gray-700 mb-2"><strong>เครือข่ายสาธารณะที่ใหญ่ที่สุดในโลก:</strong> เป็นเครือข่าย WAN รูปแบบหนึ่งที่โยงคอมพิวเตอร์ทั่วโลกเข้าด้วยกันแบบไม่มีพรมแดน</p>
+                    <div class="bg-rose-50/50 border-l-4 border-rose-400 p-4 rounded-r-xl text-xs text-rose-900">💡 เหมือน "โลกทั้งใบที่มีถนนเชื่อมถึงกันหมด" ใครอยากขับรถไปเที่ยวเมืองไหน (เข้าเว็บไหน) ก็ขับไปได้เลยอิสระ</div>
+                </section>
+
+                <section id="u2-5" class="bg-white rounded-2xl p-6 shadow-xs border border-rose-100/50 scroll-mt-20">
+                    <h3 class="text-lg font-bold text-slate-900 mb-3 flex items-center">
+                        <span class="bg-pink-100 text-pink-600 text-xs font-bold px-2 py-0.5 rounded-md mr-2">2.5</span> เครือข่ายแลนเสมือน VLAN (Virtual LAN)
+                    </h3>
+                    <p class="text-sm text-gray-700 mb-2"><strong>การแบ่งห้องเรียนในสวิตช์ตัวเดียว:</strong> ใช้ซอฟต์แวร์สั่งการ Switch ให้แบ่งกลุ่มคอมพิวเตอร์ออกจากกันเป็นกลุ่มย่อยเพื่อความปลอดภัย</p>
+                    <div class="bg-rose-50/50 border-l-4 border-rose-400 p-4 rounded-r-xl text-xs text-rose-900">💡 เหมือน "ฉากกั้นห้องเรียนขนาดใหญ่" กั้นแบ่งห้องโถงกว้างออกเป็นห้องย่อย ทำให้ทำงานพร้อมกันได้โดยไม่กวนกัน</div>
+                </section>
+
+                <section id="u2-6" class="bg-white rounded-2xl p-6 shadow-xs border border-rose-100/50 scroll-mt-20">
+                    <h3 class="text-lg font-bold text-slate-900 mb-3 flex items-center">
+                        <span class="bg-pink-100 text-pink-600 text-xs font-bold px-2 py-0.5 rounded-md mr-2">2.6</span> เครือข่าย VPN (Virtual Private Network)
+                    </h3>
+                    <p class="text-sm text-gray-700 mb-2"><strong>อุโมงค์ส่วนตัวบนถนนสาธารณะ:</strong> สร้าง "ท่อเสมือนที่มีการเข้ารหัส" ตัดผ่านเครือข่ายอินเทอร์เน็ตสาธารณะเพื่อเชื่อมต่อเข้าองค์กรอย่างปลอดภัย</p>
+                    <div class="bg-rose-50/50 border-l-4 border-rose-400 p-4 rounded-r-xl text-xs text-rose-900">💡 เหมือน "รถขนเงินของธนาคาร" วิ่งร่วมกับรถคันอื่นบนถนนทั่วไป แต่ตัวรถหุ้มเกราะล็อคแน่นหนา คนภายนอกเจาะดูไม่ได้</div>
+                </section>
+
+                <section id="u2-7" class="bg-white rounded-2xl p-6 shadow-xs border border-rose-100/50 scroll-mt-20">
+                    <h3 class="text-lg font-bold text-slate-900 mb-3 flex items-center">
+                        <span class="bg-pink-100 text-pink-600 text-xs font-bold px-2 py-0.5 rounded-md mr-2">2.7</span> อินทราเน็ต (Intranet) และ เอกซ์ทราเน็ต (Extranet)
+                    </h3>
+                    <p class="text-xs md:text-sm text-gray-700 mb-3"><strong>Intranet:</strong> ระบบภายใน "คนในเข้าได้ คนนอกห้ามเข้า" | <strong>Extranet:</strong> เปิดให้ "คนนอกบางกลุ่มที่เกี่ยวข้องเข้าใช้ได้"</p>
+                    <div class="bg-rose-50/50 border-l-4 border-rose-400 p-4 rounded-r-xl text-xs text-rose-900">💡 Intranet เหมือนห้องครัวหลังร้านอาหาร (เฉพาะพนักงานเข้าได้) | Extranet เหมือนโต๊ะอาหารในร้าน (ลูกค้าที่มาใช้บริการเข้าได้บางส่วน)</div>
+                </section>
+
+                <section id="u2-8" class="bg-slate-50 border border-slate-200 rounded-2xl p-5 text-xs scroll-mt-20">
+                    <p class="font-bold text-red-600 mb-2">⚠️ ความรู้เสริม: เทคโนโลยีในอดีต (Token Ring, FDDI, ATM)</p>
+                    <p class="text-gray-600 leading-relaxed">ปัจจุบันถูกทดแทนด้วยระบบ Ethernet ความเร็วสูงหมดแล้ว เรียนรู้ไว้เป็นพื้นฐานประวัติศาสตร์: Token Ring ต่อกันเป็นวงกลมต้องรอไมค์สิทธิ์ (Token) ถึงส่งข้อมูลได้ | FDDI ใช้สายใยแก้วนำแสงระบบวงแหวนคู่ขนาน 2 ชั้นสำรองข้อมูล | ATM เด่นเรื่องการหั่นข้อมูลก้อนเท่ากัน 53 ไบต์ เรียกว่า Cell</p>
+                </section>
+            </div>
+
+            <div class="space-y-6">
+                <div class="border-l-4 border-pink-500 pl-3">
+                    <span class="text-xs font-bold text-pink-500 uppercase tracking-wider">UNIT 3</span>
+                    <h2 class="text-xl md:text-2xl font-extrabold text-slate-800">หน่วยที่ 3: อุปกรณ์ระบบเครือข่าย (Network Devices)</h2>
+                </div>
+
+                <section id="u3-1" class="bg-white rounded-2xl p-6 shadow-xs border border-rose-100/50 scroll-mt-20">
+                    <h3 class="text-lg font-bold text-slate-900 mb-3 flex items-center">
+                        <span class="bg-pink-100 text-pink-600 text-xs font-bold px-2 py-0.5 rounded-md mr-2">3.1</span> อุปกรณ์เชื่อมต่อเครือข่ายคอมพิวเตอร์ (Connection Devices)
+                    </h3>
+                    <div class="space-y-4 text-xs md:text-sm text-gray-700">
+                        <div class="border-b border-rose-50 pb-3">
+                            <p class="font-bold text-pink-600 mb-1">1) การ์ดเครือข่าย (NIC - Network Interface Card)</p>
+                            <p class="mb-2">ติดตั้งในคอมพิวเตอร์เพื่อแปลงข้อมูลในเครื่องให้กลายเป็นสัญญาณวิ่งไปตามสายแลนหรือคลื่นวิทยุ</p>
+                            <span class="text-xs text-rose-700 bg-rose-50 px-2 py-1 rounded">💡 เปรียบเสมือน "ประตูบ้าน" ถ้าไม่มีประตู คนในบ้านก็เดินออกไปไหนไม่ได้</span>
+                        </div>
+                        <div class="border-b border-rose-50 pb-3">
+                            <p class="font-bold text-pink-600 mb-1">2) ฮับ (Hub)</p>
+                            <p class="mb-2">กระจายสัญญาณแบบหว่านแหเหมาเข่งไปทุกพอร์ต ปัจจุบันไม่นิยมใช้เพราะทำให้เน็ตช้าและข้อมูลชนกันง่าย</p>
+                            <span class="text-xs text-rose-700 bg-rose-50 px-2 py-1 rounded">💡 เปรียบเหมือน "การตะโกนคุยลั่นห้องเรียน" ทุกคนได้ยินหมดและฟังไม่รู้เรื่องถ้าตะโกนพร้อมกัน</span>
+                        </div>
+                        <div class="border-b border-rose-50 pb-3">
+                            <p class="font-bold text-pink-600 mb-1">3) สวิตช์ (Switch)</p>
+                            <p class="mb-2">ฮีโร่ระบบ LAN ส่งข้อมูลตรงหาผู้รับเฉพาะเจาะจงแบบส่วนตัว ไม่รบกวนพอร์ตอื่น ปลอดภัยและรวดเร็วสูง</p>
+                            <span class="text-xs text-rose-700 bg-rose-50 px-2 py-1 rounded">💡 เปรียบเหมือน "บุรุษไปรษณีย์ส่งจดหมายตรงตามบ้านเลขที่" บ้านอื่นไม่รู้เห็นข้อมูลด้วย</span>
+                        </div>
+                        <div>
+                            <p class="font-bold text-pink-600 mb-1">4) เราเตอร์ (Router)</p>
+                            <p class="mb-2">เชื่อมเครือข่ายต่างวงเข้าด้วยกัน (พัง LAN ออกสู่อินเทอร์เน็ต) และคำนวณหาเส้นทางที่เร็วที่สุดในการส่งข้อมูล</p>
+                            <span class="text-xs text-rose-700 bg-rose-50 px-2 py-1 rounded">💡 เปรียบเหมือน "ด่านเก็บเงินทางด่วน หรือ สถานี บขส." คอยจัดรถและบอกเส้นทางข้ามจังหวัด</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="u3-2" class="bg-white rounded-2xl p-6 shadow-xs border border-rose-100/50 scroll-mt-20">
+                    <h3 class="text-lg font-bold text-slate-900 mb-3 flex items-center">
+                        <span class="bg-pink-100 text-pink-600 text-xs font-bold px-2 py-0.5 rounded-md mr-2">3.2</span> อุปกรณ์รักษาความปลอดภัย (Security Devices)
+                    </h3>
+                    <p class="text-sm text-gray-700 mb-3"><strong>ไฟร์วอลล์ (Firewall):</strong> ทำหน้าที่เป็นยามหน้าประตูเครือข่าย คอยสแกนข้อมูลและบล็อกสิ่งแปลกปลอม แฮกเกอร์ หรือไวรัสตามกฎที่ตั้งไว้</p>
+                    <div class="bg-rose-50/50 border-l-4 border-rose-400 p-4 rounded-r-xl text-xs text-rose-900">
+                        <strong>💡 เปรียบเทียบเหมือน "รปภ. ตรวจบัตรหน้าสถานบันเทิง":</strong> คอยคัดกรองบุคคลเข้างานอย่างเคร่งครัด ใครพกอาวุธหรือไม่มีบัตรประจำตัวก็จะไม่ได้รับอนุญาตให้ผ่านประตูเข้ามาเด็ดขาด
+                    </div>
+                </section>
+
+                <section id="u3-3" class="bg-white rounded-2xl p-6 shadow-xs border border-rose-100/50 scroll-mt-20">
+                    <h3 class="text-lg font-bold text-slate-900 mb-3 flex items-center">
+                        <span class="bg-pink-100 text-pink-600 text-xs font-bold px-2 py-0.5 rounded-md mr-2">3.3</span> อุปกรณ์เครือข่ายไร้สาย (Wireless Devices)
+                    </h3>
+                    <div class="space-y-4 text-xs md:text-sm text-gray-700">
+                        <div>
+                            <p class="font-bold text-pink-600">1) จุดเข้าใช้งานเครือข่ายไร้สาย (Access Point หรือ AP)</p>
+                            <p class="mb-2">รับสัญญาณเน็ตมาจากสายแลนหลัก แล้วแปลงเป็นคลื่นวิทยุ Wi-Fi กระจายในอากาศให้อุปกรณ์เคลื่อนที่มาเกาะใช้งาน</p>
+                            <span class="text-xs text-rose-700 bg-rose-50 px-2 py-1 rounded">💡 เหมือน "ลำโพงกระจายเสียงประจำหมู่บ้าน" ประกาศเสียงออกไปในอากาศให้ได้ยินพร้อมกัน</span>
+                        </div>
+                        <div>
+                            <p class="font-bold text-pink-600">2) ไวร์เลสเราเตอร์ (Wireless Router)</p>
+                            <p class="mb-2">อุปกรณ์ 3 in 1 ประจำบ้าน มัดรวมเอา Router + Switch + Access Point มาไว้ในกล่องเดียว ปล่อยสัญญาณไร้สายและเสียบสายแลนได้พร้อมกัน</p>
+                            <span class="text-xs text-rose-700 bg-rose-50 px-2 py-1 rounded">💡 เหมือน "สมาร์ทโฟน" เครื่องเดียวจบ เป็นทั้งโทรศัพท์ กล้องถ่ายรูป และเครื่องคิดเลข</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+        </main>
+    </div>
+
+    <footer class="bg-white border-t border-rose-100 py-6 text-center text-xs text-gray-400">
+        <p>© 2026 ระบบสรุปบทเรียนออนไลน์ วิชาเครือข่ายคอมพิวเตอร์เบื้องต้น • รูปแบบปราศจากแบบทดสอบ</p>
+    </footer>
+
+</body>
+</html>
