@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows Shortcut Typing Challenge (10 Points)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;700&display=swap');
+        
+        body {
+            background-color: #0d1117;
+            color: #00ff66;
+            font-family: 'Chakra Petch', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            background-color: #161b22;
+            border: 2px solid #00ff66;
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.2);
+            border-radius: 10px;
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #00ff66;
+            text-shadow: 0 0 10px rgba(0, 255, 102, 0.5);
+            margin-top: 0;
+            font-size: 1.8rem;
+        }
+
+        .status-panel {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            background: #21262d;
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+
+        .mission-box {
+            background-color: #0d1117;
+            border-left: 5px solid #ff3366;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+            min-height: 100px;
+        }
+
+        .mission-title {
+            color: #ff3366;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .mission-desc {
+            color: #ffffff;
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+
+        .input-area {
+            margin: 25px 0;
+        }
+
+        .shortcut-input {
+            background-color: #0d1117;
+            color: #ffffff;
+            border: 2px solid #30363d;
+            border-radius: 5px;
+            padding: 12px 20px;
+            font-size: 1.3rem;
+            width: 80%;
+            max-width: 300px;
+            text-align: center;
+            font-family: 'Chakra Petch', sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .shortcut-input:focus {
+            border-color: #00ff66;
+            box-shadow: 0 0 10px rgba(0, 255, 102, 0.3);
+        }
+
+        .btn {
+            background-color: #00ff66;
+            color: #0d1117;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            font-family: 'Chakra Petch', sans-serif;
+            box-shadow: 0 0 15px rgba(0, 255, 102, 0.4);
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background-color: #00cc52;
+        }
+
+        .btn-skip {
+            background-color: #ffaa00;
+            color: #0d1117;
+            box-shadow: 0 0 15px rgba(255, 170, 0, 0.4);
+        }
+
+        .btn-skip:hover {
+            background-color: #cc8800;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #21262d;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #00ff66;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+        .summary-table th, .summary-table td {
+            border: 1px solid #30363d;
+            padding: 8px;
+            text-align: left;
+        }
+        .summary-table th {
+            background-color: #21262d;
+            color: #00ff66;
+        }
+        
+        .danger-time {
+            color: #ff3366 !important;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <h1>🧠 WINDOWS SHORTCUT QUIZ CHALLENGE 🧠</h1>
+        
+        <div id="start-screen">
+            <p style="color: #fff; font-size: 1.1rem; line-height: 1.6;">
+                เกมตอบคำถามคีย์ลัดวินโดวน์ <strong>10 ข้อ 10 คะแนนเต็ม!</strong><br>
+                <strong style="color: #ff3366;">วิธีเล่น:</strong> อ่านคำอธิบายภารกิจแล้วพิมพ์คำตอบคีย์ลัดลงในช่องว่าง เช่น <span style="color: #00ff66;">ctrl+c</span> หรือ <span style="color: #00ff66;">win+d</span><br>
+                <strong style="color: #ffaa00;">เงื่อนไข:</strong> จำกัดเวลา 2 นาที (120 วินาที) และกดปุ่มข้ามไปทำข้ออื่นก่อนได้ถ้าคิดไม่ออก!
+            </p>
+            <button class="btn" onclick="startGame()">เริ่มทำแบบทดสอบ</button>
+        </div>
+
+        <div id="game-screen" style="display: none;">
+            <div class="status-panel">
+                <div>ข้อที่: <span id="current-stage">1</span> / 10</div>
+                <div>คะแนน: <span id="score" style="color: #00ff66; font-weight: bold;">0</span> / 10</div>
+                <div>เวลาเหลือ: <span id="timer" style="font-weight: bold;">120</span> วินาที</div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress"></div>
+            </div>
+
+            <div class="mission-box">
+                <div class="mission-title" id="mission-title">กำลังโหลดโจทย์...</div>
+                <div class="mission-desc" id="mission-desc">ระบบพร้อมทำงาน</div>
+            </div>
+
+            <div class="input-area">
+                <p style="color: #8b949e; font-size: 0.9rem; margin-bottom: 8px;">พิมพ์คำตอบคีย์ลัดลงในช่องด้านล่างนี้ (ระบบจะตรวจให้อัตโนมัติ)</p>
+                <input type="text" id="shortcut-answer" class="shortcut-input" placeholder="ตัวอย่าง ctrl+c" autocomplete="off" oninput="checkAnswer()">
+            </div>
+            
+            <button class="btn btn-skip" onclick="skipMission()">⏩ ข้ามข้อนี้ไปก่อน</button>
+        </div>
+
+        <div id="end-screen" style="display: none;">
+            <h2 id="end-title" style="color: #00ff66;">🎉 จบการทดสอบ!</h2>
+            <p style="font-size: 1.4rem; color: #fff; margin: 10px 0;">
+                คะแนนรวมของคุณ: <strong id="final-score" style="color: #00ff66;">0</strong> / 10 คะแนน<br>
+                เวลาที่ใช้ไปทั้งหมด: <strong id="final-time" style="color: #ff3366;">0</strong> วินาที
+            </p>
+            
+            <h3 style="color: #00ff66; text-align: left; margin-top: 20px;">📊 เฉลยคีย์ลัดที่ถูกต้องทั้ง 10 ข้อ:</h3>
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>ฟังก์ชันการทำงาน</th>
+                        <th>คีย์ลัดที่ถูกต้อง</th>
+                    </tr>
+                </thead>
+                <tbody id="summary-body"></tbody>
+            </table>
+
+            <br>
+            <button class="btn" onclick="location.reload()">เริ่มทดสอบใหม่</button>
+        </div>
+    </div>
+
+    <script>
+        // ชุดข้อมูลคำถามดึงตามใบงานเป๊ะๆ 10 ข้อ
+        const missions = [
+            { title: "ฟังก์ชัน: คัดลอก (Copy)", desc: "ต้องการคัดลอกไฟล์หรือข้อความที่เลือกไว้ไปยังหน่วยความจำชั่วคราว", ans: "ctrl+c" },
+            { title: "ฟังก์ชัน: ตัด (Cut)", desc: "ต้องการย้ายข้อความหรือไฟล์ออกจากตำแหน่งเดิมทันที เพื่อเตรียมไปวางที่อื่น", ans: "ctrl+x" },
+            { title: "ฟังก์ชัน: วาง (Paste)", desc: "ต้องการนำไฟล์หรือข้อความที่คัดลอกหรือตัดมาล่าสุด นำมาแสดงผล ณ จุดปัจจุบัน", ans: "ctrl+v" },
+            { title: "ฟังก์ชัน: ย้อนกลับการกระทำล่าสุด (Undo)", desc: "เมื่อเผลอกดทำอะไรผิดพลาดไปในระบบ และต้องการย้อนเวลากลับไปก่อนที่จะกด", ans: "ctrl+z" },
+            { title: "ฟังก์ชัน: เลือกทั้งหมด (Select All)", desc: "ต้องการครอบหรือเลือกไฟล์และข้อความทั้งหมดที่ปรากฏอยู่บนหน้าจอในทีเดียว", ans: "ctrl+a" },
+            { title: "ฟังก์ชัน: เปิด File Explorer", desc: "ต้องการเปิดหน้าต่างจัดการไฟล์และโฟลเดอร์ต่างๆ ของระบบวินโดวน์ขึ้นมา", ans: "win+e" },
+            { title: "ฟังก์ชัน: ยุบหน้าต่างทั้งหมดเพื่อดูหน้าจอ Desktop", desc: "มีหน้าต่างโปรแกรมเปิดค้างไว้เต็มหน้าจอ แต่อยากพับเก็บทั้งหมดลงไปเพื่อดูหน้า Desktop ทันที", ans: "win+d" },
+            { title: "ฟังก์ชัน: สลับหน้าต่างโปรแกรมที่เปิดอยู่", desc: "ต้องการสลับหน้าจอไปทำงานยังโปรแกรมอื่นๆ ที่เปิดค้างไว้เบื้องหลังอย่างรวดเร็ว", ans: "alt+tab" },
+            { title: "ฟังก์ชัน: ล็อกหน้าจอคอมพิวเตอร์ (Lock)", desc: "ต้องลุกออกจากโต๊ะคอมพิวเตอร์กะทันหัน และต้องการล็อกหน้าจอเพื่อความปลอดภัยของข้อมูล", ans: "win+l" },
+            { title: "ฟังก์ชัน: เปิด Task Manager", desc: "คอมพิวเตอร์เกิดอาการค้าง ต้องการเปิดหน้าต่างตัวจัดการงาน (Task Manager) เพื่อไปปิดโปรแกรมที่มีปัญหา", ans: "ctrl+shift+esc" }
+        ];
+
+        let currentStage = 0;
+        let score = 0;
+        let timeLeft = 120; 
+        let timerInterval;
+        let startTime;
+        let gameEnded = false;
+
+        function startGame() {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+            
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
+            
+            loadMission();
+        }
+
+        function updateTimer() {
+            if(gameEnded) return;
+            timeLeft--;
+            document.getElementById('timer').innerText = timeLeft;
+
+            if(timeLeft <= 20) {
+                document.getElementById('timer').classList.add('danger-time');
+            }
+
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                endGame(true);
+            }
+        }
+
+        function loadMission() {
+            if (currentStage >= missions.length) {
+                endGame(false);
+                return;
+            }
+
+            let mission = missions[currentStage];
+            document.getElementById('current-stage').innerText = currentStage + 1;
+            document.getElementById('score').innerText = score;
+            document.getElementById('mission-title').innerText = mission.title;
+            document.getElementById('mission-desc').innerText = mission.desc;
+            
+            let progressPercent = (currentStage / missions.length) * 100;
+            document.getElementById('progress').style.width = `${progressPercent}%`;
+
+            // รีเซ็ตช่องกรอกข้อความและโฟกัสไปที่กล่องข้อความทันที
+            let inputField = document.getElementById('shortcut-answer');
+            inputField.value = '';
+            inputField.focus();
+        }
+
+        function checkAnswer() {
+            if (gameEnded) return;
+            
+            let userInput = document.getElementById('shortcut-answer').value;
+            // จัดรูปแบบข้อความที่ผู้ใช้พิมพ์: ทำเป็นตัวพิมพ์เล็กทั้งหมด และลบช่องว่าง (Space) ออก
+            let cleanInput = userInput.toLowerCase().replace(/\s+/g, '');
+            
+            let correctAns = missions[currentStage].ans;
+
+            // ตรวจสอบคำตอบ
+            if (cleanInput === correctAns) {
+                score++;
+                currentStage++;
+                setTimeout(() => {
+                    loadMission();
+                }, 200); // หน่วงเวลานิดหน่อยให้รู้สึกถึงการเปลี่ยนข้อ
+            }
+        }
+
+        function skipMission() {
+            if (gameEnded) return;
+            currentStage++; // ข้ามข้อนี้โดยขยับด่านไปข้างหน้า แต่ไม่นับแต้มเพิ่ม
+            loadMission();
+        }
+
+        function endGame(isTimeOut) {
+            gameEnded = true;
+            clearInterval(timerInterval);
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'block';
+            
+            let totalTimeUsed = 120 - timeLeft;
+            if(isTimeOut) {
+                document.getElementById('end-title').innerText = "⏰ หมดเวลาการทำภารกิจ!";
+                document.getElementById('end-title').style.color = "#ff3366";
+                totalTimeUsed = 120;
+            }
+
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('final-time').innerText = totalTimeUsed;
+
+            // แสดงตารางเฉลยเมื่อจบเกม
+            let tbody = document.getElementById('summary-body');
+            tbody.innerHTML = '';
+            missions.forEach(m => {
+                let row = `<tr>
+                    <td><strong>${m.title.replace('ฟังก์ชัน: ', '')}</strong></td>
+                    <td style="color: #00ff66;"><strong>${m.ans.toUpperCase()}</strong></td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+    </script>
+</body>
+</html>
