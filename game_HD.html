@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Architect: Intelligent Laboratory</title>
+    <style>
+        :root {
+            --bg-color: #0f1016;
+            --panel-bg: #171923;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            text-align: center;
+            padding: 30px 20px;
+            margin: 0;
+            user-select: none;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background-color: var(--panel-bg);
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            border: 1px solid #2d3142;
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 1.8rem;
+            letter-spacing: 0.5px;
+            background: linear-gradient(to right, #a5b4fc, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #1f2232;
+            padding: 12px 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-weight: 600;
+            border: 1px solid #2d3142;
+        }
+
+        .badge {
+            background-color: var(--warning);
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .mission-box {
+            background-color: #1f2232;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 5px solid var(--primary);
+            text-align: left;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        /* พื้นที่ทำงานประกอบวงจร */
+        .workspace {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            background-color: #0b0c10;
+            padding: 40px 15px;
+            border-radius: 16px;
+            border: 2px solid #23273a;
+            margin-bottom: 30px;
+            min-height: 80px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+
+        .node {
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .start-node { background: linear-gradient(135deg, #dc2626, #991b1b); }
+        .end-node { background: linear-gradient(135deg, #0284c7, #075985); }
+        
+        .drop-zone {
+            border: 2px dashed #4f46e5;
+            background-color: rgba(99, 102, 241, 0.03);
+            min-width: 130px;
+            height: 52px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #555e7d;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .drop-zone.hovered {
+            background-color: rgba(99, 102, 241, 0.15);
+            border-color: #818cf8;
+            transform: scale(1.03);
+        }
+        .drop-zone.filled {
+            background-color: var(--primary);
+            color: #fff;
+            border: 1px solid #818cf8;
+            font-weight: bold;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        .drop-zone.correct-glow {
+            background: linear-gradient(135deg, #059669, #065f46) !important;
+            border-color: #34d399 !important;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.6) !important;
+        }
+        .drop-zone.error-glow {
+            background: linear-gradient(135deg, #dc2626, #991b1b) !important;
+            border-color: #f87171 !important;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.6) !important;
+        }
+
+        .arrow {
+            color: #3f445e;
+            font-weight: bold;
+            font-size: 1.3rem;
+            transition: color 0.3s;
+        }
+        .arrow.active-signal {
+            color: var(--success);
+            text-shadow: 0 0 10px var(--success);
+        }
+
+        /* คลังอุปกรณ์ */
+        .inventory {
+            background-color: #1f2232;
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid #2d3142;
+        }
+        .inventory h4 { 
+            margin-top: 0; 
+            margin-bottom: 15px;
+            color: var(--text-muted); 
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .device-pool {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .draggable-device {
+            background-color: #2d3142;
+            color: var(--text-main);
+            padding: 12px 22px;
+            border-radius: 10px;
+            cursor: grab;
+            font-weight: 600;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+            border: 1px solid #3f445e;
+        }
+        .draggable-device:active { cursor: grabbing; }
+        .draggable-device:hover { 
+            background-color: #3f445e; 
+            border-color: var(--primary);
+            transform: translateY(-2px); 
+        }
+        
+        #message {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-top: 25px;
+            min-height: 35px;
+            transition: all 0.3s;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>⚡ Network Architect: ห้องปฏิบัติการอัจฉริยะ</h2>
+    
+    <div class="status-bar">
+        <div>เลเวล: <span class="badge" id="levelNum">1 / 5</span></div>
+        <div>ข้อที่: <span id="questionNum">1 / 10</span></div>
+        <div>คะแนนรวม: <span class="badge" style="background-color: var(--success); color: #fff;" id="scoreLabel">0 / 10</span></div>
+    </div>
+
+    <div class="mission-box">
+        <strong style="color: #818cf8;">🎯 ภารกิจข้อที่ <span id="taskNum">1</span>:</strong> 
+        <span id="missionText">กำลังโหลดภารกิจ...</span>
+    </div>
+
+    <div class="workspace" id="workspace">
+        </div>
+
+    <div class="inventory" id="inventoryPanel">
+        <h4>📦 คลังอุปกรณ์อุปกรณ์ (ลากวางเพื่อตรวจสอบคำตอบอัตโนมัติ)</h4>
+        <div class="device-pool" id="devicePool">
+            </div>
+    </div>
+
+    <div id="message"></div>
+</div>
+
+<script>
+    // ชุดข้อมูลโจทย์ 10 ข้อ 5 เลเวล
+    const stages = [
+        {
+            level: 1, qNum: 1,
+            mission: "ต้องการเชื่อมต่อเครือข่ายภายในห้องเรียนคอมพิวเตอร์ เพื่อให้ส่งข้อมูลหากันภายในวงได้อย่างเสถียรและเร็วที่สุด ไม่เกิดปัญหาข้อมูลชนกัน (Collision)",
+            layout: ["🌐 Internet", "DROP", "💻 Student PC"],
+            answer: ["Switch"],
+            pool: ["Switch", "Hub", "Access Point"]
+        },
+        {
+            level: 1, qNum: 2,
+            mission: "ต้องการอุปกรณ์ทำหน้าที่ค้นหาเส้นทาง และเชื่อมวงเครือข่ายภายในบ้าน (LAN) เชื่อมต่อไปยังเครือข่ายสากล (WAN)",
+            layout: ["🏠 Home LAN", "DROP", "🌍 Public WAN"],
+            answer: ["Router"],
+            pool: ["Router", "Switch", "สาย LAN"]
+        },
+        {
+            level: 2, qNum: 3,
+            mission: "เพื่อความปลอดภัยของข้อมูลบริษัท ควรติดตั้งอุปกรณ์คัดกรองทราฟฟิกและบล็อกภัยคุกคามไว้ที่ด่านแรกสุดก่อนเข้าสู่ Router",
+            layout: ["🌍 Internet", "DROP", "🚦 Router"],
+            answer: ["Firewall"],
+            pool: ["Firewall", "Hub", "Access Point"]
+        },
+        {
+            level: 2, qNum: 4,
+            mission: "ต้องการแปลงสัญญาณเครือข่ายแบบสายอินเทอร์เน็ต ให้กลายเป็นคลื่นสัญญาณไร้สายกระจายไปทั่วตึกเพื่อให้พนักงานใช้สมาร์ตโฟนเชื่อมต่อได้",
+            layout: ["🔌 Switch", "DROP", "📱 Smartphone"],
+            answer: ["Access Point"],
+            pool: ["Access Point", "Firewall", "Fiber Optic"]
+        },
+        {
+            level: 3, qNum: 5,
+            mission: "ต้องการเชื่อมสัญญาณอินเทอร์เน็ตระหว่าง ตึกสำนักงานใหญ่ ไปยัง โรงงานผลิต ที่ตั้งอยู่ห่างออกไป 2 กิโลเมตร โดยให้ได้ความเร็วสูงสุดและเสถียรที่สุด",
+            layout: ["🏢 Office", "DROP", "🏭 Factory"],
+            answer: ["Fiber Optic"],
+            pool: ["Fiber Optic", "สาย LAN", "สายโทรศัพท์"]
+        },
+        {
+            level: 3, qNum: 6,
+            mission: "ต้องการลากสายสัญญาณเชื่อมต่อจากเต้ารับที่ผนังห้อง (Wall Outlet) เข้าสู่คอมพิวเตอร์ตั้งโต๊ะในระยะไม่เกิน 50 เมตร",
+            layout: ["🔌 Wall Outlet", "DROP", "🖥️ Desktop PC"],
+            answer: ["สาย LAN"],
+            pool: ["สาย LAN", "Fiber Optic", "สายไฟบ้าน"]
+        },
+        {
+            level: 4, qNum: 7,
+            mission: "จงวางระบบลำดับขั้นพื้นฐานสำหรับออฟฟิศขนาดเล็ก โดยเรียงจาก Internet เข้ามาหาคอมพิวเตอร์ให้ถูกต้องและปลอดภัย",
+            layout: ["🌍 Internet", "DROP", "DROP", "🖥️ PC"],
+            answer: ["Router", "Switch"],
+            pool: ["Router", "Switch", "Hub"]
+        },
+        {
+            level: 4, qNum: 8,
+            mission: "จงสร้างระบบกระจายสัญญาณ Wi-Fi ที่ปลอดภัย โดยมีด่านตรวจกรองข้อมูลไม่พึงประสงค์จากอินเทอร์เน็ตก่อนส่งให้ตัวกระจายสัญญาณ",
+            layout: ["🌍 Internet", "DROP", "DROP", "📶 Wi-Fi User"],
+            answer: ["Firewall", "Access Point"],
+            pool: ["Firewall", "Access Point", "Hub"]
+        },
+        {
+            level: 5, qNum: 9,
+            mission: "องค์กรระดับใหญ่ต้องการระบบป้องกันภัยคุกคามขั้นสุด พร้อมสวิตช์กระจายสายที่ความสามารถสูง สามารถเข้าไปแบ่งวงเครือข่ายเสมือน (VLAN) ได้",
+            layout: ["🌍 Internet", "DROP", "DROP", "👥 VLAN Group"],
+            answer: ["Firewall", "Managed Switch"],
+            pool: ["Firewall", "Managed Switch", "Unmanaged Switch"]
+        },
+        {
+            level: 5, qNum: 10,
+            mission: "ต้องการเชื่อมต่อเครือข่ายไปยังกล้องวงจรปิด (IP Camera) โดยใช้สวิตช์พิเศษที่สามารถปล่อยกระแสไฟไปพร้อมกับสายข้อมูลอินเทอร์เน็ตได้เลย",
+            layout: ["🚦 Router", "DROP", "📷 IP Camera"],
+            answer: ["PoE Switch"],
+            pool: ["PoE Switch", "Normal Switch", "Hub"]
+        }
+    ];
+
+    let currentStage = 0;
+    let score = 0;
+    let draggedText = null;
+
+    function initStage() {
+        if (currentStage >= stages.length) {
+            showEndScreen();
+            return;
+        }
+        
+        const stage = stages[currentStage];
+        
+        document.getElementById('levelNum').innerText = `${stage.level} / 5`;
+        document.getElementById('questionNum').innerText = `${stage.qNum} / 10`;
+        document.getElementById('taskNum').innerText = stage.qNum;
+        document.getElementById('missionText').innerText = stage.mission;
+        
+        const msg = document.getElementById('message');
+        msg.innerText = "⏳ รอการประกอบวงจร...";
+        msg.style.color = "var(--text-muted)";
+        
+        const workspace = document.getElementById('workspace');
+        workspace.innerHTML = "";
+        
+        let dropZoneCount = 0;
+        stage.layout.forEach((node, idx) => {
+            if (node === "DROP") {
+                const dropZone = document.createElement('div');
+                dropZone.className = "drop-zone";
+                dropZone.id = `drop-${dropZoneCount}`;
+                dropZone.innerText = "ลากมาวางที่นี่";
+                
+                dropZone.addEventListener('dragover', (e) => e.preventDefault());
+                dropZone.addEventListener('dragenter', () => { if(!dropZone.classList.contains('filled')) dropZone.classList.add('hovered'); });
+                dropZone.addEventListener('dragleave', () => dropZone.classList.remove('hovered'));
+                dropZone.addEventListener('drop', (e) => handleDrop(dropZone));
+                
+                workspace.appendChild(dropZone);
+                dropZoneCount++;
+            } else {
+                const fixedNode = document.createElement('div');
+                fixedNode.className = "node " + (idx === 0 ? "start-node" : "end-node");
+                fixedNode.innerText = node;
+                workspace.appendChild(fixedNode);
+            }
+            
+            if (idx < stage.layout.length - 1) {
+                const arrow = document.createElement('div');
+                arrow.className = "arrow";
+                arrow.id = `arrow-${idx}`;
+                arrow.innerText = "➔";
+                workspace.appendChild(arrow);
+            }
+        });
+
+        const poolContainer = document.getElementById('devicePool');
+        poolContainer.innerHTML = "";
+        
+        const shuffledPool = [...stage.pool].sort(() => Math.random() - 0.5);
+        shuffledPool.forEach(device => {
+            const devEl = document.createElement('div');
+            devEl.className = "draggable-device";
+            devEl.innerText = device;
+            devEl.draggable = true;
+            devEl.addEventListener('dragstart', () => { draggedText = device; });
+            poolContainer.appendChild(devEl);
+        });
+        
+        document.getElementById('inventoryPanel').style.display = "block";
+    }
+
+    function handleDrop(zone) {
+        zone.classList.remove('hovered');
+        zone.innerText = draggedText;
+        zone.classList.add('filled');
+        
+        // ตรวจเช็กว่าผู้เล่นกรอกครบทุกช่องในข้อนั้นๆ หรือยัง
+        const dropZones = document.querySelectorAll('.drop-zone');
+        let allFilled = true;
+        let userAnswers = [];
+        
+        dropZones.forEach(z => {
+            if (!z.classList.contains('filled')) {
+                allFilled = false;
+            }
+            userAnswers.push(z.innerText);
+        });
+        
+        // ถ้าเติมครบช่องว่างของข้อนี้แล้ว -> สั่งตรวจสอบอัตโนมัติทันที!
+        if (allFilled) {
+            autoCheckProcess(userAnswers, dropZones);
+        }
+    }
+
+    function autoCheckProcess(userAnswers, dropZones) {
+        document.getElementById('inventoryPanel').style.display = "none"; // ซ่อนคลังชั่วคราวกันกดรัว
+        const stage = stages[currentStage];
+        let isCorrect = true;
+        
+        for (let i = 0; i < stage.answer.length; i++) {
+            if (userAnswers[i] !== stage.answer[i]) {
+                isCorrect = false;
+                break;
+            }
+        }
+        
+        const msg = document.getElementById('message');
+        const arrows = document.querySelectorAll('.arrow');
+        
+        if (isCorrect) {
+            score++;
+            document.getElementById('scoreLabel').innerText = `${score} / 10`;
+            
+            // เอฟเฟกต์สีเขียวเรืองแสงเมื่อถูก
+            dropZones.forEach(z => z.classList.add('correct-glow'));
+            arrows.forEach(a => a.classList.add('active-signal'));
+            
+            msg.style.color = "var(--success)";
+            msg.innerText = "🟢 ยอดเยี่ยม! ระบบเชื่อมต่อสำเร็จ สัญญาณเน็ตวิ่งฉลุย...";
+        } else {
+            // เอฟเฟกต์สีแดงเมื่อผิด
+            dropZones.forEach(z => z.classList.add('error-glow'));
+            msg.style.color = "var(--error)";
+            msg.innerText = `❌ วงจรผิดพลาดเน็ตล่ม! (เฉลยที่ถูก: ${stage.answer.join(' ➔ ')})`;
+        }
+        
+        // หน่วงเวลา 1.5 วินาที แล้วข้ามไปข้อต่อไปอัตโนมัติ 🌟
+        setTimeout(() => {
+            currentStage++;
+            initStage();
+        }, 1800);
+    }
+
+    function showEndScreen() {
+        const container = document.querySelector('.container');
+        let rank = "";
+        if (score === 10) rank = "👑 อัจฉริยะวิศวกรระบบเครือข่าย! คุณผ่านการทดสอบแบบไร้ที่ติ เอาไปเลยคะแนนเต็ม!";
+        else if (score >= 7) rank = "🥇 สุดยอดฝีมือ! เข้าใจการทำงานของสถาปัตยกรรมเครือข่ายเป็นอย่างดี";
+        else if (score >= 5) rank = "🥈 ผ่านเกณฑ์! ถือว่าเข้าใจโครงสร้างพื้นฐาน พร้อมไปต่อยอดครับ";
+        else rank = "ไม่เป็นไรนะเพื่อนรัก ลองชวนนักเรียนกลับมาทบทวนการลากสายใหม่อีกครั้งนะ!";
+
+        container.innerHTML = `
+            <h2 style="font-size:2rem;">🏆 การประเมินผลสิ้นสุด</h2>
+            <hr style="border: 0; height: 1px; background: #2d3142; margin: 25px 0;">
+            <p style="font-size: 1.3rem; color: var(--text-muted);">สรุปผลคะแนนการต่อวงจร</p>
+            <h1 style="font-size: 5rem; color: var(--success); margin: 15px 0; text-shadow: 0 0 20px rgba(16,185,129,0.3);">${score} / 10</h1>
+            <p style="font-size: 1.2rem; line-height: 1.6; padding: 0 20px;">${rank}</p>
+            <button class="draggable-device" style="margin-top:35px; cursor:pointer; background-color: var(--primary); border:none; padding:15px 35px;" onclick="location.reload()">🔄 รีเซ็ตห้องปฏิบัติการใหม่</button>
+        `;
+    }
+
+    // เปิดเกมครั้งแรก
+    initStage();
+</script>
+
+</body>
+</html>
