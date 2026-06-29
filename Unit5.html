@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>บทเรียนที่ 5: โปรโตคอลเครือข่าย (ปวช.2)</title>
+    <!-- Google Fonts & Tailwind CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Sarabun', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Header Section -->
+    <header class="bg-gradient-to-r border-b border-blue-100 from-blue-700 to-indigo-800 text-white py-8 px-6 shadow-md text-center">
+        <span class="bg-blue-500 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">หลักสูตร ประกาศนียบัตรวิชาชีพ (ปวช.2)</span>
+        <h1 class="text-3xl font-bold mt-2">แผนการจัดการเรียนรู้ บทเรียนที่ 5: โปรโตคอล (Protocol)</h1>
+        <p class="text-blue-100 mt-2 text-sm max-w-2xl mx-auto">หลักสูตรวิชาสถาปัตยกรรมและระบบเครือข่ายคอมพิวเตอร์ แบ่งเวลาเรียน ทฤษฎี 2 ชั่วโมง และปฏิบัติ 2 ชั่วโมง</p>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto my-8 px-4">
+        
+        <!-- Navigation Tabs -->
+        <div class="flex justify-center space-x-4 mb-8">
+            <button onclick="switchTab('theory')" id="tab-theory" class="px-6 py-3 font-semibold rounded-lg shadow transition duration-200 bg-blue-600 text-white">
+                ⏱️ คาบที่ 1-2: ภาคทฤษฎี (2 ชม.)
+            </button>
+            <button onclick="switchTab('practical')" id="tab-practical" class="px-6 py-3 font-semibold rounded-lg shadow transition duration-200 bg-white text-gray-700 border hover:bg-gray-50">
+                🛠️ คาบที่ 3-4: ภาคปฏิบัติ (2 ชม.)
+            </button>
+        </div>
+
+        <!-- ==================== TAB 1: THEORY ==================== -->
+        <section id="content-theory" class="space-y-8 animate-fadeIn">
+            
+            <!-- Overview Card -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h2 class="text-xl font-bold text-blue-700 flex items-center mb-4">
+                    <span class="w-2 h-6 bg-blue-600 rounded mr-2 inline-block"></span>
+                    โครงสร้างและเวลาการสอนภาคทฤษฎี (120 นาที)
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+                    <div class="p-3 bg-gray-50 rounded-lg border">
+                        <div class="text-xs text-gray-500">0 - 15 นาที</div>
+                        <div class="font-semibold text-sm">เกริ่นนำ & Pre-test</div>
+                    </div>
+                    <div class="p-3 bg-gray-50 rounded-lg border">
+                        <div class="text-xs text-gray-500">15 - 55 นาที</div>
+                        <div class="font-semibold text-sm">5.1 - 5.2 ความหมาย & TCP/IP</div>
+                    </div>
+                    <div class="p-3 bg-gray-50 rounded-lg border">
+                        <div class="text-xs text-gray-500">55 - 95 นาที</div>
+                        <div class="font-semibold text-sm">5.3 - 5.5 FTP, HTTP, UDP</div>
+                    </div>
+                    <div class="p-3 bg-gray-50 rounded-lg border">
+                        <div class="text-xs text-gray-500">95 - 120 นาที</div>
+                        <div class="font-semibold text-sm">ใบงานที่ 8 & สรุปบทเรียน</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Blocks -->
+            <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100 space-y-6">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">5.1 ความหมายของโปรโตคอล (Protocol Definition)</h3>
+                    <p class="text-gray-600 mt-2 leading-relaxed">
+                        ในระบบเครือข่ายคอมพิวเตอร์ <strong>โปรโตคอลคือ "ข้อตกลง กฎระเบียบ หรือภาษากลาง"</strong> ที่กำหนดขึ้นเพื่อควบคุมสถาปัตยกรรมการส่งข้อมูลระหว่างอุปกรณ์อิเล็กทรอนิกส์ หากไม่มีโปรโตคอล คอมพิวเตอร์ต่างผู้ผลิตหรือคนละระบบปฏิบัติการจะไม่สามารถแลกเปลี่ยนข้อมูลกันได้อย่างถูกต้อง
+                    </p>
+                    <blockquote class="bg-blue-50 border-l-4 border-blue-500 p-3 mt-3 text-sm text-blue-800">
+                        <strong>💡 ตัวอย่างเปรียบเทียบเชิงวิชาชีพ:</strong> เหมือนการขับรถบนท้องถนนที่ต้องมี "กฎจราจร" ร่วมกัน (เช่น การเปิดไฟเลี้ยว, การหยุดรถตรงสัญญาณไฟ) หากทุกคนไม่ทำตามกฎเดียวกัน ถนนก็จะไม่สามารถสัญจรได้
+                    </blockquote>
+                </div>
+
+                <hr class="border-gray-100">
+
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">5.2 ชุดโปรโตคอล TCP/IP (Transmission Control Protocol / Internet Protocol)</h3>
+                    <p class="text-gray-600 mt-2 leading-relaxed">
+                        นี่คือมาตรฐานโครงสร้างหลักของอินเทอร์เน็ตในปัจจุบัน ทำหน้าที่จัดการการส่งผ่านแพ็กเก็ตข้อมูลจากจุดเริ่มต้นไปยังปลายทาง โดยทำงานร่วมกันเป็นสถาปัตยกรรมแบบเลเยอร์ (Layer)
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div class="p-4 bg-emerald-50 rounded-lg border border-emerald-100">
+                            <span class="font-bold text-emerald-700">📌 TCP (Connection-Oriented)</span>
+                            <ul class="list-disc list-inside text-sm text-gray-600 mt-2 space-y-1">
+                                <li>รับประกันความถูกต้องของข้อมูล (Reliable)</li>
+                                <li>มีกลไกตรวจสอบข้อผิดพลาด (Error Checking) และกระบวนการ Three-way Handshake</li>
+                                <li>หากข้อมูลสูญหายจะเกิดการขอส่งใหม่ (Retransmission)</li>
+                            </ul>
+                        </div>
+                        <div class="p-4 bg-teal-50 rounded-lg border border-teal-100">
+                            <span class="font-bold text-teal-700">📌 IP (Internet Protocol)</span>
+                            <ul class="list-disc list-inside text-sm text-gray-600 mt-2 space-y-1">
+                                <li>ทำหน้าที่ระบุที่อยู่ของอุปกรณ์ปลายทาง (IP Addressing)</li>
+                                <li>จัดการการเส้นทางของ Packet (Routing)</li>
+                                <li>เน้นการค้นหาเส้นทางที่ดีที่สุด แต่ไม่รับประกันความปลอดภัยของกล่องข้อมูล</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="border-gray-100">
+
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">5.3 โปรโตคอล FTP (File Transfer Protocol)</h3>
+                    <p class="text-gray-600 mt-2 leading-relaxed">
+                        โปรโตคอลสำหรับการโอนย้ายไฟล์งานคอมพิวเตอร์ ข้อมูลรูปภาพ หรือซอร์สโค้ดโปรแกรมผ่านเครือข่าย ทำงานในรูปแบบ Client-Server โดยใช้สถาปัตยกรรมพอร์ตคู่: <strong>Port 21</strong> สำหรับส่งคำสั่งควบคุม (Control) และ <strong>Port 20</strong> สำหรับส่งข้อมูลไฟล์จริง (Data)
+                    </p>
+                </div>
+
+                <hr class="border-gray-100">
+
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">5.4 โปรโตคอล HTTP และ HTTPS (HyperText Transfer Protocol)</h3>
+                    <p class="text-gray-600 mt-2 leading-relaxed">
+                        โปรโตคอลที่ขับเคลื่อนระบบเวิลด์ไวด์เว็บ (WWW) ทำงานบนพอร์ตมาตรฐาน <strong>Port 80</strong> โดยเป็นการแลกเปลี่ยนเอกสารเว็บในรูปแบบ Hypertext (HTML/CSS/JS)
+                    </p>
+                    <div class="mt-2 p-3 bg-amber-50 rounded-lg border border-amber-100 text-sm">
+                        <strong>🛡️ เพิ่มเติมเพื่อความทันสมัย:</strong> ปัจจุบันนิยมเปลี่ยนมาใช้ <strong>HTTPS (Port 443)</strong> ซึ่งใช้กระบวนการเข้ารหัสลับ SSL/TLS เพื่อป้องกันการดักจับข้อมูล (Eavesdropping) ของมิจฉาชีพ
+                    </div>
+                </div>
+
+                <hr class="border-gray-100">
+
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">5.5 โปรโตคอล UDP (User Datagram Protocol)</h3>
+                    <p class="text-gray-600 mt-2 leading-relaxed">
+                        ทางเลือกทดแทน TCP ในจุดที่ต้องการความเร็วขั้นสูงสุด ทำงานในลักษณะ <strong>Connectionless</strong> คือส่งข้อมูลออกไปทันทีโดยไม่ตรวจเช็คว่าปลายทางพร้อมรับหรือไม่ และไม่สนใจว่าข้อมูลจะตกหล่นระหว่างทางหรือไม่ เหมาะกับระบบสตรีมมิ่ง วิดีโอคอล หรือเกมออนไลน์
+                    </p>
+                </div>
+            </div>
+
+            <!-- Student Assignment Sheet 8 -->
+            <div class="bg-gray-800 text-white p-8 rounded-xl shadow-lg">
+                <div class="flex justify-between items-center border-b border-gray-700 pb-4 mb-4">
+                    <h2 class="text-xl font-bold text-yellow-400">📝 ใบงานที่ 8: กิจกรรมตรวจสอบความเข้าใจโปรโตคอล</h2>
+                    <span class="bg-red-500 text-xs px-2 py-1 rounded">เก็บคะแนนทฤษฎี 10 คะแนน</span>
+                </div>
+                <div class="space-y-4 text-sm text-gray-300">
+                    <p><strong>คำชี้แจง:</strong> ให้นักเรียนวิเคราะห์สถานการณ์ต่อไปนี้ แล้วตอบว่าควรเลือกใช้โปรโตคอลใด พร้อมระบุเหตุผลเชิงเทคนิค</p>
+                    <ol class="list-decimal list-inside space-y-3 bg-gray-900 p-4 rounded-lg">
+                        <li>นักเรียนต้องการทำระบบ Video Streaming การถ่ายทอดสดคอนเสิร์ตวงดนตรีผ่านเว็บ -> <span class="text-yellow-400 font-mono">[ ตอบ UDP เพราะ...]</span></li>
+                        <li>เจ้าหน้าที่ฝ่ายบัญชีต้องการส่งไฟล์สรุปงบประมาณประจำปีขนาด 500MB ขึ้นระบบคลาวด์ -> <span class="text-yellow-400 font-mono">[ ตอบ FTP บน TCP เพราะ...]</span></li>
+                        <li>ลูกค้าธนาคารต้องการเข้าสู่ระบบ Mobile Banking เพื่อทำธุรกรรมทางการเงิน -> <span class="text-yellow-400 font-mono">[ ตอบ HTTPS พอร์ต 443 เพราะ...]</span></li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ==================== TAB 2: PRACTICAL ==================== -->
+        <section id="content-practical" class="space-y-8 hidden animate-fadeIn">
+            
+            <!-- Lab Overview Card -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h2 class="text-xl font-bold text-indigo-700 flex items-center mb-4">
+                    <span class="w-2 h-6 bg-indigo-600 rounded mr-2 inline-block"></span>
+                    ปฏิบัติการห้องแล็บคอมพิวเตอร์ (120 นาที)
+                </h2>
+                <p class="text-gray-600 text-sm">ให้นักเรียนเปิดเครื่องคอมพิวเตอร์และลงมือปฏิบัติงานรายบุคคลตามโครงสร้างขั้นตอนด้านล่างนี้</p>
+            </div>
+
+            <!-- Lab sheet 9 -->
+            <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100 space-y-6">
+                <div class="border-b pb-4">
+                    <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">ปฏิบัติการหลัก</span>
+                    <h2 class="text-2xl font-bold text-gray-900 mt-2">ใบงานที่ 9: การประยุกต์ใช้งานและทดสอบโปรแกรม FTP Client/Server</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div class="p-4 bg-gray-50 rounded-lg border">
+                        <strong class="text-indigo-700 block mb-1">🛠️ เครื่องมือที่ต้องใช้:</strong>
+                        1. คอมพิวเตอร์ระบบ LAN<br>
+                        2. โปรแกรม Filezilla Client<br>
+                        3. บัญชี FTP Sandbox ของห้องเรียน
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-lg border">
+                        <strong class="text-indigo-700 block mb-1">🎯 วัตถุประสงค์:</strong>
+                        เพื่อให้นักเรียนเข้าใจกระบวนการทำงานของ Port 20, 21 และรับส่งไฟล์ผ่านสถาปัตยกรรมอินเทอร์เน็ตได้จริง
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-lg border">
+                        <strong class="text-indigo-700 block mb-1">💯 เกณฑ์คะแนน (10 คะแนน):</strong>
+                        - เชื่อมต่อสำเร็จ (3)<br>
+                        - อัปโหลด/ดาวน์โหลดถูก (4)<br>
+                        - สรุปผลถูกต้องวิชาการ (3)
+                    </div>
+                </div>
+
+                <!-- Lab Steps -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-bold text-gray-900">🚀 ขั้นตอนการทดลองปฏิบัติงาน</h3>
+                    
+                    <div class="relative border-l-2 border-indigo-200 pl-6 ml-3 space-y-6">
+                        <div class="relative">
+                            <span class="absolute -left-[31px] top-0 bg-indigo-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">1</span>
+                            <h4 class="font-semibold text-gray-900">ตรวจสอบและเปิดโปรแกรม</h4>
+                            <p class="text-gray-600 text-sm mt-1">ให้นักเรียนดับเบิ้ลคลิกเพื่อเปิดใช้งานโปรแกรม <strong>FileZilla Client</strong> บนหน้าจอ Desktop ของตนเอง</p>
+                        </div>
+
+                        <div class="relative">
+                            <span class="absolute -left-[31px] top-0 bg-indigo-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">2</span>
+                            <h4 class="font-semibold text-gray-900">ป้อนค่าพารามิเตอร์ของสถานีปลายทาง (Host Connection)</h4>
+                            <p class="text-gray-600 text-sm mt-1">กรอกข้อมูลการจำลองเครือข่ายตามที่คุณครูกำหนดไว้ที่หน้ากระดานดำ:</p>
+                            <div class="bg-gray-50 p-3 rounded border font-mono text-xs mt-2 inline-block">
+                                Host: 192.168.x.x (ตามเบอร์ Server เครื่องครู)<br>
+                                Username: std_pvoc2<br>
+                                Password: password2026<br>
+                                Port: 21
+                            </div>
+                        </div>
+
+                        <div class="relative">
+                            <span class="absolute -left-[31px] top-0 bg-indigo-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">3</span>
+                            <h4 class="font-semibold text-gray-900">ทดสอบระบบการโอนย้ายไฟล์ (Data Transfer)</h4>
+                            <p class="text-gray-600 text-sm mt-1">
+                                ให้ลากไฟล์รูปภาพในเครื่องของนักเรียนฝั่งซ้าย (Local Site) ข้ามไปยังฝั่งขวา (Remote Site) เพื่อทดสอบการ <strong>Upload</strong> จากนั้นสังเกตกล่องข้อความสถานะด้านบนสุดว่าขึ้นคำว่า <span class="text-emerald-600 font-semibold">"Transfer successful"</span> หรือไม่
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Section -->
+                <div class="bg-indigo-50 p-6 rounded-xl border border-indigo-100">
+                    <h3 class="font-bold text-indigo-900 mb-2">📌 แบบฟอร์มรายงานผลการปฏิบัติงาน (ให้นักเรียนพิมพ์ตอบหรือเขียนส่ง)</h3>
+                    <div class="space-y-4 text-sm">
+                        <div>
+                            <label class="block font-medium text-gray-700">1. ภาพ Screenshot ตอนที่เชื่อมต่อสำเร็จและอัปโหลดไฟล์เสร็จสิ้น:</label>
+                            <div class="border-2 border-dashed border-gray-300 bg-white h-32 rounded mt-1 flex items-center justify-center text-gray-400">
+                                [ พื้นที่สำหรับวางรูปภาพผลลัพธ์ของนักเรียน ]
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block font-medium text-gray-700">2. สรุปผลความแตกต่างระหว่างฝั่ง Local Site และ Remote Site ในการใช้งานจริง:</label>
+                            <p class="text-xs text-gray-500 mt-1">....................................................................................................................................................................................</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-8 text-xs text-gray-500 border-t mt-12">
+        &copy; 2026 ระบบการจัดการแผนการเรียนรู้อาชีวศึกษา แผนกวิชาคอมพิวเตอร์ธุรกิจ/เทคโนโลยีสารสนเทศ
+    </footer>
+
+    <!-- Tab Switching Logic Script -->
+    <script>
+        function switchTab(tabName) {
+            const theoryContent = document.getElementById('content-theory');
+            const practicalContent = document.getElementById('content-practical');
+            const theoryTab = document.getElementById('tab-theory');
+            const practicalTab = document.getElementById('tab-practical');
+
+            if (tabName === 'theory') {
+                theoryContent.classList.remove('hidden');
+                practicalContent.classList.add('hidden');
+                
+                theoryTab.className = "px-6 py-3 font-semibold rounded-lg shadow transition duration-200 bg-blue-600 text-white";
+                practicalTab.className = "px-6 py-3 font-semibold rounded-lg shadow transition duration-200 bg-white text-gray-700 border hover:bg-gray-50";
+            } else {
+                theoryContent.classList.add('hidden');
+                practicalContent.classList.remove('hidden');
+
+                theoryTab.className = "px-6 py-3 font-semibold rounded-lg shadow transition duration-200 bg-white text-gray-700 border hover:bg-gray-50";
+                practicalTab.className = "px-6 py-3 font-semibold rounded-lg shadow transition duration-200 bg-indigo-600 text-white";
+            }
+        }
+    </script>
+</body>
+</html>

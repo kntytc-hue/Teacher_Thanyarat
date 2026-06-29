@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Ultimate Network Games - บทเรียนที่ 5 โปรโตคอล (ปวช.2)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Sarabun', sans-serif; }
+        .digital-clock { font-family: 'Orbitron', sans-serif; }
+        .game-card { transition: all 0.2s ease; }
+        .game-card:hover { transform: scale(1.02); }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen pb-12">
+
+    <!-- Top Navigation Dashboard -->
+    <header class="bg-gradient-to-r from-slate-900 via-purple-950 to-slate-900 border-b border-purple-900/50 py-6 px-6 text-center shadow-2xl">
+        <span class="bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest">Fixed Bug Mode 100%</span>
+        <h1 class="text-3xl font-bold mt-2 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-pink-400 to-indigo-400">🚨 ⏳ ระบบเกมวัดความเร็วเครือข่าย: บทเรียนโปรโตคอล</h1>
+    </header>
+
+    <main class="max-w-5xl mx-auto mt-8 px-4">
+        
+        <!-- Game Selection Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <button onclick="changeGame('game1')" id="tab-game1" class="game-card bg-purple-600 p-5 rounded-2xl text-left border-2 border-purple-400 shadow-xl text-white">
+                <div class="flex justify-between items-center"><span class="text-2xl">🏢</span> <span class="text-xs bg-black/30 px-2 py-0.5 rounded text-purple-200">10 ข้อ / ข้อละ 10 วิ</span></div>
+                <div class="font-bold text-lg mt-2">1. Network Tycoon</div>
+                <div class="text-xs text-purple-200 mt-1">วิเคราะห์ Request และเลือกโปรโตคอลความปลอดภัยระดับองค์กร</div>
+            </button>
+            <button onclick="changeGame('game2')" id="tab-game2" class="game-card bg-slate-900 p-5 rounded-2xl text-left border border-slate-800 shadow-md text-slate-400">
+                <div class="flex justify-between items-center"><span class="text-2xl">🏃‍♂️</span> <span class="text-xs bg-black/30 px-2 py-0.5 rounded text-slate-400">10 ข้อ / ตรวจสอบ 3-Way</span></div>
+                <div class="font-bold text-lg mt-2">2. Packet Journey Quiz</div>
+                <div class="text-xs text-slate-400 mt-1">พาแพ็กเก็ตฝ่าด่าน Router ตรวจคุณสมบัติเชิงลึกของ TCP และ UDP</div>
+            </button>
+            <button onclick="changeGame('game3')" id="tab-game3" class="game-card bg-slate-900 p-5 rounded-2xl text-left border border-slate-800 shadow-md text-slate-400">
+                <div class="flex justify-between items-center"><span class="text-2xl">🃏</span> <span class="text-xs bg-black/30 px-2 py-0.5 rounded text-slate-400">10 คู่ / แข่งจับเวลารวม</span></div>
+                <div class="font-bold text-lg mt-2">3. Protocol Duel (Speed Match)</div>
+                <div class="text-xs text-slate-400 mt-1">แมตช์ความเร็วสูงจับคู่ระหว่าง บริการ ระบบพอร์ต และโปรโตคอล</div>
+            </button>
+        </div>
+
+        <!-- STATUS PANEL (Score / Timer / HP) -->
+        <div class="grid grid-cols-3 gap-4 mb-6 bg-slate-900 p-4 rounded-xl border border-slate-800 text-center">
+            <div>
+                <div class="text-xs text-slate-400">คะแนนปัจจุบัน</div>
+                <div id="panel-score" class="text-2xl font-bold text-yellow-400 digital-clock">0</div>
+            </div>
+            <div>
+                <div class="text-xs text-slate-400">เวลาถอยหลัง</div>
+                <div id="panel-timer" class="text-2xl font-bold text-red-500 digital-clock">10</div>
+            </div>
+            <div>
+                <div class="text-xs text-slate-400">พลังระบบ (HP)</div>
+                <div id="panel-hp" class="text-2xl font-bold text-emerald-400">❤️❤️❤️</div>
+            </div>
+        </div>
+
+        <!-- ==================== GAME 1 ZONE ==================== -->
+        <section id="zone-game1" class="bg-slate-900 p-6 rounded-2xl border border-purple-500/30 shadow-2xl">
+            <div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold text-purple-400">🏢 Game 1: Network Tycoon</h2> <span id="g1-progress" class="text-xs text-slate-400">ข้อที่ 1/10</span></div>
+            <div class="bg-slate-950 p-6 rounded-xl border border-slate-800 text-center mb-6 min-h-[100px] flex items-center justify-center">
+                <p id="g1-q-text" class="text-lg font-medium text-slate-200">Loading...</p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="g1-options-box"></div>
+        </section>
+
+        <!-- ==================== GAME 2 ZONE ==================== -->
+        <section id="zone-game2" class="bg-slate-900 p-6 rounded-2xl border border-emerald-500/30 shadow-2xl hidden">
+            <div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold text-emerald-400">🏃‍♂️ Game 2: Packet Journey Quiz</h2> <span id="g2-progress" class="text-xs text-slate-400">ข้อที่ 1/10</span></div>
+            <div class="bg-slate-950 p-6 rounded-xl border border-slate-800 text-center mb-6 min-h-[100px] flex items-center justify-center">
+                <p id="g2-q-text" class="text-lg font-medium text-slate-200">Loading...</p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="g2-options-box"></div>
+        </section>
+
+        <!-- ==================== GAME 3 ZONE ==================== -->
+        <section id="zone-game3" class="bg-slate-900 p-6 rounded-2xl border border-indigo-500/30 shadow-2xl hidden">
+            <div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold text-indigo-400">🃏 Game 3: Protocol Duel (Speed Match)</h2> <span id="g3-progress" class="text-xs text-slate-400">เหลือ 10 คู่</span></div>
+            <p class="text-xs text-slate-400 mb-4">กฎ: เวลาจะลดลงไปเรื่อยๆ หากจับคู่ผิด HP จะลดลงทันที 1 ดวง จงหาคู่ที่เข้ากันของฝั่งซ้ายและขวา!</p>
+            <div class="grid grid-cols-2 gap-6 text-center">
+                <div class="space-y-2" id="g3-left-col"></div>
+                <div class="space-y-2" id="g3-right-col"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center mt-12 text-xs text-slate-500">
+        &copy; 2026 ระบบแผนการจัดการเรียนรู้อาชีวศึกษา ยุคดิจิทัล
+    </footer>
+
+    <!-- JavaScript Game Engine -->
+    <script>
+        let currentMode = 'game1';
+        let globalScore = 0;
+        let hp = 3;
+        let timer = 10;
+        let intervalId = null;
+        
+        // --- DATA POOL 10 FULL DISCRETE QUESTIONS ---
+        const game1Data = [
+            {q: "1. ลูกค้าธนาคารต้องการเข้าสู่ระบบ Mobile Banking เพื่อทำธุรกรรมทางการเงินอย่างปลอดภัยสูงสุด", options: ["HTTPS (Port 443)", "HTTP (Port 80)", "FTP (Port 21)", "UDP"], a: "HTTPS (Port 443)"},
+            {q: "2. เว็บมาสเตอร์ต้องการอัปโหลดซอร์สโค้ดเว็บไซต์ปริมาณมากเข้าไปเก็บไว้บนโฮสติ้งเซิร์ฟเวอร์ส่วนกลาง", options: ["HTTP", "FTP (Port 21)", "UDP", "HTTPS"], a: "FTP (Port 21)"},
+            {q: "3. โรงเรียนต้องการระบุหมายเลขพิกัดที่อยู่เสมือนให้คอมพิวเตอร์ลูกข่ายทุกเครื่องในห้องแล็บเพื่อให้ส่งแพ็กเก็ตหาแกนกลางถูก", options: ["TCP", "IP (Internet Protocol)", "HTTP", "FTP"], a: "IP (Internet Protocol)"},
+            {q: "4. นักเรียนกดเข้าเว็บอ่านข่าวสารทั่วไปที่ไม่มีการพิมพ์รหัสผ่านหรือข้อมูลส่วนตัวสำคัญใดๆ", options: ["HTTP (Port 80)", "HTTPS (Port 443)", "FTP", "UDP"], a: "HTTP (Port 80)"},
+            {q: "5. ระบบต้องการจัดหมวดหมู่และแตกข้อมูลไฟล์งาน 1GB ออกเป็นชิ้นเล็กๆ (Packets) เพื่อพร้อมส่งข้ามสายแลน", options: ["UDP", "IP", "TCP", "HTTP"], a: "TCP"},
+            {q: "6. ผู้ใช้นั่งดูการไลฟ์สดสตรีมมิ่งคอนเสิร์ตผ่านทางออนไลน์และต้องการความต่อเนื่องลื่นไหลมากที่สุด", options: ["TCP", "FTP", "UDP", "HTTPS"], a: "UDP"},
+            {q: "7. เจ้าหน้าที่เปิดโปรแกรม FileZilla เพื่อโอนย้ายฐานข้อมูลดิบข้ามจังหวัด", options: ["HTTP", "FTP (Port 21)", "UDP", "IP"], a: "FTP (Port 21)"},
+            {q: "8. โปรโตคอลที่เป็นภาษากลางและเป็นโครงสร้างหลักของเครือข่ายอินเทอร์เน็ตในปัจจุบันคือชุดข้อตกลงใด", options: ["TCP/IP", "HTTP/FTP", "UDP/IP", "SSL/TLS"], a: "TCP/IP"},
+            {q: "9. ต้องการส่งพัสดุข้อมูลแบบลงทะเบียนที่ต้องมีการลงชื่อรับและยืนยันกระบวนการ Three-way Handshake", options: ["UDP", "TCP", "IP", "HTTP"], a: "TCP"},
+            {q: "10. บริการเว็บอีคอมเมิร์ซที่หน้าร้านต้องมีเครื่องหมายกุญแจเขียวแสดงความปลอดภัยของบัตรเครดิต", options: ["HTTP", "FTP", "HTTPS (Port 443)", "UDP"], a: "HTTPS (Port 443)"}
+        ];
+
+        const game2Data = [
+            {q: "1. คุณสมบัติใดคือลักษณะการทำงานเฉพาะของโปรโตคอล TCP?", options: ["Connectionless", "Reliable (รับประกันส่งถึง)", "เน้นความเร็วสูงสุด", "ไม่สนใจแพ็กเก็ตตกหล่น"], a: "Reliable (รับประกันส่งถึง)"},
+            {q: "2. ก่อนที่ TCP จะทำการรับส่งข้อมูลจริง จะต้องผ่านกระบวนการตกลงกันที่เรียกว่าอะไร?", options: ["Two-way Session", "Three-way Handshake", "Four-way Routing", "Ping Check"], a: "Three-way Handshake"},
+            {q: "3. หากข้อมูลที่ส่งด้วย TCP เกิดตกหล่นกลางทาง ระบบจะมีกลไกจัดการอย่างไร?", options: ["ยกเลิกการส่งทั้งหมด", "ขอส่งใหม่ (Retransmission)", "ข้ามชิ้นนั้นไปเลย", "ค้างระบบไว้ถาวร"], a: "ขอส่งใหม่ (Retransmission)"},
+            {q: "4. โปรโตคอล UDP ทำงานอยู่ในเลเยอร์ระดับใดในโมเดลเครือข่าย?", options: ["Application Layer", "Transport Layer", "Network Layer", "Physical Layer"], a: "Transport Layer"},
+            {q: "5. พอร์ตมาตรฐานของโปรโตคอล FTP Data ในการโอนถ่ายข้อมูลจริงคือพอร์ตใด?", options: ["Port 20", "Port 21", "Port 80", "Port 443"], a: "Port 20"},
+            {q: "6. ข้อใดคือข้อเสียหลักของการเลือกใช้โปรโตคอล UDP ในระบบเครือข่าย?", options: ["ทำงานช้ามาก", "ข้อมูลอาจสูญหายได้ (Unreliable)", "กินแบนด์วิดท์สูงเกินไป", "เปลืองทรัพยากร CPU เครื่องครู"], a: "ข้อมูลอาจสูญหายได้ (Unreliable)"},
+            {q: "7. ระบบการโทรแบบ Voice over IP (VoIP) หรือการคุยสายผ่าน Discord ควรใช้โปรโตคอลใด?", options: ["TCP", "UDP", "FTP", "HTTP"], a: "UDP"},
+            {q: "8. พอร์ตควบคุม (Control) ของโปรโตคอล FTP ใช้หมายเลขพอร์ตใด?", options: ["Port 20", "Port 21", "Port 23", "Port 25"], a: "Port 21"},
+            {q: "9. ข้อใดกล่าวถึงโครงสร้างอินเทอร์เน็ตโปรโตคอล (IP) ได้อย่างถูกต้อง?", options: ["เน้นระบุที่อยู่ปลายทางและการเลือกเส้นทาง", "ทำหน้าที่เข้ารหัสหน้าเว็บ", "เป็นตัวเชื่อมสายแลนเข้าการ์ดจอ", "จัดการความเร็วแอปพลิเคชัน"], a: "เน้นระบุที่อยู่ปลายทางและการเลือกเส้นทาง"},
+            {q: "10. ทำไมระบบเกมออนไลน์ MMORPG ถึงมักเลือกใช้ UDP ในการส่งพิกัดตำแหน่งตัวละคร?", options: ["ต้องการความเร็ว Real-time สูงสุด", "ต้องการความปลอดภัยขั้นสูง", "ป้องกันการแฮกไอเทม", "เซิร์ฟเวอร์ราคาถูกกว่า"], a: "ต้องการความเร็ว Real-time สูงสุด"}
+        ];
+
+        const game3Data = [
+            {l: "เว็บปลอดภัย", r: "HTTPS (443)", id: 1}, {l: "โอนย้ายไฟล์", r: "FTP (21)", id: 2},
+            {l: "ดูสตรีมมิ่งไลฟ์สด", r: "UDP", id: 3}, {l: "เว็บทั่วไป", r: "HTTP (80)", id: 4},
+            {l: "ส่งข้อมูลเน้นความชัวร์", r: "TCP", id: 5}, {l: "ระบุที่อยู่อุปกรณ์", r: "IP Address", id: 6},
+            {l: "รับส่งไฟล์ (Data)", r: "FTP (20)", id: 7}, {l: "โครงสร้างเน็ตหลัก", r: "TCP/IP", id: 8},
+            {l: "การคุยโทรศัพท์ VoIP", r: "UDP Voice", id: 9}, {l: "ข้อตกลงเครือข่าย", r: "Protocol", id: 10}
+        ];
+
+        let idxG1 = 0; let idxG2 = 0;
+
+        // --- ENGINE CONTROLLER ---
+        function changeGame(mode) {
+            currentMode = mode;
+            clearInterval(intervalId);
+            document.getElementById('zone-game1').classList.add('hidden');
+            document.getElementById('zone-game2').classList.add('hidden');
+            document.getElementById('zone-game3').classList.add('hidden');
+            document.getElementById('tab-game1').className = "game-card bg-slate-900 p-5 rounded-2xl text-left border border-slate-800 shadow-md text-slate-400";
+            document.getElementById('tab-game2').className = "game-card bg-slate-900 p-5 rounded-2xl text-left border border-slate-800 shadow-md text-slate-400";
+            document.getElementById('tab-game3').className = "game-card bg-slate-900 p-5 rounded-2xl text-left border border-slate-800 shadow-md text-slate-400";
+
+            if(mode === 'game1') {
+                document.getElementById('zone-game1').classList.remove('hidden');
+                document.getElementById('tab-game1').className = "game-card bg-purple-600 p-5 rounded-2xl text-left border-2 border-purple-400 shadow-xl text-white";
+                initGame1();
+            } else if(mode === 'game2') {
+                document.getElementById('zone-game2').classList.remove('hidden');
+                document.getElementById('tab-game2').className = "game-card bg-emerald-600 p-5 rounded-2xl text-left border-2 border-emerald-400 shadow-xl text-white";
+                initGame2();
+            } else if(mode === 'game3') {
+                document.getElementById('zone-game3').classList.remove('hidden');
+                document.getElementById('tab-game3').className = "game-card bg-indigo-600 p-5 rounded-2xl text-left border-2 border-indigo-400 shadow-xl text-white";
+                initGame3();
+            }
+        }
+
+        function updateHPDisplay() {
+            let hearts = "";
+            for(let i=0; i<3; i++) hearts += (i < hp) ? "❤️" : "🖤";
+            document.getElementById('panel-hp').innerText = hearts;
+            if(hp <= 0) {
+                clearInterval(intervalId);
+                alert("🔴 ระบบเครือข่ายล่มสลาย (Game Over)! คะแนนรวมทั้งหมดของคุณคือ: " + globalScore);
+                resetSystem();
+            }
+        }
+
+        function resetSystem() {
+            globalScore = 0; hp = 3; idxG1 = 0; idxG2 = 0;
+            document.getElementById('panel-score').innerText = globalScore;
+            updateHPDisplay();
+            changeGame('game1');
+        }
+
+        // --- GAME 1 ENGINE (FIXED BUG - NO IN-LOOP CAP) ---
+        function initGame1() {
+            if(idxG1 >= game1Data.length) { 
+                clearInterval(intervalId);
+                alert("🎉 ยอดเยี่ยม! คุณเคลียร์ด่านที่ 1 ครบ 10 ข้อแล้ว กำลังก้าวสู่ด่านถัดไป"); 
+                changeGame('game2'); 
+                return; 
+            }
+            timer = 10;
+            document.getElementById('panel-timer').innerText = timer;
+            document.getElementById('g1-progress').innerText = `ข้อที่ ${idxG1+1}/10`;
+            
+            let currentQ = game1Data[idxG1];
+            document.getElementById('g1-q-text').innerText = currentQ.q;
+            
+            let box = document.getElementById('g1-options-box');
+            box.innerHTML = "";
+            currentQ.options.forEach(opt => {
+                box.innerHTML += `<button onclick="ansGame1('${opt}')" class="bg-slate-800 hover:bg-purple-600 border border-slate-700 py-3 rounded-xl font-medium transition text-sm text-center">${opt}</button>`;
+            });
+
+            clearInterval(intervalId);
+            intervalId = setInterval(() => {
+                timer--;
+                document.getElementById('panel-timer').innerText = timer;
+                if(timer <= 0) { 
+                    hp--; 
+                    updateHPDisplay(); 
+                    idxG1++; 
+                    initGame1(); 
+                }
+            }, 1000);
+        }
+
+        function ansGame1(chosen) {
+            if(chosen === game1Data[idxG1].a) { 
+                globalScore += 10; 
+                document.getElementById('panel-score').innerText = globalScore; 
+            } else { 
+                hp--; 
+                updateHPDisplay(); 
+            }
+            idxG1++;
+            initGame1();
+        }
+
+        // --- GAME 2 ENGINE ---
+        function initGame2() {
+            if(idxG2 >= game2Data.length) { 
+                clearInterval(intervalId);
+                alert("🎉 สุดยอด! คุณเคลียร์ด่านที่ 2 ครบ 10 ข้อแล้ว ไปต่อกันที่ด่านจับคู่ความเร็วสูง!"); 
+                changeGame('game3'); 
+                return; 
+            }
+            timer = 10;
+            document.getElementById('panel-timer').innerText = timer;
+            document.getElementById('g2-progress').innerText = `ข้อที่ ${idxG2+1}/10`;
+            
+            let currentQ = game2Data[idxG2];
+            document.getElementById('g2-q-text').innerText = currentQ.q;
+            
+            let box = document.getElementById('g2-options-box');
+            box.innerHTML = "";
+            currentQ.options.forEach(opt => {
+                box.innerHTML += `<button onclick="ansGame2('${opt}')" class="bg-slate-800 hover:bg-emerald-600 border border-slate-700 py-3 rounded-xl font-medium transition text-sm text-center">${opt}</button>`;
+            });
+
+            clearInterval(intervalId);
+            intervalId = setInterval(() => {
+                timer--;
+                document.getElementById('panel-timer').innerText = timer;
+                if(timer <= 0) { 
+                    hp--; 
+                    updateHPDisplay(); 
+                    idxG2++; 
+                    initGame2(); 
+                }
+            }, 1000);
+        }
+
+        function ansGame2(chosen) {
+            if(chosen === game2Data[idxG2].a) { 
+                globalScore += 10; 
+                document.getElementById('panel-score').innerText = globalScore; 
+            } else { 
+                hp--; 
+                updateHPDisplay(); 
+            }
+            idxG2++;
+            initGame2();
+        }
+
+        // --- GAME 3 ENGINE ---
+        let selectedLeftId = null; let selectedRightId = null;
+        let activeLeftBtn = null; let activeRightBtn = null;
+        let pairsLeft = 10;
+
+        function initGame3() {
+            timer = 45;
+            pairsLeft = 10;
+            document.getElementById('panel-timer').innerText = timer;
+            document.getElementById('g3-progress').innerText = `เหลือ ${pairsLeft} คู่`;
+            
+            let leftSide = [...game3Data].sort(() => Math.random() - 0.5);
+            let rightSide = [...game3Data].sort(() => Math.random() - 0.5);
+
+            let lCol = document.getElementById('g3-left-col');
+            let rCol = document.getElementById('g3-right-col');
+            lCol.innerHTML = ""; rCol.innerHTML = "";
+
+            leftSide.forEach(item => {
+                lCol.innerHTML += `<button onclick="clickG3('left', ${item.id}, this)" class="w-full bg-slate-800 border border-slate-700 p-2 text-xs sm:text-sm rounded-lg hover:bg-slate-700 transition text-center">${item.l}</button>`;
+            });
+            rightSide.forEach(item => {
+                rCol.innerHTML += `<button onclick="clickG3('right', ${item.id}, this)" class="w-full bg-slate-800 border border-slate-700 p-2 text-xs sm:text-sm rounded-lg hover:bg-slate-700 transition text-center">${item.r}</button>`;
+            });
+
+            clearInterval(intervalId);
+            intervalId = setInterval(() => {
+                timer--;
+                document.getElementById('panel-timer').innerText = timer;
+                if(timer <= 0) { 
+                    clearInterval(intervalId);
+                    alert("⏱️ หมดเวลาด่านจับคู่!"); 
+                    hp = 0; 
+                    updateHPDisplay(); 
+                }
+            }, 1000);
+        }
+
+        function clickG3(side, id, btn) {
+            if(side === 'left') {
+                if(activeLeftBtn) activeLeftBtn.className = "w-full bg-slate-800 border border-slate-700 p-2 text-xs sm:text-sm rounded-lg hover:bg-slate-700 transition text-center";
+                selectedLeftId = id; activeLeftBtn = btn;
+                btn.className = "w-full bg-indigo-600 border border-indigo-400 p-2 text-xs sm:text-sm rounded-lg text-white font-bold text-center";
+            } else {
+                if(activeRightBtn) activeRightBtn.className = "w-full bg-slate-800 border border-slate-700 p-2 text-xs sm:text-sm rounded-lg hover:bg-slate-700 transition text-center";
+                selectedRightId = id; activeRightBtn = btn;
+                btn.className = "w-full bg-indigo-600 border border-indigo-400 p-2 text-xs sm:text-sm rounded-lg text-white font-bold text-center";
+            }
+
+            if(selectedLeftId !== null && selectedRightId !== null) {
+                if(selectedLeftId === selectedRightId) {
+                    globalScore += 15;
+                    document.getElementById('panel-score').innerText = globalScore;
+                    activeLeftBtn.className = "w-full bg-emerald-800 border border-emerald-600 p-2 text-xs sm:text-sm rounded-lg text-emerald-200 cursor-not-allowed opacity-50 text-center";
+                    activeLeftBtn.disabled = true;
+                    activeRightBtn.className = "w-full bg-emerald-800 border border-emerald-600 p-2 text-xs sm:text-sm rounded-lg text-emerald-200 cursor-not-allowed opacity-50 text-center";
+                    activeRightBtn.disabled = true;
+                    pairsLeft--;
+                    document.getElementById('g3-progress').innerText = `เหลือ ${pairsLeft} คู่`;
+                    
+                    if(pairsLeft <= 0) {
+                        clearInterval(intervalId);
+                        alert("🏆 ยินดีด้วยอย่างยิ่ง! นักเรียนผ่านด่านและเคลียร์ระบบเครือข่ายสำเร็จ คะแนนรวมทั้งสิ้น: " + globalScore);
+                    }
+                } else {
+                    hp--; 
+                    updateHPDisplay();
+                    let lTmp = activeLeftBtn; let rTmp = activeRightBtn;
+                    setTimeout(() => {
+                        if(lTmp && !lTmp.disabled) lTmp.className = "w-full bg-slate-800 border border-slate-700 p-2 text-xs sm:text-sm rounded-lg hover:bg-slate-700 transition text-center";
+                        if(rTmp && !rTmp.disabled) rTmp.className = "w-full bg-slate-800 border border-slate-700 p-2 text-xs sm:text-sm rounded-lg hover:bg-slate-700 transition text-center";
+                    }, 500);
+                }
+                selectedLeftId = null; selectedRightId = null; activeLeftBtn = null; activeRightBtn = null;
+            }
+        }
+
+        // Start local instance on boot
+        initGame1();
+    </script>
+</body>
+</html>
