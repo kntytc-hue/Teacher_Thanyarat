@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL IoT Arcade Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #060913;
+            --panel-bg: #0d1527;
+            --primary: #3b82f6;
+            --accent-green: #10b981;
+            --accent-purple: #8b5cf6;
+            --accent-yellow: #f59e0b;
+            --accent-pink: #ec4899;
+            --danger: #ef4444;
+            --text-light: #f8fafc;
+            --text-muted: #64748b;
+            --glow-color: rgba(59, 130, 246, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        header {
+            background: linear-gradient(180deg, #0f172a 0%, #060913 100%);
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 2px solid #1e293b;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.7);
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            background: linear-gradient(90deg, #3b82f6, #10b981, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.05em;
+            font-weight: 300;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            max-width: 1050px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Hub Screen Layout */
+        .hub-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 25px;
+            width: 100%;
+            margin-top: 30px;
+        }
+
+        .game-card {
+            background: var(--panel-bg);
+            border: 1px solid #1e293b;
+            border-radius: 16px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: transparent;
+            transition: background 0.3s;
+        }
+
+        .game-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+            background: #111b33;
+        }
+
+        .card-1:hover { border-color: var(--primary); }
+        .card-1::before { background: var(--primary); }
+        .card-2:hover { border-color: var(--accent-purple); }
+        .card-2::before { background: var(--accent-purple); }
+        .card-3:hover { border-color: var(--accent-pink); }
+        .card-3::before { background: var(--accent-pink); }
+        .card-4:hover { border-color: var(--accent-green); }
+        .card-4::before { background: var(--accent-green); }
+
+        .game-icon {
+            font-size: 3.5em;
+            margin-bottom: 15px;
+            display: inline-block;
+            transition: transform 0.3s;
+        }
+
+        .game-card:hover .game-icon {
+            transform: scale(1.15) rotate(5deg);
+        }
+
+        .game-title {
+            font-size: 1.35em;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text-light);
+        }
+
+        .game-desc {
+            font-size: 0.9em;
+            color: #94a3b8;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            flex-grow: 1;
+            font-weight: 300;
+        }
+
+        .play-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            font-family: 'Kanit', sans-serif;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .play-btn:active {
+            transform: scale(0.98);
+        }
+
+        .card-1 .play-btn { background: var(--primary); }
+        .card-1 .play-btn:hover { background: #2563eb; }
+        .card-2 .play-btn { background: var(--accent-purple); }
+        .card-2 .play-btn:hover { background: #7c3aed; }
+        .card-3 .play-btn { background: var(--accent-pink); }
+        .card-3 .play-btn:hover { background: #db2777; }
+        .card-4 .play-btn { background: var(--accent-green); }
+        .card-4 .play-btn:hover { background: #059669; }
+
+        /* General Game Play Interface Wrapper */
+        .game-container {
+            width: 100%;
+            background: var(--panel-bg);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+            display: none;
+            position: relative;
+            border: 1px solid #1e293b;
+        }
+
+        .back-hub {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            background: #1e293b;
+            color: var(--text-light);
+            border: 1px solid #334155;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9em;
+            font-family: 'Kanit', sans-serif;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .back-hub:hover {
+            background: #334155;
+            border-color: #475569;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-top: 20px;
+        }
+
+        .game-header h2 {
+            font-size: 2em;
+            font-weight: 700;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            font-size: 1.05em;
+            border: 1px solid #1e293b;
+        }
+
+        .timer-container {
+            width: 100%;
+            background: #111827;
+            height: 12px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            border: 1px solid #1e293b;
+        }
+
+        .timer-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-yellow), var(--danger));
+            width: 100%;
+            transition: width 0.1s linear;
+        }
+
+        .question-box {
+            background: #060913;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-size: 1.15em;
+            line-height: 1.7;
+            border-left: 6px solid var(--primary);
+            font-weight: 400;
+        }
+
+        .options-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .opt-btn {
+            background: #111b33;
+            color: var(--text-light);
+            border: 1px solid #1e293b;
+            padding: 18px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1.05em;
+            transition: all 0.2s;
+            font-family: 'Kanit', sans-serif;
+            font-weight: 400;
+        }
+        
+        .opt-btn:hover:not(:disabled) {
+            background: #1e2e54;
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .opt-btn.correct {
+            background: rgba(16, 185, 129, 0.2) !important;
+            border-color: var(--accent-green) !important;
+            color: #10b981 !important;
+            font-weight: 600;
+        }
+
+        .opt-btn.wrong {
+            background: rgba(239, 68, 68, 0.2) !important;
+            border-color: var(--danger) !important;
+            color: #f87171 !important;
+            font-weight: 600;
+        }
+
+        .control-btn {
+            display: block;
+            margin: 30px auto 0;
+            padding: 14px 40px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1em;
+            cursor: pointer;
+            background: var(--primary);
+            font-family: 'Kanit', sans-serif;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .control-btn:hover {
+            background: #2563eb;
+        }
+        
+        .control-btn:active {
+            transform: scale(0.97);
+        }
+
+        .result-view {
+            text-align: center;
+            padding: 30px 10px;
+        }
+
+        .score-num {
+            font-size: 4em;
+            font-weight: 700;
+            margin: 20px 0;
+            background: linear-gradient(90deg, var(--accent-yellow), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .syntax-snippet {
+            display: block;
+            background: #020617;
+            color: #a78bfa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-family: 'Share Tech Mono', monospace;
+            border: 1px solid #1e293b;
+            font-size: 0.95em;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+
+        footer {
+            text-align: center;
+            padding: 25px;
+            color: var(--text-muted);
+            font-size: 0.9em;
+            margin-top: auto;
+            border-top: 1px solid #1e293b;
+        }
+
+        /* Responsive adaptations */
+        @media(max-width: 768px) {
+            header h1 { font-size: 2em; }
+            .game-container { padding: 25px 15px; }
+            .back-hub { position: relative; top: 0; left: 0; margin-bottom: 20px; display: inline-flex; }
+            .game-header { padding-top: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🎮 SQL IoT Arcade Center</h1>
+    <p>ศูนย์รวมมินิเกมทักษะคำสั่งฐานข้อมูลจากบทเรียน IoT (10 ข้อ ข้อละ 10 วินาที)</p>
+</header>
+
+<div class="main-content">
+    <!-- Hub View (Main Menu) -->
+    <div id="hub-view" style="width: 100%;">
+        <p style="text-align: center; font-size: 1.15em; color: var(--text-light); font-weight: 300;">
+            เลือกหนึ่งในสี่เกมประลองไหวพริบด้านล่างเพื่อเริ่มการสปีดรันเก็บคะแนนทันที:
+        </p>
+        <div class="hub-grid">
+            <!-- Game 1 Card -->
+            <div class="game-card card-1" onclick="openGame(1)">
+                <div>
+                    <div class="game-icon">🛡️</div>
+                    <div class="game-title">Database Defender</div>
+                    <div class="game-desc">สวมบทบาทเป็นผู้ควบคุมคำสั่ง CRUD ให้ปลอดภัย คอยจับตาเงื่อนไข WHERE ในจังหวะลบและแก้ไขข้อมูล เพื่อพยุงระบบไม่ให้เสียหาย</div>
+                </div>
+                <button class="play-btn">เข้าเล่นเกม</button>
+            </div>
+            
+            <!-- Game 2 Card -->
+            <div class="game-card card-2" onclick="openGame(2)">
+                <div>
+                    <div class="game-icon">⛓️</div>
+                    <div class="game-title">CASCADE Reaction</div>
+                    <div class="game-desc">ท้าทายระบบการผูกโครงสร้างข้อมูลและเงื่อนไข Foreign Key ตารางแม่-ตารางลูก วิเคราะห์ทิศทางและปฏิกิริยาสะสมข้อมูลตกค้าง</div>
+                </div>
+                <button class="play-btn">เข้าเล่นเกม</button>
+            </div>
+            
+            <!-- Game 3 Card -->
+            <div class="game-card card-3" onclick="openGame(3)">
+                <div>
+                    <div class="game-icon">🕵️‍♂️</div>
+                    <div class="game-title">SQL Detective</div>
+                    <div class="game-desc">ระบุรอยรั่วและคำสั่งประสงค์ร้ายที่แฮกเกอร์ฝังตัวก่อกวนระบบ Dashboard ตึกสมาร์ทเซนเซอร์ ตรวจสอบ Log ภายใน 10 วินาที!</div>
+                </div>
+                <button class="play-btn">เข้าเล่นเกม</button>
+            </div>
+            
+            <!-- Game 4 Card -->
+            <div class="game-card card-4" onclick="openGame(4)">
+                <div>
+                    <div class="game-icon">⚡</div>
+                    <div class="game-title">Syntax Speedrunner</div>
+                    <div class="game-desc">มินิเกมวิ่งเร็วเติมคำศัพท์ทางไวยากรณ์ SQL IoT จับเวลาสลับคีย์เวิร์ด ตัวแปร และเครื่องหมาย ; (Semicolon) ให้แม่นยำ</div>
+                </div>
+                <button class="play-btn">เข้าเล่นเกม</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interface Wrapper for Selected Game -->
+    <div id="game-view" class="game-container">
+        <button class="back-hub" onclick="exitToHub()">⬅️ กลับเมนูหลัก</button>
+        
+        <div class="game-header">
+            <h2 id="active-game-title">ชื่อเกมส์</h2>
+        </div>
+
+        <!-- Setup Screen -->
+        <div id="setup-screen" style="text-align: center; padding: 20px 0;">
+            <p id="game-long-desc" style="margin-bottom: 30px; font-size: 1.2em; color: #94a3b8; line-height: 1.7; font-weight: 300;">คำอธิบายแบบละเอียด</p>
+            <button class="control-btn" onclick="startActiveGame()">เริ่มการแข่งขัน</button>
+        </div>
+
+        <!-- Live Quiz Play Screen -->
+        <div id="play-screen" style="display: none;">
+            <div class="status-bar">
+                <div>ด่านย่อย: <span id="current-step">1</span> / 10</div>
+                <div>คะแนน: <span id="current-score">0</span></div>
+            </div>
+            <div class="timer-container">
+                <div id="timer-bar" class="timer-bar"></div>
+            </div>
+            <div class="question-box">
+                <div id="q-text">คำถามจะแสดงตรงนี้</div>
+                <div id="q-subtext"></div>
+            </div>
+            <div class="options-list" id="options-box"></div>
+            <button id="next-btn" class="control-btn" style="display: none;" onclick="advanceQuestion()">ข้อถัดไป ➡️</button>
+        </div>
+
+        <!-- Finish / Result Screen -->
+        <div id="end-screen" class="result-view" style="display: none;">
+            <h3>🏁 ผลการประเมินทักษะ!</h3>
+            <div class="score-num"><span id="final-score">0</span> / 10</div>
+            <p id="result-feedback" style="font-size: 1.2em; margin-bottom: 30px; line-height: 1.6; font-weight: 300;"></p>
+            <button class="control-btn" onclick="retryGame()">ลองใหม่อีกครั้ง</button>
+        </div>
+    </div>
+</div>
+
+<footer>
+    &copy; 2026 SQL IoT Arcade Center | ออกแบบบนพื้นฐานโครงสร้างความปลอดภัยระบบคลังข้อมูลตามบทเรียนจริง
+</footer>
+
+<script>
+// JSON repository for all 4 games data containing 10 questions each
+const gamesData = {
+    1: {
+        title: "🛡️ Database Defender",
+        desc: "สวมบทบาทเป็นผู้ควบคุมคำสั่งประมวลผลฐานข้อมูลตามภาพบทเรียน 5.1 คุณต้องเลือกรันคำสั่ง CRUD (Insert, Select, Update, Delete) ให้ปลอดภัยและจำกัดเวลา 10 วินาทีต่อข้อเพื่อรักษาเสถียรภาพระบบข้อมูล IoT ตึกอัจฉริยะ!",
+        questions: [
+            { 
+                q: "มีอุปกรณ์เซนเซอร์ตัวใหม่ (ESP32) วัดค่าได้และต้องการส่งค่าเหล่านี้บันทึกลงสู่ตารางเก็บข้อมูล tb_sensor_logs โดยมี fk_sensor_id เป็น 1 และ temperature_value เป็น 28.5 ต้องใช้คำสั่งใด?", 
+                sub:"", 
+                opts: [
+                    "INSERT INTO tb_sensor_logs (fk_sensor_id, temperature_value) VALUES (1, 28.5);", 
+                    "SELECT * FROM tb_sensor_logs WHERE fk_sensor_id = 1;", 
+                    "UPDATE tb_sensor_logs SET temperature_value = 28.5 WHERE fk_sensor_id = 1;", 
+                    "INSERT VALUE (1, 28.5) INTO tb_sensor_logs;"
+                ], 
+                ans: 0 
+            },
+            { 
+                q: "หน้าต่างแอปพลิเคชัน Dashboard ต้องการดึงข้อมูลอุณหภูมิทั้งหมดมาแสดงผลให้มนุษย์ดูหรือพลอตกร๊าฟ โดยดึงเฉพาะข้อมูลของ fk_sensor_id = 1 ต้องใช้คำสั่งใด?", 
+                sub:"", 
+                opts: [
+                    "GET * FROM tb_sensor_logs WHERE fk_sensor_id = 1;", 
+                    "SELECT * FROM tb_sensor_logs WHERE fk_sensor_id = 1;", 
+                    "SELECT fk_sensor_id = 1 FROM tb_sensor_logs;", 
+                    "UPDATE tb_sensor_logs SELECT * WHERE fk_sensor_id = 1;"
+                ], 
+                ans: 1 
+            },
+            { 
+                q: "ช่างเทคนิคเดินไปเปลี่ยนตัวเซนเซอร์ใหม่ หรือย้ายตำแหน่งโซนติดตั้งของเซนเซอร์ที่มี id = 1 จึงต้องปรับปรุงประวัติในระบบให้เป็น 'Zone_B' ต้องเขียนคำสั่งอย่างไรจึงจะปลอดภัยที่สุด?", 
+                sub:"⚠️ คำเตือน: หากพิมพ์แก้ไขข้อมูลลอยๆ ข้อมูลทั้งหมดในอาคารจะถูกเปลี่ยนเป็น Zone_B ทั้งตึก!", 
+                opts: [
+                    "UPDATE tb_sensors SET location_zone = 'Zone_B';", 
+                    "UPDATE tb_sensors SET location_zone = 'Zone_B' WHERE sensor_id = 1;", 
+                    "INSERT INTO tb_sensors (location_zone) VALUES ('Zone_B') WHERE sensor_id = 1;", 
+                    "MODIFY tb_sensors SET location_zone = 'Zone_B' WHERE sensor_id = 1;"
+                ], 
+                ans: 1 
+            },
+            { 
+                q: "ต้องการล้างข้อมูลเก่าค้างปีเพื่อเพิ่มพื้นที่หน่วยความจำให้ระบบเซิร์ฟเวอร์ โดยต้องการลบข้อมูลในตาราง tb_sensor_logs ที่บันทึกไว้ก่อนวันที่ '2025-01-01' ต้องใช้คำสั่งใดจึงจะปลอดภัย?", 
+                sub:"⚠️ คำเตือน: หากลืมใส่ตัวกรอง ข้อมูลประวัติเซนเซอร์สะสมทั้งหมดจะสูญหายในพริบตาเดียว!", 
+                opts: [
+                    "DELETE FROM tb_sensor_logs;", 
+                    "REMOVE FROM tb_sensor_logs WHERE recorded_at < '2025-01-01';", 
+                    "DELETE FROM tb_sensor_logs WHERE recorded_at < '2025-01-01';", 
+                    "DROP TABLE tb_sensor_logs WHERE recorded_at < '2025-01-01';"
+                ], 
+                ans: 2 
+            },
+            { 
+                q: "คุณเผลอรันคำสั่งลอยๆ ว่า 'DELETE FROM tb_sensor_logs;' โดยปราศจากเงื่อนไข WHERE จะเกิดความเสียหายใดขึ้น?", 
+                sub:"", 
+                opts: [
+                    "ระบบจะปฏิเสธคำสั่งเนื่องจากเกิด Syntax Error", 
+                    "ข้อมูลประวัติเซนเซอร์ที่สะสมมาทั้งหมดจะถูกลบทิ้งหายเกลี้ยงไปทันที!", 
+                    "ลบข้อมูลออกเพียงแค่แถวปัจจุบันเท่านั้น", 
+                    "ระบบจำลองอุณหภูมิจะออฟไลน์เพื่อความปลอดภัย"
+                ], 
+                ans: 1 
+            },
+            { 
+                q: "หากต้องการดึงค่าข้อมูลรายละเอียดทุกแถวจากตารางเซนเซอร์ (tb_sensors) ออกมาดูทั้งหมดโดยไม่มีการคัดกรองใดๆ ต้องใช้คำสั่งใด?", 
+                sub:"", 
+                opts: [
+                    "SELECT * FROM tb_sensors;", 
+                    "SELECT ALL FROM tb_sensors WHERE sensor_id = *;", 
+                    "GET tb_sensors FROM *;", 
+                    "SHOW TABLES tb_sensors;"
+                ], 
+                ans: 0 
+            },
+            { 
+                q: "ต้องการระบุบันทึกอุณหภูมิใหม่ โดยระบุ fk_sensor_id เป็น 5 และ temperature_value เป็น 32.0 ลงในตารางเก็บล็อกคำสั่งใดถูกต้อง?", 
+                sub:"", 
+                opts: [
+                    "ADD INTO tb_sensor_logs VALUES (5, 32.0);", 
+                    "INSERT INTO tb_sensor_logs (fk_sensor_id, temperature_value) VALUES (5, 32.0);", 
+                    "UPDATE tb_sensor_logs SET fk_sensor_id=5, temperature_value=32.0;", 
+                    "INSERT INTO tb_sensor_logs VALUES (fk_sensor_id=5, temperature_value=32.0);"
+                ], 
+                ans: 1 
+            },
+            { 
+                q: "หากผู้ดูแลระบบต้องการเปลี่ยนประเภทโซนของเซนเซอร์จากคำว่า 'Zone_A' ให้ย้ายเป็น 'Zone_X' ทั้งหมด ต้องเขียนคำสั่งอย่างไร?", 
+                sub:"", 
+                opts: [
+                    "UPDATE tb_sensors SET location_zone = 'Zone_X' WHERE location_zone = 'Zone_A';", 
+                    "REPLACE tb_sensors SET location_zone = 'Zone_X' WHERE location_zone = 'Zone_A';", 
+                    "UPDATE location_zone = 'Zone_X' FROM tb_sensors WHERE location_zone = 'Zone_A';", 
+                    "UPDATE tb_sensors SET location_zone = 'Zone_A' WHERE location_zone = 'Zone_X';"
+                ], 
+                ans: 0 
+            },
+            { 
+                q: "ข้อใดถือเป็นความเสี่ยงสูงสุดและพึงระวังในการเขียนคำสั่ง UPDATE และ DELETE ในการใช้งานฐานข้อมูลระดับองค์กร?", 
+                sub:"", 
+                opts: [
+                    "การพิมพ์คำสั่งด้วยตัวพิมพ์ใหญ่ทั้งหมด", 
+                    "การลืมพิมพ์เงื่อนไข WHERE กรอบข้อมูล ทำให้คำสั่งส่งผลเปลี่ยนค่าหรือลบข้อมูลเสียหายทั้งตาราง!", 
+                    "การตั้งชื่อคอลัมน์และตารางเป็นชื่อเดียวกัน", 
+                    "การรันคำสั่งหลายประโยคพร้อมกัน"
+                ], 
+                ans: 1 
+            },
+            { 
+                q: "ชุดคำสั่งประเภทใดมีวัตถุประสงค์เพื่อลบ 'โครงสร้างของตารางหลัก' ทิ้งไปเลยจากฐานข้อมูล ไม่ใช่แค่การลบแถวข้อมูล?", 
+                sub:"", 
+                opts: [
+                    "DELETE TABLE tb_sensor_logs;", 
+                    "DROP TABLE tb_sensor_logs;", 
+                    "REMOVE TABLE tb_sensor_logs;", 
+                    "CLEAR TABLE tb_sensor_logs;"
+                ], 
+                ans: 1 
+            }
+        ],
+        feedback: [
+            "ต้องปรับปรุง: คุณอาจทำข้อมูลของบริษัทสูญหายได้ง่าย ลองกลับไปศึกษาความปลอดภัยของ WHERE คลอส นะครับ",
+            "ผ่านเกณฑ์: มีทักษะการรันคำสั่ง CRUD และมีความระวังป้องกันความปลอดภัยของข้อมูลเซนเซอร์ในระดับดี!",
+            "ดีเยี่ยมระดับผู้ดูแลระบบสูงสุด!: เข้าใจกลไกการป้องการทำลายและการจัดการข้อมูลได้อย่างแม่นยำ ไร้ที่ติ!"
+        ]
+    },
+    2: {
+        title: "⛓️ CASCADE Reaction",
+        desc: "ไขปริศนาความสัมพันธ์ตารางหลักและตารางล็อกประวัติ (Parent & Child Tables) ตามรูปบทเรียนที่ 4.3 ตรวจสอบทักษะตรรกะเงื่อนไขคีย์นอก (Foreign Key) การทำงานของ ON DELETE / ON UPDATE แบบ Cascade และ Restrict เพื่อไม่ให้เกิดประวัติขยะสะสมค้าง",
+        questions: [
+            { 
+                q: "ความหมายของเงื่อนไข 'CASCADE' (ลบตามกัน / แก้ตามกัน) ในความสัมพันธ์แบบ Foreign Key คือข้อใด?", 
+                sub:"", 
+                opts: [
+                    "หากมีการลบหรือปรับเปลี่ยนรหัสในตารางแม่ ระบบจะลบหรืออัปเดตข้อมูลที่ผูกไว้ในตารางลูกให้ตามกันแบบอัตโนมัติ", 
+                    "ไม่อนุญาตให้แก้ไขข้อมูลในตารางลูกเด็ดขาด", 
+                    "ตารางลูกจะดึงข้อมูลมาเปลี่ยนตำแหน่งโซน", 
+                    "ระบบจะล็อกไม่ให้มีการลบข้อมูลใดๆ ออกจากตารางแม่"
+                ], 
+                ans: 0 
+            },
+            { 
+                q: "ความหมายของ 'RESTRICT / NO ACTION' (บล็อกการลบ) ในความสัมพันธ์ตารางของระบบ IoT คือข้อใด?", 
+                sub:"", 
+                opts: [
+                    "ยอมให้ลบตารางแม่แล้วเปลี่ยนตารางลูกเป็นค่าว่าง", 
+                    "ไม่อนุญาตให้ลบรหัสจากตารางแม่เด็ดขาด ตราบใดที่มีประวัติตารางลูกเชื่อมต่ออ้างอิงเหลืออยู่ เพื่อป้องกันข้อมูลกำพร้าหรือผิดพลาด", 
+                    "ลบประวัติของทั้งสองตารางออกทั้งหมดทันที", 
+                    "ตารางลูกจะทำการจำลองอุณหภูมิซ้ำขึ้นมาอัตโนมัติ"
+                ], 
+                ans: 1 
+            },
+            { 
+                q: "จากรูปโค้ดที่สอง ตารางแม่มีชื่อว่าอะไร และตารางลูกมีชื่อว่าอะไร?", 
+                sub:"", 
+                opts: [
+                    "ตารางแม่: tb_humidity_logs, ตารางลูก: tb_sensors", 
+                    "ตารางแม่: tb_sensors, ตารางลูก: tb_humidity_logs", 
+                    "ตารางแม่: sensor_id, ตารางลูก: log_id", 
+                    "ทั้งสองตารางทำหน้าที่เป็นตารางหลักร่วมกัน"
+                ], 
+                ans: 1 
+            },
+            { 
+                q: "ในประโยคคำสั่งการสร้างตารางลูก บรรทัดที่ระบุความสัมพันธ์กำหนดให้เกิดปฏิกิริยา 'ON DELETE CASCADE' หมายความว่าหากเซนเซอร์รหัส 5 ถูกลบออก ตารางลูกจะเป็นอย่างไร?", 
+                sub:"", 
+                opts: [
+                    "ประวัติตัววัดความชื้นของเซนเซอร์ id = 5 ทั้งหมดจะถูกระเบิดลบหายไปพร้อมกันอย่างเรียบร้อยและปลอดภัย", 
+                    "ตารางลูกจะไม่ลบข้อมูลใดๆ และเด้งค่าผิดพลาดขึ้นมา", 
+                    "ระบบจะบล็อกห้ามทำการลบเซนเซอร์รหัส 5 ในตารางแม่", 
+                    "ประวัติความชื้นของเซนเซอร์ทุกตัวจะสูญหายไปหมด"
+                ], 
+                ans: 0 
+            },
+            { 
+                q: "หากผู้ออกแบบฐานข้อมูลทำการตั้งค่าความสัมพันธ์คีย์นอกเป็น 'ON DELETE RESTRICT' เมื่อต้องการลบเซนเซอร์ตัวที่ชำรุดทิ้งแต่ยังมีข้อมูลประวัติความชื้นตกค้างอยู่ 500 บรรทัด ผลลัพธ์จะเป็นอย่างไร?", 
+                sub:"", 
+                opts: [
+                    "เซนเซอร์หลักจะถูกลบทิ้งไป และประวัติจะกลายเป็นค่าว่างเปล่า", 
+                    "เกิดข้อผิดพลาดแจ้งเตือน (Error Block) และไม่อนุญาตให้ลบเซนเซอร์ จนกว่าช่างจะไปลบประวัติลูก 500 แถวนั้นทิ้งไปก่อน", 
+                    "ระบบทำการลบประวัติลูกก่อน แล้วจึงย้อนมาลบเซนเซอร์หลัก", 
+                    "ระบบจะเปลี่ยนชื่อเซนเซอร์เป็นชื่อว่างแทนการลบ"
+                ], 
+                ans: 1 
+            },
+            { 
+                q: "คีย์เวิร์ด 'ON UPDATE CASCADE' ในโค้ดตัวอย่างมีความสามารถตามข้อใดเมื่อมีการปรับแก้ไข?", 
+                sub:"", 
+                opts: [
+                    "เมื่อช่างเทคนิคแก้ไขอุณหภูมิเซนเซอร์ ตารางแม่จะส่งสัญญาณแจ้งเตือน", 
+                    "เมื่อรหัสเซนเซอร์หลักในตารางแม่เปลี่ยนแปลงไป คีย์นอกที่จับคู่คู่ขนานกันอยู่ในตารางลูกจะเปลี่ยนแปลงตามทันทีแบบไม่ขัดข้อง", 
+                    "ห้ามแก้ไขข้อมูลรหัสไอดีของตารางแม่ไม่ว่าจะกรณีใด", 
+                    "ส่งข้อมูลอัปเดตกลับไปยังอุปกรณ์ ESP32 ทางเครือข่าย"
+                ], 
+                ans: 1 
+            },
+            { 
+                q: "จากตัวอย่างคำสั่งสร้างตาราง คอลัมน์ชนิดใดที่ผูกโยงความสัมพันธ์คีย์นอก (FOREIGN KEY) ไปหาคีย์หลักของตารางแม่?", 
+                sub:"", 
+                opts: [
+                    "log_id เชื่อมไปหา sensor_id", 
+                    "fk_sensor_id เชื่อมไปหา sensor_id ของตาราง tb_sensors", 
+                    "humidity_value เชื่อมไปหา sensor_mac", 
+                    "sensor_mac เชื่อมไปหา fk_sensor_id"
+                ], 
+                ans: 1 
+            },
+            { 
+                q: "หากไม่มีการตั้งเงื่อนไขความเชื่อมโยง CASCADE หรือ RESTRICT และปล่อยให้ลบข้อมูลตารางแม่ได้เลย จะส่งผลอย่างไรต่อประวัติตารางลูก?", 
+                sub:"", 
+                opts: [
+                    "ทำให้เกิดข้อมูลกำพร้า (Orphan Data) ในตารางลูกที่ไม่สามารถบ่งบอกได้ว่าเป็นข้อมูลของอุปกรณ์ตัวใด ส่งผลให้รายงานผิดพลาด", 
+                    "ฐานข้อมูลจะจัดเรียงข้อมูลได้เร็วและประหยัดเนื้อที่ขึ้น", 
+                    "ทำให้ประวัติตารางลูกทั้งหมดถูกสำรองข้อมูลไปยังคลาวด์", 
+                    "ไม่มีผลกระทบใดๆ ต่อเสถียรภาพของข้อมูล"
+                ], 
+                ans: 0 
+            },
+            { 
+                q: "จากโค้ดโครงสร้าง ตารางแม่กำหนดให้คอลัมน์ sensor_mac มีข้อจำกัดชนิดข้อมูลตามเงื่อนไขข้อใด?", 
+                sub:"", 
+                opts: [
+                    "INT AUTO_INCREMENT PRIMARY KEY", 
+                    "VARCHAR(50) NOT NULL UNIQUE (ต้องกรอกห้ามว่างและห้ามตั้งซ้ำกันเด็ดขาด)", 
+                    "FLOAT NOT NULL", 
+                    "FOREIGN KEY REFERENCES"
+                ], 
+                ans: 1 
+            },
+            { 
+                q: "เหตุใดข้อมูลตารางบันทึกความชื้นสัมพัทธ์ (tb_humidity_logs) จึงสมควรตั้งคอลัมน์ fk_sensor_id เป็น NOT NULL?", 
+                sub:"", 
+                opts: [
+                    "เพราะประวัติตัววัดจำเป็นต้องบันทึกคู่กับที่มาของเซนเซอร์เครื่องนั้นๆ เสมอ จะลอยลำว่างโดยไม่มีที่มาไม่ได้เด็ดขาด", 
+                    "เพื่อประหยัดแบตเตอรี่และความเร็วในการประมวลผลฮาร์ดแวร์", 
+                    "เพื่อลบข้อมูลประวัติได้ไวกว่าตารางอื่นๆ", 
+                    "เป็นเพียงโครงสร้างบังคับดั้งเดิมของโปรแกรมภาษา SQL ที่เปลี่ยนไม่ได้"
+                ], 
+                ans: 0 
+            }
+        ],
+        feedback: [
+            "ต้องปรับปรุง: ลองกลับไปวิเคราะห์รูปที่ 2 เรื่องการเชื่อมความสัมพันธ์ Foreign Key ดีๆ อีกครั้งนะครับ",
+            "เก่งมากครับ: คุณมีความเข้าใจเรื่องคีย์นอก ป้องกันความพลั้งเผลอและการกำจัดข้อมูลกำพร้าได้อย่างดีเยี่ยม!",
+            "สมบูรณ์แบบระดับหัวหน้าวิศวกรข้อมูล: มองเห็นภาพปฏิกิริยาลูกโซ่และความเชื่อมโยงคีย์ได้อย่างลึกซึ้ง ไร้จุดพลาด!"
+        ]
+    },
+    3: {
+        title: "🕵️‍♂️ SQL Detective",
+        desc: "เกิดเหตุเจาะระบบฐานข้อมูลโรงฟาร์มและอาคารอัจฉริยะ IoT ตรวจพบพฤติกรรมคำสั่งน่าสงสัยในระบบบันทึก Logs (จากภาพที่ 5.1 และ 4.3) คุณมีเวลา 10 วินาทีต่อคดีในการตรวจสอบ Log ความเสียหายเพื่อหาตัวคำสั่งที่แฮกเกอร์ใช้โจมตีทำลายระบบ!",
+        questions: [
+            { 
+                q: "คดีที่ 1: หน้าจอแสดงผลโซนเซนเซอร์กลายเป็น 'Zone_B' เหมือนกันหมด ทั้งๆ ที่เคยแบ่งพื้นที่ย่อยไว้ ตรวจพบล็อกคำสั่งใดที่เป็นต้นเหตุ?", 
+                sub:"Log A: UPDATE tb_sensors SET location_zone = 'Zone_B' WHERE sensor_id = 1;\nLog B: UPDATE tb_sensors SET location_zone = 'Zone_B';\nLog C: SELECT * FROM tb_sensors WHERE location_zone = 'Zone_B';", 
+                opts: [
+                    "Log A - มุ่งเปลี่ยนเฉพาะเซนเซอร์ตัวที่ 1 เท่านั้น", 
+                    "Log B - เพราะเป็นการอัปเดตค่าเปลี่ยนข้อมูลโดยไม่มีเงื่อนไข WHERE ส่งผลลามเปลี่ยนทั้งตารางตึกพังยับ!", 
+                    "Log C - เป็นแค่คำสั่งดึงค่าแสดงผลธรรมดา", 
+                    "ไม่มีตัวเลือกใดถูก เป็นปัญหาที่ไฟฟ้าขัดข้องเอง"
+                ], 
+                ans: 1 
+            },
+            { 
+                q: "คดีที่ 2: ข้อมูลความชื้นสะสมย้อนหลังในตารางลูก (tb_humidity_logs) ถูกล้างหายไปจนเกลี้ยงตารางอย่างปริศนา คาดว่าเป็นเพราะคำสั่งใด?", 
+                sub:"Log 1: DELETE FROM tb_sensor_logs;\nLog 2: DROP TABLE tb_humidity_logs;\nLog 3: DELETE FROM tb_humidity_logs;", 
+                opts: [
+                    "Log 1 - รันลบข้อมูลผิดตารางอุณหภูมิ", 
+                    "Log 2 - เป็นการลบทำลายทั้งโครงสร้างตารางหลัก ไม่ใช่ลบข้อมูลภายในแถว", 
+                    "Log 3 - สั่งลบข้อมูลออกจากตารางล็อกความชื้นสัมพัทธ์โดยลืมใส่ตัวกรอง WHERE ข้อมูลจึงหายไปหมดสิ้น!", 
+                    "สัญญาณอินเทอร์เน็ตหลุดชั่วคราวขณะเซนเซอร์เขียนไฟล์"
+                ], 
+                ans: 2 
+            },
+            { 
+                q: "คดีที่ 3: แฮกเกอร์ฝังตัวในระบบและพยายามสอดแนม (Data Leak) เพื่อขโมยรายงานอุณหภูมิของอุปกรณ์เซนเซอร์ตัวที่ 1 คาดว่าประโยคคำสั่งที่แฮกเกอร์เลือกรันคือข้อใด?", 
+                sub:"", 
+                opts: [
+                    "SELECT * FROM tb_sensor_logs WHERE fk_sensor_id = 1;", 
+                    "DELETE FROM tb_sensor_logs WHERE fk_sensor_id = 1;", 
+                    "UPDATE tb_sensor_logs SET fk_sensor_id = 1;", 
+                    "INSERT INTO tb_sensor_logs (fk_sensor_id) VALUES (1);"
+                ], 
+                ans: 0 
+            },
+            { 
+                q: "คดีที่ 4: ตรวจพบค่าบันทึกทศนิยมอุณหภูมิสุดเพี้ยนสูงผิดปกติถึง 999.9 องศาเซลเซียสป้อนลงตาราง คาดว่าผู้บุกรุกใช้วิธีรันคำสั่งใดป้อนค่าเท็จนี้เข้ามา?", 
+                sub:"Log X: INSERT INTO tb_sensor_logs (fk_sensor_id, temperature_value) VALUES (1, 999.9);\nLog Y: SELECT * FROM tb_sensor_logs WHERE temperature_value = 999.9;\nLog Z: UPDATE tb_sensor_logs SET temperature_value = 999.9;", 
+                opts: [
+                    "Log Y - รันดึงคำสั่งค่าแปลกปลอมตรวจสอบ", 
+                    "Log Z - รันเปลี่ยนอุณหภูมิทุกเครื่องให้พังตามกัน", 
+                    "Log X - เป็นการเพิ่มแถวประวัติข้อมูลใหม่ และแทรกค่าปลอมแปลง 999.9 เข้ามาในระบบตรงๆ", 
+                    "เกิดจากอุณหภูมิในห้องสูงถึงจุดเดือดเนื่องจากไฟดับ"
+                ], 
+                ans: 2 
+            },
+            { 
+                q: "คดีที่ 5: ตรวจสอบพบว่า แฮกเกอร์รันคำสั่งลบข้อมูลเซนเซอร์หมายเลข 5 ในตารางแม่ (tb_sensors) แล้วประวัติการบันทึกความชื้นทั้งหมดของเซนเซอร์ตัวนี้ในตารางลูกสูญหายไปด้วย แสดงว่าคีย์นอกระบุเงื่อนไขใด?", 
+                sub:"", 
+                opts: [
+                    "กำหนดแบบ ON DELETE CASCADE ทำให้ประวัติตารางลูกลบตามไปแบบลูกโซ่", 
+                    "กำหนดแบบ ON DELETE RESTRICT ซึ่งบล็อกไม่ให้ลบ", 
+                    "เป็นการลบข้อมูลธรรมดาโดยช่างกดอัปเดตสลับตัวแปร", 
+                    "แฮกเกอร์รันคำสั่งลบซ้ำสองรอบพร้อมๆ กัน"
+                ], 
+                ans: 0 
+            },
+            { 
+                q: "คดีที่ 6: ตรวจสอบโครงสร้างระบบพบคำสั่งร้ายแรง 'DROP TABLE tb_sensors;' ถูกป้อนเข้าระบบ หากประมวลผลสำเร็จผลลัพธ์ที่เป็นหายนะที่สุดคือข้อใด?", 
+                sub:"", 
+                opts: [
+                    "ข้อมูลจะหายไปเพียงแถวแรกแถวเดียว", 
+                    "โครงสร้างตารางแม่และข้อมูลเซนเซอร์ทั้งหมดจะถูกลบทำลายทิ้งไปทันทีอย่างกู้คืนไม่ได้!", 
+                    "ตารางลูกจะทำการปรับเปลี่ยนชื่อตำแหน่งเป็น Zone_B", 
+                    "ระบบจะสั่งการให้ออฟไลน์การเชื่อมต่อ ESP32 ทั้งอาคาร"
+                ], 
+                ans: 1 
+            },
+            { 
+                q: "คดีที่ 7: พบ Logs คำสั่งลบล้างข้อมูลระบุข้อความ 'DELETE FROM tb_sensor_logs WHERE recorded_at < '2025-01-01';' ข้อใดระบุกลุ่มเป้าหมายข้อมูลที่จะถูกลบได้ถูกต้อง?", 
+                sub:"", 
+                opts: [
+                    "ลบประวัติเซนเซอร์เฉพาะของปี 2025 เป็นต้นไป", 
+                    "ลบเฉพาะประวัติบันทึกที่เก่าแก่ย้อนหลังก่อนวันที่ 1 มกราคม 2025 ออกเพื่อเคลียร์พื้นที่อย่างปลอดภัย", 
+                    "ลบประวัติของอุปกรณ์เซนเซอร์ที่มีเลขไอดี 2025", 
+                    "คำสั่งมี Syntax ผิดพลาดยืนยันใช้งานจริงไม่ได้"
+                ], 
+                ans: 1 
+            },
+            { 
+                q: "คดีที่ 8: แฮกเกอร์เปลี่ยนรหัสหลักของเซนเซอร์ในตารางแม่ส่งผลให้ข้อมูลคีย์นอกในตารางลูกเปลี่ยนเลขตามคู่ขนานโดยสมบูรณ์ ตรวจพบว่าระบบรันคำสั่งภายใต้เงื่อนไขใด?", 
+                sub:"", 
+                opts: [
+                    "ON UPDATE RESTRICT", 
+                    "ON UPDATE NO ACTION", 
+                    "ON UPDATE CASCADE", 
+                    "ON UPDATE DELETE"
+                ], 
+                ans: 2 
+            },
+            { 
+                q: "คดีที่ 9: หน้าจอแอปพลิเคชันหลักขององค์กรไม่แสดงประวัติตัววัดความชื้นใดๆ ขึ้นมาเลย และระบบฐานข้อมูลฟ้อง Error โครงสร้างตารางลูกพังทลาย คาดว่าเพราะคนร้ายใช้คำสั่งใด?", 
+                sub:"", 
+                opts: [
+                    "DELETE FROM tb_humidity_logs;", 
+                    "DROP TABLE tb_humidity_logs;", 
+                    "UPDATE tb_humidity_logs SET humidity_value = 0;", 
+                    "SELECT * FROM tb_humidity_logs;"
+                ], 
+                ans: 1 
+            },
+            { 
+                q: "คดีที่ 10: จากภาพบทเรียน หากทีมงานต้องการจำกัดสิทธิ์ความปลอดภัยสูงสุดเพื่อไม่ให้ใครสามารถกดสั่งลบชื่อเซนเซอร์ออกจากตารางหลักทิ้งเฉยๆ ในขณะยังมีรายงานล็อกค้างอยู่ ควรตั้งค่าคีย์นอกแบบใด?", 
+                sub:"", 
+                opts: [
+                    "ON DELETE CASCADE", 
+                    "ON DELETE RESTRICT", 
+                    "ON DELETE SET NULL", 
+                    "ON DELETE DEFAULT"
+                ], 
+                ans: 1 
+            }
+        ],
+        feedback: [
+            "นักสืบฝึกหัด: พลาดเบาะแสสำคัญและหลักการรัน Log คำสั่งประสงค์ร้ายไปหลายจุด ลองสืบใหม่อีกครั้งครับ",
+            "ผู้ชำนาญคดีไซเบอร์: วิเคราะห์หาจุดผิดปกติและแยกแยะความเสี่ยงของคำสั่ง SQL ประสงค์ร้ายส่วนใหญ่ได้ดี!",
+            "เหรียญรางวัลนักสืบฐานข้อมูลสูงสุด!: ตรวจสอบร่องรอย แกะรอยความพยายามทำลายระบบ IoT ได้คลี่คลายคดีเสร็จสิ้น 100%!"
+        ]
+    },
+    4: {
+        title: "⚡ Syntax Speedrunner",
+        desc: "มินิเกมวิ่งเร็วเติมคำสำคัญ (Keywords) ไวยากรณ์ สัญลักษณ์ และชนิดข้อมูล SQL IoT จากภาพบทเรียนทั้งสองข้อเพื่อผ่านด่านย่อยให้ถูกต้องสมบูรณ์ภายในเวลาจำกัด ข้อละ 10 วินาที เท่านั้น!",
+        questions: [
+            { 
+                q: "ข้อที่ 1: เติมคำสำคัญสำหรับการป้อนข้อมูลแถวบันทึกประวัติอุณหภูมิลงตารางตามภาพ 5.1 ข้อที่ 1", 
+                sub:"______ tb_sensor_logs (fk_sensor_id, temperature_value) VALUES (1, 28.5);", 
+                opts: ["INSERT INTO", "INSERT VALUE", "ADD ROW", "UPDATE INTO"], 
+                ans: 0 
+            },
+            { 
+                q: "ข้อที่ 2: เติมคำสั่งระบุเงื่อนไขกรองข้อมูลแสดงประวัติเซนเซอร์ตัวปัจจุบันตามรหัสไอดี ในคำสั่งเรียกดูข้อมูล (SELECT)", 
+                sub:"SELECT * FROM tb_sensor_logs ______ fk_sensor_id = 1;", 
+                opts: ["HAVING", "WHERE", "WHEN", "IF"], 
+                ans: 1 
+            },
+            { 
+                q: "ข้อที่ 3: เติมคำหลักในการตั้งค่าแก้ไขเปลี่ยนตำแหน่งติดตั้งเซนเซอร์ให้เรียบร้อยตามภาพที่ 5.1 ข้อที่ 3", 
+                sub:"UPDATE tb_sensors ______ location_zone = 'Zone_B' WHERE sensor_id = 1;", 
+                opts: ["SET", "PUT", "VALUE", "EQUAL"], 
+                ans: 0 
+            },
+            { 
+                q: "ข้อที่ 4: เลือกสัญลักษณ์เปรียบเทียบที่ถูกต้องสำหรับการลบประวัติเซนเซอร์ที่เกิดขึ้นก่อนหน้าปี 2025 ในข้อ 4 ของรูปที่หนึ่ง", 
+                sub:"DELETE FROM tb_sensor_logs WHERE recorded_at ______ '2025-01-01';", 
+                opts: [">", "=", "<", "!="], 
+                ans: 2 
+            },
+            { 
+                q: "ข้อที่ 5: วิเคราะห์ไวยากรณ์ (Syntax Error) คำสั่งใดใช้คำหลักระบุการลบแถวข้อมูลผิดหลักภาษา SQL?", 
+                sub:"", 
+                opts: [
+                    "DELETE FROM tb_sensor_logs;", 
+                    "REMOVE FROM tb_sensor_logs;", 
+                    "DELETE FROM tb_sensor_logs WHERE sensor_id = 1;", 
+                    "DELETE FROM tb_sensors;"
+                ], 
+                ans: 1 
+            },
+            { 
+                q: "ข้อที่ 6: การกำหนดตัวแปรไอดีตารางหลักให้รันบวกเพิ่มค่าทีละหนึ่งให้อัตโนมัติในภาพที่สอง (สร้างตารางแม่) ใช้ประโยคใด?", 
+                sub:"sensor_id INT ____________________ PRIMARY KEY,", 
+                opts: ["INCREMENT_BY_ONE", "AUTO_INCREMENT", "SELF_ADD", "SEQUENCE"], 
+                ans: 1 
+            },
+            { 
+                q: "ข้อที่ 7: การระบุผูกความสัมพันธ์คีย์นอกไปพาดพิงหาคีย์หลักในตารางแม่ตามรูปแบบรูปที่สอง ต้องใส่คำสำคัญใด?", 
+                sub:"FOREIGN KEY (fk_sensor_id) ________________ tb_sensors(sensor_id)", 
+                opts: ["LINK_TO", "REFERENCES", "KEY_OF", "BELONGS_TO"], 
+                ans: 1 
+            },
+            { 
+                q: "ข้อที่ 8: เลือกเงื่อนไขข้อบังคับลงท้ายสำหรับคำสั่งให้เกิดการอัพเดตค่าลามต่อเนื่องตามกันแบบลูปในรูปที่สอง", 
+                sub:"ON UPDATE ________________ ON DELETE CASCADE", 
+                opts: ["RESTRICT", "CASCADE", "NO ACTION", "REMOVE"], 
+                ans: 1 
+            },
+            { 
+                q: "ข้อที่ 9: ชนิดข้อมูลในการเก็บค่าจุดทศนิยมของประวัติความชื้นในตารางตามโครงสร้างรูปที่สองคือข้อใด?", 
+                sub:"humidity_value ______ NOT NULL,", 
+                opts: ["FLOAT", "INTEGER", "VARCHAR", "DOUBLE"], 
+                ans: 0 
+            },
+            { 
+                q: "ข้อที่ 10: สัญลักษณ์ข้อใดที่ห้ามขาดในการใช้ปิดท้ายประโยคคำสั่งประมวลผลฐานข้อมูล SQL ทุกครั้ง?", 
+                sub:"SELECT * FROM tb_sensors ______", 
+                opts: [": (Colon)", ", (Comma)", "; (Semicolon)", ". (Dot)"], 
+                ans: 2 
+            }
+        ],
+        feedback: [
+            "สปีดรันเนอร์ระดับหอยทาก: ไวยากรณ์หรือความไวยังไม่เข้าที่ ลองฝึกสมาธิเปิดรูปทวนแล้ววิ่งสปีดใหม่อีกรอบนะครับ",
+            "นักวิ่งสปีดความเร็วสูง: ตอบสนองได้รวดเร็วและเติมโครงสร้างไวยากรณ์ประโยคได้แม่นยำดีมาก!",
+            "ความเร็วแสงระดับแกรนด์มาสเตอร์!: เติมเต็มสัญลักษณ์ คีย์เวิร์ด และปิดท้ายประโยคได้อย่างแม่นยำ 100% ครบถ้วนดั่งใจ!"
+        ]
+    }
+};
+
+let activeGameId = null;
+let currentQIdx = 0;
+let currentGameScore = 0;
+let timerId = null;
+let countdownTime = 10;
+let hasResponded = false;
+
+function openGame(gameId) {
+    activeGameId = gameId;
+    const game = gamesData[gameId];
+    
+    document.getElementById('hub-view').style.display = 'none';
+    document.getElementById('game-view').style.display = 'block';
+    
+    document.getElementById('active-game-title').innerText = game.title;
+    document.getElementById('game-long-desc').innerText = game.desc;
+    
+    document.getElementById('setup-screen').style.display = 'block';
+    document.getElementById('play-screen').style.display = 'none';
+    document.getElementById('end-screen').style.display = 'none';
+}
+
+function exitToHub() {
+    clearInterval(timerId);
+    document.getElementById('game-view').style.display = 'none';
+    document.getElementById('hub-view').style.display = 'block';
+}
+
+function startActiveGame() {
+    currentQIdx = 0;
+    currentGameScore = 0;
+    document.getElementById('setup-screen').style.display = 'none';
+    document.getElementById('play-screen').style.display = 'block';
+    document.getElementById('current-score').innerText = "0";
+    renderQuestion();
+}
+
+function renderQuestion() {
+    hasResponded = false;
+    document.getElementById('next-btn').style.display = 'none';
+    
+    const game = gamesData[activeGameId];
+    const qData = game.questions[currentQIdx];
+    
+    document.getElementById('current-step').innerText = currentQIdx + 1;
+    document.getElementById('q-text').innerText = qData.q;
+    
+    const subBox = document.getElementById('q-subtext');
+    if (qData.sub) {
+        subBox.innerHTML = `<span class="syntax-snippet">${qData.sub}</span>`;
+        subBox.style.display = 'block';
+    } else {
+        subBox.style.display = 'none';
+    }
+    
+    const optionsBox = document.getElementById('options-box');
+    optionsBox.innerHTML = '';
+    
+    qData.opts.forEach((opt, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'opt-btn';
+        btn.innerText = opt;
+        btn.onclick = () => handleChoice(index);
+        optionsBox.appendChild(btn);
+    });
+    
+    initCountdown();
+}
+
+function initCountdown() {
+    const bar = document.getElementById('timer-bar');
+    bar.style.width = '100%';
+    clearInterval(timerId);
+    
+    const startTime = Date.now();
+    timerId = setInterval(() => {
+        const passedSec = (Date.now() - startTime) / 1000;
+        const remainPct = Math.max(0, 100 - (passedSec / 10) * 100);
+        bar.style.width = remainPct + '%';
+        
+        if (passedSec >= 10) {
+            clearInterval(timerId);
+            if (!hasResponded) handleTimeout();
+        }
+    }, 50);
+}
+
+function handleChoice(chosenIdx) {
+    if (hasResponded) return;
+    hasResponded = true;
+    clearInterval(timerId);
+    
+    const game = gamesData[activeGameId];
+    const qData = game.questions[currentQIdx];
+    const buttons = document.querySelectorAll('.opt-btn');
+    
+    buttons.forEach((btn, idx) => {
+        btn.disabled = true;
+        if (idx === qData.ans) btn.classList.add('correct');
+        if (idx === chosenIdx && chosenIdx !== qData.ans) btn.classList.add('wrong');
+    });
+    
+    if (chosenIdx === qData.ans) {
+        currentGameScore++;
+        document.getElementById('current-score').innerText = currentGameScore;
+    }
+    document.getElementById('next-btn').style.display = 'block';
+}
+
+function handleTimeout() {
+    hasResponded = true;
+    const game = gamesData[activeGameId];
+    const qData = game.questions[currentQIdx];
+    const buttons = document.querySelectorAll('.opt-btn');
+    
+    buttons.forEach((btn, idx) => {
+        btn.disabled = true;
+        if (idx === qData.ans) btn.classList.add('correct');
+    });
+    document.getElementById('next-btn').style.display = 'block';
+}
+
+function advanceQuestion() {
+    currentQIdx++;
+    const game = gamesData[activeGameId];
+    if (currentQIdx < game.questions.length) {
+        renderQuestion();
+    } else {
+        showGameEndSummary();
+    }
+}
+
+function showGameEndSummary() {
+    document.getElementById('play-screen').style.display = 'none';
+    document.getElementById('end-screen').style.display = 'block';
+    document.getElementById('final-score').innerText = currentGameScore;
+    
+    const game = gamesData[activeGameId];
+    const feedbackBox = document.getElementById('result-feedback');
+    
+    if (currentGameScore === 10) {
+        feedbackBox.innerText = game.feedback[2];
+    } else if (currentGameScore >= 6) {
+        feedbackBox.innerText = game.feedback[1];
+    } else {
+        feedbackBox.innerText = game.feedback[0];
+    }
+}
+
+function retryGame() {
+    document.getElementById('end-screen').style.display = 'none';
+    startActiveGame();
+}
+</script>
+
+</body>
+</html>
