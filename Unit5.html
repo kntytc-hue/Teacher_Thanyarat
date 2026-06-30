@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หน่วยที่ 5: การจัดการข้อมูลในฐานข้อมูล (CRUD Operations)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Sarabun', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header class="bg-gradient-to-r from-teal-600 to-indigo-700 text-white py-12 px-4 shadow-lg text-center">
+        <p class="text-teal-200 font-bold tracking-widest text-sm uppercase">วิชา 21909-1012 ระบบฐานข้อมูลสำหรับงาน IoT</p>
+        <h1 class="text-3xl md:text-5xl font-bold mt-2">หน่วยที่ 5: การจัดการข้อมูลในฐานข้อมูล (CRUD Operations)</h1>
+        <p class="mt-4 text-lg text-teal-100 max-w-3xl mx-auto">ขับเคลื่อนข้อมูลในระบบ IoT ด้วยกลุ่มคำสั่ง DML เรียนรู้การเพิ่ม ดึงข้อมูล แก้ไข และลบข้อมูลอย่างปลอดภัยและรอบคอบ</p>
+        <div class="mt-6 inline-block bg-teal-800 text-teal-100 text-xs px-4 py-2 rounded-full font-semibold">
+            ⏱️ เวลาเรียน: 2 สัปดาห์ (สัปดาห์ที่ 11 - 12 | รวมเวลา 8 ชั่วโมง)
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 py-10">
+
+        <section class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
+            <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                🎯 สมรรถนะย่อยประจำหน่วยที่ 5
+            </h2>
+            <ul class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 text-sm text-gray-600">
+                <li class="flex items-center gap-2">✅ อธิบายความหมายและกลไกการทำงานของ CRUD Operations ในงานฐานข้อมูลได้</li>
+                <li class="flex items-center gap-2">✅ เขียนคำสั่ง SQL เพื่อเพิ่ม แก้ไข และลบข้อมูลได้อย่างมีไวยากรณ์และถูกต้อง</li>
+                <li class="flex items-center gap-2">✅ ตระหนักถึงความปลอดภัยและผลกระทบของการใช้คำสั่งแก้ไข/ลบข้อมูลโดยระบุเงื่อนไขอย่างรอบคอบ</li>
+            </ul>
+        </section>
+
+        <div class="space-y-8">
+
+            <section class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
+                <h2 class="text-xl font-bold text-indigo-700 mb-3">💡 ทำความรู้จักกับ CRUD Operations</h2>
+                <p class="text-sm text-gray-600 leading-relaxed">
+                    คำว่า <span class="font-bold text-gray-800">CRUD</span> คือหัวใจหลักของนักพัฒนาโปรแกรมและวิศวกร IoT ทั่วโลก เป็นคำย่อแทน 4 ธุรกรรมพื้นฐานที่กระทำต่อข้อมูลในระบบ ประกอบไปด้วยคำสั่งสากลดังนี้:
+                </p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-center font-mono text-xs">
+                    <div class="bg-blue-50 p-3 rounded-xl border border-blue-100"><span class="block font-bold text-blue-700 text-sm">C - Create</span>คำสั่ง <code class="font-bold text-gray-800">INSERT</code><br>(เพิ่มข้อมูลใหม่)</div>
+                    <div class="bg-green-50 p-3 rounded-xl border border-green-100"><span class="block font-bold text-green-700 text-sm">R - Read</span>คำสั่ง <code class="font-bold text-gray-800">SELECT</code><br>(ดึงข้อมูลมาดู)</div>
+                    <div class="bg-amber-50 p-3 rounded-xl border border-amber-100"><span class="block font-bold text-amber-700 text-sm">U - Update</span>คำสั่ง <code class="font-bold text-gray-800">UPDATE</code><br>(แก้ไขข้อมูลเดิม)</div>
+                    <div class="bg-rose-50 p-3 rounded-xl border border-rose-100"><span class="block font-bold text-rose-700 text-sm">D - Delete</span>คำสั่ง <code class="font-bold text-gray-800">DELETE</code><br>(ลบข้อมูลทิ้ง)</div>
+                </div>
+            </section>
+
+            <section class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="bg-teal-600 text-white font-bold px-3 py-1 rounded-lg text-sm">5.1</span>
+                    <h2 class="text-xl font-bold text-teal-700">เจาะลึกรูปแบบคำสั่งและตัวอย่างในงาน IoT</h2>
+                </div>
+
+                <div class="space-y-6 text-sm">
+                    <div class="border-l-4 border-blue-500 pl-4">
+                        <h4 class="font-bold text-blue-900 text-base">1. การเพิ่มข้อมูล (INSERT INTO)</h4>
+                        <p class="text-gray-600 mt-1">ใช้เมื่ออุปกรณ์เซนเซอร์ (เช่น ESP32) วัดค่าได้ แล้วต้องการหย่อนค่าเหล่านั้นบันทึกลงสู่ถังเก็บฐานข้อมูล</p>
+                        <div class="bg-gray-900 text-gray-100 p-3 rounded-xl font-mono text-xs mt-2">
+                            <span class="text-purple-400">INSERT INTO</span> tb_sensor_logs (fk_sensor_id, temperature_value) <span class="text-purple-400">VALUES</span> (1, 28.5);
+                        </div>
+                    </div>
+
+                    <div class="border-l-4 border-green-500 pl-4">
+                        <h4 class="font-bold text-green-900 text-base">2. การเรียกดูข้อมูล (SELECT)</h4>
+                        <p class="text-gray-600 mt-1">ใช้เมื่อหน้าต่างแอปพลิเคชันหรือ Dashboard ต้องการดึงข้อมูลอุณหภูมิมาแสดงผลให้มนุษย์ดูหรือพลอตกราฟ</p>
+                        <div class="bg-gray-900 text-gray-100 p-3 rounded-xl font-mono text-xs mt-2">
+                            <span class="text-purple-400">SELECT</span> * <span class="text-purple-400">FROM</span> tb_sensor_logs <span class="text-purple-400">WHERE</span> fk_sensor_id = 1;
+                        </div>
+                    </div>
+
+                    <div class="border-l-4 border-amber-500 pl-4">
+                        <h4 class="font-bold text-amber-900 text-base">3. การแก้ไขข้อมูล (UPDATE)</h4>
+                        <p class="text-gray-600 mt-1">ใช้เมื่อช่างเทคนิคเดินไปเปลี่ยนตัวเซนเซอร์ใหม่ หรือย้ายตำแหน่งโซนติดตั้ง จึงต้องปรับปรุงประวัติระบบ</p>
+                        <div class="bg-gray-900 text-gray-100 p-3 rounded-xl font-mono text-xs mt-2">
+                            <span class="text-purple-400">UPDATE</span> tb_sensors <span class="text-purple-400">SET</span> location_zone = <span class="text-yellow-400">'Zone_B'</span> <span class="text-purple-400">WHERE</span> sensor_id = 1;
+                        </div>
+                        <p class="text-xs text-amber-700 mt-1 font-semibold">⚠️ ข้อควรระวังสูงสุด: ห้ามลืมพิมพ์เงื่อนไข WHERE เด็ดขาด! หากลืม ข้อมูลทุกตัวแปรในอาคารจะถูกเปลี่ยนเป็น Zone_B ทั้งหมด</p>
+                    </div>
+
+                    <div class="border-l-4 border-rose-500 pl-4">
+                        <h4 class="font-bold text-rose-900 text-base">4. การลบข้อมูล (DELETE)</h4>
+                        <p class="text-gray-600 mt-1">ใช้เมื่อต้องการล้างข้อมูลเก่าค้างปีทิ้งเพื่อเพิ่มพื้นที่หน่วยความจำให้ระบบเซิร์ฟเวอร์</p>
+                        <div class="bg-gray-900 text-gray-100 p-3 rounded-xl font-mono text-xs mt-2">
+                            <span class="text-purple-400">DELETE FROM</span> tb_sensor_logs <span class="text-purple-400">WHERE</span> recorded_at < <span class="text-yellow-400">'2025-01-01'</span>;
+                        </div>
+                        <p class="text-xs text-rose-700 mt-1 font-semibold">⚠️ ข้อควรระวังสูงสุด: หากพิมพ์ลอยๆ แค่ <code class="bg-rose-100 px-0.5 rounded">DELETE FROM tb_sensor_logs;</code> โดยไม่มี WHERE ข้อมูลล็อกประวัติเซนเซอร์ที่สะสมมาทั้งหมดจะหายวับไปในพริบตา</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <h2 class="text-2xl font-bold text-gray-900 mt-12 mb-6 flex items-center gap-2">
+            🛠️ 2. ลำดับกิจกรรมปฏิบัติจริง "สวมบทบาทเป็นบอร์ด IoT" (รวม 6 ชั่วโมง)
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+                <span class="bg-teal-100 text-teal-800 font-bold px-2 py-0.5 rounded">สัปดาห์ที่ 11</span>
+                <h4 class="font-bold text-sm text-gray-800 mt-2">ฝึกหัดป้อนและเรียกดูข้อมูล (Create & Read)</h4>
+                <p class="text-gray-500 mt-1 leading-relaxed">นักเรียนจำลองตนเองเป็นบอร์ดควบคุม ฝึกพิมพ์คำสั่ง <code class="bg-gray-100 px-0.5 rounded">INSERT</code> ข้อมูลสลับป้อนเข้าฐานข้อมูล และใช้คำสั่ง <code class="bg-gray-100 px-0.5 rounded">SELECT</code> กรองเจาะจงเฉพาะช่วงค่าที่ครูกำหนด</p>
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+                <span class="bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded">สัปดาห์ที่ 12</span>
+                <h4 class="font-bold text-sm text-gray-800 mt-2">ปฏิบัติการปรับปรุงและล้างขยะ (Update & Delete)</h4>
+                <p class="text-gray-500 mt-1 leading-relaxed">ฝึกทำภารกิจศัลยกรรมข้อมูลช่างเทคนิคย้ายระบบ ฝึกพิมพ์ <code class="bg-gray-100 px-0.5 rounded">UPDATE</code> และ <code class="bg-gray-100 px-0.5 rounded">DELETE</code> อย่างรอบคอบ โดยตรวจสอบการทำงานของเงื่อนไข <code class="bg-gray-100 px-0.5 rounded">WHERE</code> ทุกครั้งก่อนกดรันคำสั่งจริง</p>
+            </div>
+        </div>
+
+        <section class="mt-12 bg-white p-6 md:p-8 rounded-2xl shadow-md border-2 border-indigo-600">
+            <h2 class="text-2xl font-bold text-indigo-900 mb-2 flex items-center gap-2">
+                📝 ใบงานออนไลน์ที่ 5: แบบทดสอบไวยากรณ์และความปลอดภัย CRUD
+            </h2>
+            <p class="text-xs text-gray-500 mb-6">ฝึกฝนทักษะการวิเคราะห์ไวยากรณ์ DML ผ่านระบบถามตอบอินเทอร์แอคทีฟ</p>
+            
+            <div class="space-y-6">
+                <div class="border-b pb-4">
+                    <p class="font-semibold text-xs md:text-sm text-gray-800 mb-2">❔ โจทย์ข้อที่ 1: รถขนส่งรหัสทะเบียน "กข-777" ต้องการบันทึกประวัติความเร็วใหม่เข้าตารางในฐานข้อมูล ต้องใช้คำสั่งหลักใดในกลุ่ม CRUD?</p>
+                    <button onclick="toggleAnswer('u5_ans1')" class="text-[11px] text-indigo-600 font-bold hover:underline">▶️ คลิกเพื่อดูเฉลยคำตอบ</button>
+                    <div id="u5_ans1" class="hidden mt-2 text-xs text-green-800 bg-green-50 p-3 rounded-lg border border-green-200 font-mono">
+                        ตอบ: คำสั่ง <span class="font-bold text-green-700">INSERT INTO</span> (ธุรกรรมด่าน Create) เพื่อเอาแถวข้อมูลชุดความเร็วชุดใหม่ไปหย่อนลงตาราง
+                    </div>
+                </div>
+
+                <div class="border-b pb-4">
+                    <p class="font-semibold text-xs md:text-sm text-gray-800 mb-2">❔ โจทย์ข้อที่ 2: อะไรคือความเสี่ยงที่ร้ายแรงที่สุดหากโปรแกรมเมอร์เผลอรันคำสั่ง <code class="bg-gray-100 text-red-500 px-1 rounded font-mono">DELETE FROM tb_users;</code> โดยลืมใส่ส่วนของเงื่อนไข?</p>
+                    <button onclick="toggleAnswer('u5_ans2')" class="text-[11px] text-indigo-600 font-bold hover:underline">▶️ คลิกเพื่อดูเฉลยคำตอบ</button>
+                    <div id="u5_ans2" class="hidden mt-2 text-xs text-green-800 bg-green-50 p-3 rounded-lg border border-green-200">
+                        ตอบ: <span class="font-bold text-red-600">ข้อมูลผู้ใช้งานทั้งหมดในตารางจะถูกล้างทิ้งจนเกลี้ยงเตียนทันที</span> เนื่องจากไม่มีประโยคเงื่อนไขกำกับว่าให้ลบแถวไหน ระบบจึงดำเนินการกวาดล้างทุกแถวที่มีอยู่ในโครงสร้างตาราง
+                    </div>
+                </div>
+
+                <div>
+                    <p class="font-semibold text-xs md:text-sm text-gray-800 mb-2">❔ โจทย์ข้อที่ 3: หากต้องการอัปเดตสถานะของอุปกรณ์เซนเซอร์รหัส ID หมายเลข 5 ให้เป็นสถานะ 'OFFLINE' ต้องพิมพ์ไวยากรณ์แบบใด?</p>
+                    <button onclick="toggleAnswer('u5_ans3')" class="text-[11px] text-indigo-600 font-bold hover:underline">▶️ คลิกเพื่อดูเฉลยคำตอบ</button>
+                    <div id="u5_ans3" class="hidden mt-2 text-xs text-green-800 bg-green-50 p-3 rounded-lg border border-green-200 font-mono">
+                        ตอบ: UPDATE tb_sensors SET device_status = 'OFFLINE' WHERE sensor_id = 5;
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-gray-400 text-center py-6 border-t border-gray-700 text-xs">
+        <p>© 2026 ระบบจัดการเรียนรู้ออนไลน์วิชาฐานข้อมูล IoT • มุ่งเน้นการศึกษาเทคโนโลยีอย่างละเอียด รอบคอบ และเป็นระบบ</p>
+    </footer>
+
+    <script>
+        // ฟังก์ชันเปิด-ปิดการแสดงผลเฉลยใบงาน
+        function toggleAnswer(id) {
+            var element = document.getElementById(id);
+            if (element.classList.contains("hidden")) {
+                element.classList.remove("hidden");
+            } else {
+                element.classList.add("hidden");
+            }
+        }
+    </script>
+</body>
+</html>
