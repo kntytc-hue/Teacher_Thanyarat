@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard ผู้เรียน | 31909-1001 ระบบปฏิบัติการ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="D:\OS\css\style.css">
+    <link rel="stylesheet" href="D:\OS\css\responsive.css">
+    <link rel="stylesheet" href="D:\OS\css\dark-mode.css">
+</head>
+<body class="light-mode">
+
+    <div id="loading-screen">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg sticky-top main-navbar">
+        <div class="container-fluid">
+            <button class="btn text-white me-2" id="sidebar-toggle-btn" aria-label="เปิดเมนูด้านข้าง">
+                <i class="fas fa-bars fa-lg"></i>
+            </button>
+            <a class="navbar-brand d-flex align-items-center" href="index.html">
+                <i class="fas fa-laptop-code me-2"></i>
+                <span>31909-1001 ระบบปฏิบัติการ</span>
+            </a>
+            <div class="ms-auto d-flex align-items-center gap-3">
+                <button class="btn text-white" id="theme-toggle-btn" aria-label="เปลี่ยนโหมดหน้าจอ">
+                    <i class="fas fa-moon fa-lg"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="app-layout">
+        <aside class="sidebar-navigation" id="main-sidebar">
+            <div class="sidebar-profile text-center py-4">
+                <div class="avatar-container mb-2">
+                    <i class="fas fa-user-graduate fa-3x text-white bg-primary p-3 rounded-circle"></i>
+                </div>
+                <h6 class="text-white mb-0" id="student-name-display">ธัญญรัตน์ ตาเล๊ะ</h6>
+                <small class="text-white-50">รหัสนักศึกษา: ผู้เข้ารับการประเมิน</small>
+            </div>
+            <ul class="sidebar-menu-list px-2" id="sidebar-menu-injector">
+                </ul>
+        </aside>
+
+        <main class="main-content-flow px-3 px-md-5 py-4">
+            <nav aria-label="breadcrumb" class="mb-4" data-aos="fade-down">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="index.html" class="text-decoration-none"><i class="fas fa-home me-1"></i>หน้าแรก</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Dashboard ผู้เรียน</li>
+                </ol>
+            </nav>
+
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 text-white" style="background: linear-gradient(135deg, #00B4D8 0%, #0077B6 100%);" data-aos="fade-up">
+                <h2 class="font-kanit mb-1">ศูนย์วิเคราะห์ผลการเรียนรู้อัจฉริยะ</h2>
+                <p class="mb-0 text-white-50">ติดตามภาพรวมคะแนนการประเมิน ตรวจสอบสถานะการส่งงาน และพิมพ์ใบประกาศนียบัตรวิชาการ</p>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-6 col-lg-3" data-aos="fade-up" data-aos-delay="50">
+                    <div class="card custom-card p-3 shadow-sm border-0 h-100 text-center">
+                        <i class="fas fa-tasks fa-2x text-primary mb-2"></i>
+                        <h3 class="font-kanit mb-0 font-weight-bold" id="widget-completed-count">0 / 15</h3>
+                        <small class="text-muted">หน่วยเรียนที่ศึกษาแล้ว</small>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3" data-aos="fade-up" data-aos-delay="100">
+                    <div class="card custom-card p-3 shadow-sm border-0 h-100 text-center">
+                        <i class="fas fa-percentage fa-2x text-success mb-2"></i>
+                        <h3 class="font-kanit mb-0 font-weight-bold" id="widget-progress-percent">0%</h3>
+                        <small class="text-muted">ความก้าวหน้ารวม</small>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3" data-aos="fade-up" data-aos-delay="150">
+                    <div class="card custom-card p-3 shadow-sm border-0 h-100 text-center">
+                        <i class="fas fa-star fa-2x text-warning mb-2"></i>
+                        <h3 class="font-kanit mb-0 font-weight-bold" id="widget-avg-score">0.00</h3>
+                        <small class="text-muted">คะแนนสอบเฉลี่ย (เต็ม 20)</small>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3" data-aos="fade-up" data-aos-delay="200">
+                    <div class="card custom-card p-3 shadow-sm border-0 h-100 text-center">
+                        <i class="fas fa-award fa-2x text-info mb-2"></i>
+                        <h3 class="font-kanit mb-0 font-weight-bold fs-5 pt-1 text-uppercase" id="widget-cert-status">ยังไม่ผ่านเกณฑ์</h3>
+                        <small class="text-muted">สถานะเกียรติบัตร</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-5">
+                <div class="col-lg-8" data-aos="fade-up" data-aos-delay="250">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                        <h5 class="font-kanit text-dark-primary mb-3"><i class="fas fa-chart-bar me-2 text-primary"></i>ผลการทดสอบท้ายบทเรียนแบ่งตามหน่วยการเรียนรู้</h5>
+                        <div class="chart-container position-relative" style="height: 320px; width: 100%;">
+                            <canvas id="scoresAnalyticsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4" data-aos="fade-up" data-aos-delay="300">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 h-100 text-center d-flex flex-column justify-content-center align-items-center">
+                        <div class="cert-icon-wrapper p-4 bg-light rounded-circle mb-3 border">
+                            <i class="fas fa-file-signature fa-4x text-muted" id="cert-main-icon"></i>
+                        </div>
+                        <h5 class="font-kanit text-dark-primary font-weight-bold mb-2">ใบรับรองผลการเรียนออนไลน์</h5>
+                        <p class="text-secondary fs-7 px-2 mb-4">เงื่อนไข: ผู้เรียนต้องเข้าศึกษาเนื้อหาครบทุกบทเรียน และทำแบบทดสอบให้ครบทั้ง 15 หน่วยการเรียนรู้ ระบบจึงจะเปิดสิทธิ์ให้สั่งพิมพ์เกียรติบัตรฉบับสมบูรณ์</p>
+                        <button id="download-cert-btn" class="btn btn-secondary btn-lg w-100 py-3 rounded-3" disabled>
+                            <i class="fas fa-print me-2"></i>ดาวน์โหลดใบประกาศฯ
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <section class="card border-0 shadow-sm rounded-4 p-4" data-aos="fade-up">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <h5 class="font-kanit text-danger mb-1"><i class="fas fa-exclamation-triangle me-2"></i>พื้นที่จัดการข้อมูลนักศึกษา</h5>
+                        <p class="mb-0 text-muted fs-7">หากต้องการล้างประวัติการทดสอบ หรือจำลองสถานการณ์เริ่มเรียนใหม่ทั้งหมด สามารถสั่งรีเซ็ตระบบได้ที่นี่</p>
+                    </div>
+                    <button id="reset-data-btn" class="btn btn-outline-danger px-4 py-2 rounded-3 fw-medium">
+                        <i class="fas fa-trash-alt me-2"></i>ล้างประวัติการเรียนทั้งหมด
+                    </button>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <footer class="main-footer-section py-4 text-center mt-auto border-top">
+        <div class="container">
+            <p class="mb-1 text-secondary">© 2026 รายวิชา 31909-1001 ระบบปฏิบัติการ — แผงควบคุมสถิติวิชาการปวส.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="D:\OS\js\data.js"></script>
+    <script src="D:\OS\js\storage.js"></script>
+    <script src="D:\OS\js\progress.js"></script>
+    <script src="D:\OS\js\main.js"></script>
+    <script src="D:\OS\js\dashboard.js"></script>
+</body>
+</html>

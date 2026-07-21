@@ -1,0 +1,44 @@
+/**
+ * @file css/responsive.css
+ * @description ปรับปรุงเลย์เอาต์โครงสร้างเว็บแบบยืดหยุ่น (Responsive Design) รองรับ Desktop, Tablet และ Mobile
+ */
+
+@media (max-width: 991.98px) {
+    /* ซ่อนแถบเมนูด้านข้างบนหน้าจอมือถือและแท็บเล็ตเป็นค่าเริ่มต้น */
+    .sidebar-navigation {
+        position: fixed;
+        top: 56px; /* ความสูงของ Navbar */
+        left: -280px;
+        height: calc(100vh - 56px);
+        overflow-y: auto;
+    }
+    
+    /* สลับคลาสเปิดแถบเมนูด้านข้าง */
+    .sidebar-navigation.open {
+        left: 0;
+    }
+
+    .main-content-flow {
+        width: 100%;
+        padding: 20px 15px !important;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .hero-banner-section {
+        padding: 30px 20px !important;
+        text-align: center;
+    }
+    
+    .hero-banner-section h1 {
+        font-size: 28px !important;
+    }
+    
+    .hero-banner-section .btn {
+        width: 100%;
+    }
+    
+    .custom-card {
+        border-radius: 12px;
+    }
+}

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หน่วยที่ 13 Multi OS ตอนที่ 2 | วิชา 31909-1001 ระบบปฏิบัติการ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="D:\OS\css\style.css">
+    <link rel="stylesheet" href="D:\OS\css\responsive.css">
+    <link rel="stylesheet" href="D:\OS\css\dark-mode.css">
+    <style>
+        /* สไตล์แบบสากลสำหรับการจำลอง Animation */
+        .simulation-space {
+            background-color: #1e293b;
+            border-radius: 16px;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        body.light-mode .simulation-space {
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+        }
+        .state-container-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        .simulation-node {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Kanit', sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            color: #ffffff;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 4px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        #sim-node-virtual { background: linear-gradient(135deg, #a855f7, #9333ea); }
+        #sim-node-mmu { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+        #sim-node-ram { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        
+        /* อนิเมชันกระพริบเมื่อสถานะกำลัง Active */
+        .simulation-node.active-state {
+            transform: scale(1.15);
+            box-shadow: 0 0 25px currentColor;
+            border-color: #ffffff;
+            animation: pulse-glow 1.5s infinite alternate;
+        }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 15px rgba(255,255,255,0.2); }
+            100% { box-shadow: 0 0 30px rgba(255,255,255,0.8); }
+        }
+        
+        .sim-arrow {
+            height: 4px;
+            background-color: #cbd5e1;
+            flex-grow: 1;
+            position: relative;
+            margin: 0 10px;
+            transition: all 0.3s;
+        }
+        body.dark-mode .sim-arrow { background-color: #475569; }
+        .sim-arrow::after {
+            content: '';
+            position: absolute;
+            right: -2px;
+            top: -6px;
+            width: 0; height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 12px solid #cbd5e1;
+        }
+        body.dark-mode .sim-arrow::after { border-left-color: #475569; }
+        .sim-arrow.active-arrow {
+            background-color: #10b981 !important;
+        }
+        .sim-arrow.active-arrow::after {
+            border-left-color: #10b981 !important;
+        }
+        
+        /* สไตล์ตารางบล็อกจำลอง */
+        .queue-box-list {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 60px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            border: 1px dashed rgba(0,0,0,0.1);
+        }
+        body.dark-mode .queue-box-list { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); }
+        .pcb-token {
+            background: #4b5563;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            animation: bounceIn 0.5s;
+        }
+        .pcb-token.ram-slot { background: #ef4444; }
+        .pcb-token.swap-slot { background: #f59e0b; }
+    </style>
+</head>
+<body class="light-mode">
+    
+    <div id="loading-screen">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    
+    <nav class="navbar navbar-expand-lg sticky-top main-navbar">
+        <div class="container-fluid">
+            <button class="btn text-white me-2" id="sidebar-toggle-btn" aria-label="เปิดเมนูด้านข้าง">
+                <i class="fas fa-bars fa-lg"></i>
+            </button>
+            <a class="navbar-brand d-flex align-items-center" href="../index.html">
+                <i class="fas fa-laptop-code me-2"></i>
+                <span>31909-1001 ระบบปฏิบัติการ</span>
+            </a>
+            <div class="ms-auto">
+                <button class="btn text-white" id="theme-toggle-btn" aria-label="เปลี่ยนโหมดหน้าจอ">
+                    <i class="fas fa-moon fa-lg"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="app-layout">
+        <aside class="sidebar-navigation" id="main-sidebar">
+            <div class="sidebar-profile text-center py-4">
+                <div class="avatar-container mb-2">
+                    <i class="fas fa-book-reader fa-3x text-white bg-primary p-3 rounded-circle"></i>
+                </div>
+                <h6 class="text-white mb-0">อาจารย์ธัญญรัตน์ ตาเล๊ะ</h6>
+                <small class="text-white-50">เทคโนโลยีคอมพิวเตอร์</small>
+            </div>
+            <ul class="sidebar-menu-list px-2" id="sidebar-menu-injector"></ul>
+        </aside>
+    
+        <main class="main-content-flow px-3 px-md-5 py-4">
+            
+            <nav aria-label="breadcrumb" class="mb-4" data-aos="fade-down">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="../index.html" class="text-decoration-none"><i class="fas fa-home me-1"></i>หน้าแรก</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">หน่วยที่ 13 Multi OS ตอนที่ 2</li>
+                </ol>
+            </nav>
+    
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light text-dark border-start border-5 border-primary" data-aos="fade-up">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <span class="text-primary fw-bold text-uppercase d-block mb-1">Unit 13: Multi OS (Part 2)</span>
+                        <h1 class="font-kanit font-weight-bold text-dark-primary mb-0">หน่วยที่ 13 Multi OS ตอนที่ 2</h1>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary btn-sm rounded-3 px-3" onclick="window.print()"><i class="fas fa-print me-1"></i>พิมพ์บทเรียน</button>
+                        <button class="btn btn-primary btn-sm rounded-3 px-3" id="bookmark-btn"><i class="far fa-bookmark me-1"></i>คั่นหน้าไว้</button>
+                    </div>
+                </div>
+            </div>
+    
+            <article class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 leading-relaxed text-secondary text-justify content-article-body" data-aos="fade-up" data-aos-delay="100">
+                
+                <h3 class="font-kanit text-dark-primary font-weight-bold mb-3 border-bottom pb-2">1. โครงสร้างและการทำงานของ Boot Loader</h3>
+                <p style="text-indent: 30px;">
+                    Boot Loader คือโปรแกรมขนาดเล็กที่จัดเก็บอยู่ในพื้นที่เฉพาะของอุปกรณ์จัดเก็บข้อมูล (เช่น Master Boot Record หรือ MBR และ EFI System Partition หรือ ESP) ทำหน้าที่โหลดเคอร์เนล (Kernel) ของระบบปฏิบัติการเข้าสู่หน่วยความจำ RAM ในระหว่างกระบวนการเปิดเครื่อง (Bootstrapping Process) สำหรับระบบปฏิบัติการแบบ Multi OS Boot Loader ถือเป็นตัวกลางสำคัญในการควบคุมและนำทางให้ผู้ใช้เลือก Boot ระบบปฏิบัติการที่ต้องการใช้งาน
+                </p>
+                <p style="text-indent: 30px;">
+                    ในสถาปัตยกรรมคอมพิวเตอร์ยุคใหม่ Boot Loader จะแบ่งออกเป็น 2 มาตรฐานหลัก คือ Legacy BIOS (ใช้ MBR ในการเก็บสคริปต์สแกนพาร์ทิชัน) และ UEFI (Unified Extensible Firmware Interface) ซึ่งทำงานร่วมกับตารางพาร์ทิชันแบบ GPT (GUID Partition Table) โดย UEFI มีความยืดหยุ่นกว่าเนื่องจากสามารถโหลดตัวจัดการบูต (.efi) หลายตัวแยกกันตามแต่ละระบบปฏิบัติการได้โดยตรง
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">2. GRUB (Grand Unified Bootloader)</h3>
+                <p style="text-indent: 30px;">
+                    GRUB (ปัจจุบันใช้ GRUB 2) เป็น Boot Loader มาตรฐานยอดนิยมในฝั่งระบบปฏิบัติการ Linux ที่มีความสามารถในการจัดการ Multi OS สูงที่สุด สามารถตรวจจับและโหลดเคอร์เนลได้ทั้ง Linux, Windows, macOS และ BSD โดย GRUB อ่านค่าคอนฟิกูเรชันหลักจากไฟล์ <code>/boot/grub/grub.cfg</code> ซึ่งสร้างขึ้นอัตโนมัติผ่านคำสั่ง <code>update-grub</code> หรือ Script ใน <code>/etc/grub.d/</code> และตั้งค่าทั่วไปผ่าน <code>/etc/default/grub</code>
+                </p>
+                <p style="text-indent: 30px;">
+                    โครงสร้างและพารามิเตอร์ที่สำคัญของ GRUB ประกอบด้วย:
+                </p>
+                <ul>
+                    <li class="mb-1"><strong>GRUB_DEFAULT:</strong> กำหนดระบบปฏิบัติการเริ่มต้นที่จะบูต เช่น <code>0</code> (ลำดับแรก) หรือ <code>saved</code></li>
+                    <li class="mb-1"><strong>GRUB_TIMEOUT:</strong> ระยะเวลาถอยหลัง (วินาที) ในการแสดงเมนูให้ผู้ใช้เลือก OS ก่อนที่จะเข้าสู่ OS ค่าเริ่มต้น</li>
+                    <li class="mb-1"><strong>os-prober:</strong> ยูทิลิตีสแกนพาร์ทิชันอื่นในเครื่องเพื่อหา OS อื่น (เช่น Windows Boot Manager) แล้วนำมาเพิ่มในเมนู GRUB โดยอัตโนมัติ</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">3. ระบบแฟ้มข้อมูล และการแบ่งปันข้อมูล (Data Sharing, NTFS, Ext4)</h3>
+                <p style="text-indent: 30px;">
+                    ปัญหาสำคัญในการใช้งานระบบ Multi OS (เช่น Windows และ Linux ในเครื่องเดียวกัน) คือความแตกต่างของระบบแฟ้มข้อมูล (File System) ทำให้การแชร์ข้อมูลข้ามระบบปฏิบัติการต้องทำความเข้าใจกลไกและรูปแบบพาร์ทิชันดังนี้:
+                </p>
+                <ul>
+                    <li class="mb-3"><strong>NTFS (New Technology File System):</strong> ระบบแฟ้มข้อมูลมาตรฐานของ Windows รองรับสิทธิ์การเข้าถึง (ACL) และไฟล์ขนาดใหญ่ Windows อ่าน/เขียนได้สมบูรณ์ ในขณะที่ Linux สามารถอ่าน/เขียน NTFS ได้อย่างสมบูรณ์เช่นกันผ่านเคอร์เนลไดรเวอร์ <code>NTFS3</code> หรือ <code>NTFS-3G</code></li>
+                    <li class="mb-3"><strong>Ext4 (Fourth Extended Filesystem):</strong> ระบบแฟ้มข้อมูลมาตรฐานของ Linux มีประสิทธิภาพสูง มีระบบ Journaling ป้องกันไฟล์เสียหาย แต่ Windows ไม่รองรับการอ่าน/เขียน Ext4 โดยธรรมชาติ (ต้องใช้เครื่องมือเสริม เช่น WSL2 หรือ Ext2Fsd)</li>
+                    <li class="mb-3"><strong>เทคนิค Data Sharing Partition:</strong> วิธีที่ดีที่สุดสำหรับการแชร์ไฟล์ในเครื่อง Multi OS คือการสร้างพาร์ทิชันกลางด้วยระบบแฟ้มข้อมูลที่รองรับทั้งสองฝั่ง เช่น <strong>NTFS</strong> หรือ <strong>exFAT</strong> สำหรับเก็บข้อมูลเอกสารและมัลติมีเดียโดยเฉพาะ</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">4. การเมานต์พาร์ทิชันและการปรับแต่ง fstab (Mount & /etc/fstab)</h3>
+                <p style="text-indent: 30px;">
+                    ในระบบ Linux การเข้าถึงพาร์ทิชันหรือไดรฟ์ต่าง ๆ จะต้องผ่านกระบวนการ **Mount (การเมานต์)** เพื่อเชื่อมโยงพาร์ทิชันเข้ากับไดเรกทอรีในโครงสร้างระบบไฟล์ (Tree Structure) เช่น <code>/mnt/data</code> หรือ <code>/media/user/share</code>
+                </p>
+                <p style="text-indent: 30px;">
+                    เพื่อให้ระบบ Linux ทำการเมานต์พาร์ทิชันที่ต้องการให้อัตโนมัติเมื่อเปิดเครื่อง จะต้องกำหนดค่าในไฟล์ <code>/etc/fstab</code> (File System Table) โดยระบุรูปแบบข้อมูลดังนี้:
+                </p>
+                <div class="p-3 bg-dark text-white rounded-3 font-monospace mb-3">
+                    UUID=XXXX-XXXX-XXXX-XXXX  /mnt/data  ntfs-3g  defaults,uid=1000,gid=1000  0  2
+                </div>
+                <ul>
+                    <li class="mb-1"><strong>Device Identifier:</strong> ระบุด้วย UUID (Universally Unique Identifier) ของพาร์ทิชัน</li>
+                    <li class="mb-1"><strong>Mount Point:</strong> เส้นทางไดเรกทอรีปลายทางที่ต้องการเมานต์</li>
+                    <li class="mb-1"><strong>File System Type:</strong> ชนิดของระบบไฟล์ เช่น ext4, ntfs-3g, vfat</li>
+                    <li class="mb-1"><strong>Mount Options:</strong> ตัวเลือกการสิทธิ์ เช่น defaults, ro (Read-Only), rw (Read-Write)</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">5. Recovery Mode และ Boot Repair</h3>
+                <p style="text-indent: 30px;">
+                    เมื่อระบบ Multi OS เกิดปัญหา เช่น เมนู GRUB หายไปหลังจากอัปเดต Windows หรือไฟล์ระบบเสียหาย การกู้คืนระบบสามารถทำได้ผ่านเครื่องมือ Recovery Mode และ Boot Repair:
+                </p>
+                <ul>
+                    <li class="mb-3"><strong>Recovery Mode:</strong> โหมดการบูตพิเศษของ Linux ที่เข้าสู่สิทธิ์ Root Shell โดยไม่ต้องใช้ GUI ช่วยให้ผู้ใช้แก้ไขไฟล์คอนฟิก ติดตั้งไดรเวอร์ หรือสั่งซ่อมแซมพาร์ทิชันด้วยคำสั่ง <code>fsck</code> ได้</li>
+                    <li class="mb-3"><strong>Boot Repair:</strong> เครื่องมือ GUI และ Command-line ยอดนิยมบน Linux สำหรับซ่อมแซม GRUB และโครงสร้าง EFI โดยอัตโนมัติ แก้ไขอาการ GRUB Boot Error, MBR Overwritten หรือ Windows อัปเดตทับพื้นที่บูต</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">6. การแก้ปัญหา Boot ไม่ขึ้น และตัวอย่างสถานการณ์จริง</h3>
+                <p style="text-indent: 30px;">
+                    สถานการณ์ปัญหาที่พบบ่อยที่สุดในระบบ Dual Boot (Windows + Linux) และแนวทางการแก้ไข:
+                </p>
+                <ol>
+                    <li class="mb-3">
+                        <strong>สถานการณ์ที่ 1: ติดตั้ง Windows หลัง Linux แล้ว GRUB หาย บูตเข้าได้แต่ Windows</strong><br>
+                        <em>สาเหตุ:</em> ตัวติดตั้ง Windows จะเขียนทับ Master Boot Record (MBR) หรือเปลี่ยน Boot Order ใน NVRAM ของ UEFI ให้ชี้ไปที่ Windows Boot Manager<br>
+                        <em>แนวทางแก้ไข:</em> บูตด้วย Linux Live USB แล้วใช้คำสั่ง <code>chroot</code> เข้าสู่ระบบเดิม จากนั้นสั่งรัน <code>grub-install /dev/sda</code> และ <code>update-grub</code> หรือใช้เครื่องมือ Boot Repair สั่ง Recommended Repair
+                    </li>
+                    <li class="mb-3">
+                        <strong>สถานการณ์ที่ 2: บูตเข้า Linux แล้วไม่สามารถเมานต์หรือเขียนข้อมูลลงไดรฟ์ NTFS ของ Windows ได้ (Operation not permitted)</strong><br>
+                        <em>สาเหตุ:</em> ฟีเจอร์ <strong>Fast Startup</strong> ใน Windows ปิดเครื่องไม่สมบูรณ์ (เข้าสู่สถานะ Hibernation) ทำให้ไฟล์ระบบ NTFS ล็อกไว้<br>
+                        <em>แนวทางแก้ไข:</em> บูตเข้า Windows แล้วไปที่ Power Options -> ปิดการใช้งาน Fast Startup หรือสั่ง Shutdown แบบ Full Shutdown (กด Shift ค้างขณะคลิก Shut down)
+                    </li>
+                    <li class="mb-3">
+                        <strong>สถานการณ์ที่ 3: เปิดเครื่องแล้วขึ้นหน้าจอ <code>grub rescue></code></strong><br>
+                        <em>สาเหตุ:</em> GRUB หาไฟล์คอนฟิกูเรชันใน <code>/boot/grub</code> ไม่พบ อาจเกิดจากการลบหรือย้ายพาร์ทิชัน Linux<br>
+                        <em>แนวทางแก้ไข:</em> ใช้คำสั่ง <code>ls</code> ค้นหาพาร์ทิชันเดิมของ Linux กำหนดค่า <code>set root=(hd0,msdosX)</code> และ <code>set prefix=(hd0,msdosX)/boot/grub</code> แล้วสั่ง <code>insmod normal</code> ตามด้วย <code>normal</code> เพื่อบูตเข้าชั่วคราวแล้วซ่อมแซม GRUB
+                    </li>
+                </ol>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">7. ผังกระบวนการกู้คืน Boot Loader (Boot Recovery Mapping)</h3>
+                <p style="text-indent: 30px;">
+                    แผนภาพเปรียบเทียบขั้นตอนการทำงานเมื่อเกิดปัญหา Boot ไม่ขึ้นในระบบ Multi OS และเส้นทางการกู้คืนผ่าน Live Media / Boot Repair:
+                </p>
+
+                <div class="my-4 p-4 border rounded-4 bg-light text-center">
+                    <h5 class="font-kanit mb-4 fw-bold text-dark"><i class="fas fa-tools me-2 text-primary"></i>กระบวนการกู้คืน GRUB Boot Loader (Boot Repair Flow)</h5>
+                    
+                    <div class="row justify-content-center align-items-center g-2 text-dark font-kanit">
+                        <div class="col-md-5 p-3 border rounded bg-white shadow-sm border-purple fw-bold" style="border-color:#a855f7;">
+                            <span class="text-purple" style="color:#9333ea;">1. เกิดปัญหา Boot Failure / MBR Overwritten</span>
+                            <hr class="my-2">
+                            <small class="text-muted d-block font-sans">เกิดจาก Windows Update ทับพื้นที่การบูต หรือพาร์ทิชัน GRUB เสียหาย</small>
+                        </div>
+                        <div class="col-md-1"><i class="fas fa-arrows-alt-h fa-2x text-muted"></i></div>
+                        <div class="col-md-5 p-3 border rounded bg-primary text-white shadow-sm fw-bold">
+                            <span>2. บูตผ่าน Live USB & Boot Repair / Chroot</span>
+                            <hr class="my-2 bg-white">
+                            <small class="text-white-50 d-block font-sans">ใช้ Live Media เข้าไปติดตั้ง GRUB ใหม่ลง ESP/MBR และรัน update-grub</small>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">8. Animation จำลองกระบวนการกู้คืน GRUB Boot Loader</h3>
+                <p style="text-indent: 30px;">
+                    แบบจำลองการแก้ไขสถานการณ์เมื่อ Windows เขียนทับพื้นที่บูต (MBR/NVRAM) ส่งผลให้ GRUB หายไป และการใช้ Live USB เพื่อซ่อมแซมและกู้คืนเมนู Multi Boot กลับคืนมา
+                </p>
+                <p class="small text-muted">นักศึกษาสามารถคลิกปุ่มรันตัวจำลองเพื่อดูการซ่อมแซม GRUB Boot Loader:</p>
+
+                <div class="simulation-space my-4 shadow-sm" id="process-anim-space">
+                    <div class="state-container-wrapper py-4">
+                        <div class="simulation-node" id="sim-node-virtual">Live USB</div>
+                        <div class="sim-arrow" id="arrow-1"></div>
+                        <div class="simulation-node" id="sim-node-mmu">Boot Repair</div>
+                        <div class="sim-arrow" id="arrow-2"></div>
+                        <div class="simulation-node" id="sim-node-ram">GRUB Fixed</div>
+                    </div>
+
+                    <div class="row mt-4 pt-2 text-dark font-kanit">
+                        <div class="col-md-12 mb-2">
+                            <h6 class="text-white-50 small mb-2"><i class="fas fa-hdd me-2"></i>จำลองสถานะเมนูการบูตในระบบ (Boot Menu State)</h6>
+                            <div class="queue-box-list" id="cpu-queue-injector">
+                                <span class="pcb-token swap-slot">Windows Only (GRUB Corrupted)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button class="btn btn-primary font-kanit px-4 py-2 rounded-3 shadow" onclick="triggerVirtualMemorySimulation()">
+                            <i class="fas fa-play-circle me-2"></i>เริ่มจำลองการซ่อมแซม GRUB (Boot Repair Mechanism)
+                        </button>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">9. ตัวอย่างตารางการตั้งค่า fstab สำหรับการเมานต์ Multi OS</h3>
+                <p style="text-indent: 30px;">
+                    พิจารณาสถานการณ์การกำหนดค่าไดรฟ์และพาร์ทิชันต่าง ๆ ในไฟล์ <code>/etc/fstab</code> เพื่อให้ระบบ Linux เมานต์พาร์ทิชันอัตโนมัติเมื่อเปิดเครื่อง:
+                </p>
+                <div class="p-3 bg-light rounded-3 border-start border-4 border-info my-3">
+                    <h6 class="font-kanit fw-bold text-dark mb-2">ตัวอย่างโครงสร้างไฟล์ /etc/fstab ในระบบ Dual Boot:</h6>
+                    <p class="small text-muted mb-2">ตัวอย่างการกำหนดสิทธิ์เมานต์พาร์ทิชัน Linux (Ext4), Windows (NTFS) และพาร์ทิชันแชร์ข้อมูล:</p>
+                    
+                    <ul class="small mb-0 font-monospace">
+                        <li class="mb-2"><strong># System Root (Ext4):</strong> UUID=a1b2c3d4-1234... / ext4 errors=remount-ro 0 1 <span class="text-success fw-bold">(พาร์ทิชันระบบ Linux)</span></li>
+                        <li class="mb-2"><strong># Data Share Partition (NTFS):</strong> UUID=5678-EF90 /mnt/SharedData ntfs-3g defaults,uid=1000,gid=1000 0 0 <span class="text-primary fw-bold">(แชร์ข้อมูล Win/Linux)</span></li>
+                        <li class="mb-2"><strong># Windows C: Drive (Read-Only):</strong> UUID=1234-ABCD /mnt/WindowsC ntfs-3g ro,defaults 0 0 <span class="text-warning text-dark fw-bold">(อ่านอย่างเดียว ป้องกันไฟล์ระบบเสียหาย)</span></li>
+                    </ul>
+                </div>
+
+                <div class="row my-4 justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="ratio ratio-16x9 shadow-sm rounded-3 overflow-hidden border">
+                            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="วิดีโอประกอบบทเรียน Multi OS" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+
+            </article>
+
+            <section class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 border-top border-4 border-success" data-aos="fade-up">
+                <div class="d-flex align-items-center justify-content-between border-bottom pb-3 mb-4">
+                    <h3 class="font-kanit text-dark-primary font-weight-bold mb-0">
+                        <i class="fas fa-user-check me-2 text-success"></i>แบบทดสอบหลังเรียนประจำหน่วยการเรียนที่ 13
+                    </h3>
+                    <span class="badge bg-success px-3 py-2 fs-6" id="quiz-progress-badge">ข้อที่ 1 / 20</span>
+                </div>
+                
+                <div id="quiz-question-container" class="my-3"></div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-3">
+                    <button class="btn btn-outline-secondary px-4 py-2 rounded-3" id="prev-question-btn" disabled><i class="fas fa-arrow-left me-2"></i>ข้อก่อนหน้า</button>
+                    <button class="btn btn-primary px-4 py-2 rounded-3" id="next-question-btn">ส่งคำตอบและไปต่อ <i class="fas fa-arrow-right ms-2"></i></button>
+                </div>
+            </section>
+
+            <div class="d-flex justify-content-between align-items-center mb-5" data-aos="fade-up">
+                <a href="unit-12.html" class="btn btn-outline-dark px-4 py-2 rounded-3"><i class="fas fa-arrow-left me-2"></i>หน่วยก่อนหน้า</a>
+                <button class="btn btn-success btn-lg px-5 py-3 rounded-3 shadow font-kanit" id="mark-complete-btn">
+                    <i class="fas fa-check-double me-2"></i>ทำเครื่องหมายว่าเรียนจบหน่วยเรียนนี้แล้ว
+                </button>
+                <a href="unit-14.html" class="btn btn-outline-dark px-4 py-2 rounded-3">หน่วยถัดไป<i class="fas fa-arrow-right ms-2"></i></a>
+            </div>
+
+        </main>
+    </div>
+
+    <footer class="main-footer-section py-4 text-center mt-auto border-top">
+        <div class="container">
+            <p class="mb-0 text-secondary">© 2026 รายวิชา 31909-1001 ระบบปฏิบัติการ — แผงควบคุมเนื้อหาสถาปัตยกรรมระดับ ปวส.</p>
+        </div>
+    </footer>
+
+    <button id="back-to-top-btn" class="btn btn-primary rounded-circle shadow-lg"><i class="fas fa-chevron-up"></i></button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="D:\OS\js\data.js"></script>
+    <script src="D:\OS\js\storage.js"></script>
+    <script src="D:\OS\js\progress.js"></script>
+    <script src="D:\OS\js\main.js"></script>
+    <script src="D:\OS\js\quiz.js"></script>
+
+    <script>
+        function triggerVirtualMemorySimulation() {
+            const nodeVirtual = document.getElementById("sim-node-virtual");
+            const nodeMmu = document.getElementById("sim-node-mmu");
+            const nodeRam = document.getElementById("sim-node-ram");
+            
+            const arr1 = document.getElementById("arrow-1");
+            const arr2 = document.getElementById("arrow-2");
+            
+            const queueBox = document.getElementById("cpu-queue-injector");
+
+            // รีเซ็ตคลาสแอนิเมชันเก่ากลับคืนค่าเริ่มต้น
+            document.querySelectorAll(".simulation-node").forEach(n => n.classList.remove("active-state"));
+            document.querySelectorAll(".sim-arrow").forEach(a => a.classList.remove("active-arrow"));
+            queueBox.innerHTML = '<span class="pcb-token swap-slot">Windows Only (GRUB Corrupted)</span>';
+
+            // เฟส 1: เริ่มต้นบูตด้วย Live USB
+            nodeVirtual.classList.add("active-state");
+            
+            setTimeout(() => {
+                nodeVirtual.classList.remove("active-state");
+                arr1.classList.add("active-arrow");
+                nodeMmu.classList.add("active-state");
+            }, 1200);
+
+            // เฟส 2: สแกนพาร์ทิชันและติดตั้ง GRUB ใหม่
+            setTimeout(() => {
+                arr1.classList.remove("active-arrow");
+                arr2.classList.add("active-arrow");
+                nodeMmu.classList.remove("active-state");
+                nodeRam.classList.add("active-state");
+                
+                queueBox.innerHTML = '<span class="pcb-token ram-slot">GRUB Menu Restored (Windows + Linux)</span>';
+            }, 2600);
+
+            // เฟส 3: กู้คืนสำเร็จ
+            setTimeout(() => {
+                nodeRam.classList.remove("active-state");
+                arr2.classList.remove("active-arrow");
+                
+                Swal.fire({
+                    toast: true,
+                    position: 'bottom-end',
+                    title: 'ซ่อมแซม GRUB Boot Loader สำเร็จ! คืนค่าเมนู Multi OS เรียบร้อย',
+                    icon: 'success',
+                    showConfirmButton: false,
+                    timer: 2500
+                });
+            }, 3800);
+        }
+    </script>
+</body>
+</html>

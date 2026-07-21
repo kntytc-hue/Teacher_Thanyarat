@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หน่วยที่ 6 หน่วยความจำเสมือน | วิชา 31909-1001 ระบบปฏิบัติการ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="D:\OS\css\style.css">
+    <link rel="stylesheet" href="D:\OS\css\responsive.css">
+    <link rel="stylesheet" href="D:\OS\css\dark-mode.css">
+    <style>
+        /* สไตล์แบบสากลสำหรับการจำลอง Animation ของ Virtual Memory Management */
+        .simulation-space {
+            background-color: #1e293b;
+            border-radius: 16px;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        body.light-mode .simulation-space {
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+        }
+        .state-container-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        .simulation-node {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Kanit', sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            color: #ffffff;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 4px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        #sim-node-virtual { background: linear-gradient(135deg, #a855f7, #9333ea); }
+        #sim-node-mmu { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+        #sim-node-ram { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+        /* อนิเมชันกระพริบเมื่อสถานะกำลัง Active */
+        .simulation-node.active-state {
+            transform: scale(1.15);
+            box-shadow: 0 0 25px currentColor;
+            border-color: #ffffff;
+            animation: pulse-glow 1.5s infinite alternate;
+        }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 15px rgba(255,255,255,0.2); }
+            100% { box-shadow: 0 0 30px rgba(255,255,255,0.8); }
+        }
+        
+        .sim-arrow {
+            height: 4px;
+            background-color: #cbd5e1;
+            flex-grow: 1;
+            position: relative;
+            margin: 0 10px;
+            transition: all 0.3s;
+        }
+        body.dark-mode .sim-arrow { background-color: #475569; }
+        .sim-arrow::after {
+            content: '';
+            position: absolute;
+            right: -2px;
+            top: -6px;
+            width: 0; height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 12px solid #cbd5e1;
+        }
+        body.dark-mode .sim-arrow::after { border-left-color: #475569; }
+        .sim-arrow.active-arrow {
+            background-color: #10b981 !important;
+        }
+        .sim-arrow.active-arrow::after {
+            border-left-color: #10b981 !important;
+        }
+        
+        /* สไตล์ตารางบล็อกจำลองหน่วยความจำแฝง / Swap Space */
+        .queue-box-list {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 60px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            border: 1px dashed rgba(0,0,0,0.1);
+        }
+        body.dark-mode .queue-box-list { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); }
+        .pcb-token {
+            background: #4b5563;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            animation: bounceIn 0.5s;
+        }
+        .pcb-token.ram-slot { background: #ef4444; }
+        .pcb-token.swap-slot { background: #f59e0b; }
+    </style>
+</head>
+<body class="light-mode">
+
+    <div id="loading-screen">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg sticky-top main-navbar">
+        <div class="container-fluid">
+            <button class="btn text-white me-2" id="sidebar-toggle-btn" aria-label="เปิดเมนูด้านข้าง">
+                <i class="fas fa-bars fa-lg"></i>
+            </button>
+            <a class="navbar-brand d-flex align-items-center" href="../index.html">
+                <i class="fas fa-laptop-code me-2"></i>
+                <span>31909-1001 ระบบปฏิบัติการ</span>
+            </a>
+            <div class="ms-auto">
+                <button class="btn text-white" id="theme-toggle-btn" aria-label="เปลี่ยนโหมดหน้าจอ">
+                    <i class="fas fa-moon fa-lg"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="app-layout">
+        <aside class="sidebar-navigation" id="main-sidebar">
+            <div class="sidebar-profile text-center py-4">
+                <div class="avatar-container mb-2">
+                    <i class="fas fa-book-reader fa-3x text-white bg-primary p-3 rounded-circle"></i>
+                </div>
+                <h6 class="text-white mb-0">อาจารย์ธัญญรัตน์ ตาเล๊ะ</h6>
+                <small class="text-white-50">เทคโนโลยีคอมพิวเตอร์</small>
+            </div>
+            <ul class="sidebar-menu-list px-2" id="sidebar-menu-injector"></ul>
+        </aside>
+
+        <main class="main-content-flow px-3 px-md-5 py-4">
+            
+            <nav aria-label="breadcrumb" class="mb-4" data-aos="fade-down">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="../index.html" class="text-decoration-none"><i class="fas fa-home me-1"></i>หน้าแรก</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">หน่วยที่ 6 หน่วยความจำเสมือน</li>
+                </ol>
+            </nav>
+
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light text-dark border-start border-5 border-primary" data-aos="fade-up">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <span class="text-primary fw-bold text-uppercase d-block mb-1">Unit 06: Virtual Memory Management</span>
+                        <h1 class="font-kanit font-weight-bold text-dark-primary mb-0">หน่วยที่ 6 หน่วยความจำเสมือน</h1>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary btn-sm rounded-3 px-3" onclick="window.print()"><i class="fas fa-print me-1"></i>พิมพ์บทเรียน</button>
+                        <button class="btn btn-primary btn-sm rounded-3 px-3" id="bookmark-btn"><i class="far fa-bookmark me-1"></i>คั่นหน้าไว้</button>
+                    </div>
+                </div>
+            </div>
+
+            <article class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 leading-relaxed text-secondary text-justify content-article-body" data-aos="fade-up" data-aos-delay="100">
+                
+                <h3 class="font-kanit text-dark-primary font-weight-bold mb-3 border-bottom pb-2">1. แนวคิดหน่วยความจำเสมือน (Virtual Memory Concept)</h3>
+                <p style="text-indent: 30px;">
+                    หน่วยความจำเสมือน (Virtual Memory) เป็นเทคนิคการจัดการหน่วยความจำที่แยกส่วนของหน่วยความจำเชิงตรรกะของผู้ใช้ (Logical Memory) ออกจากหน่วยความจำทางกายภาพ (Physical Memory หรือ RAM) อย่างเด็ดขาด ช่วยให้โปรแกรมเมอร์สามารถเขียนโปรแกรมที่มีขนาดใหญ่กว่าเนื้อที่ของ RAM จริงที่มีอยู่ในระบบคอมพิวเตอร์ได้
+                </p>
+                <p style="text-indent: 30px;">
+                    หัวใจหลักของหน่วยความจำเสมือนคือ การนำพื้นที่บางส่วนของหน่วยความจำสำรอง เช่น ฮาร์ดดิสก์ (Hard Disk) หรือโซลิดสเตตไดรฟ์ (SSD) มาทำหน้าที่จำลองเป็นหน่วยความจำหลักชั่วคราว ทำให้ระบบปฏิบัติการสามารถรันโปรเซสได้พร้อมกันมากขึ้น และใช้ทรัพยากร RAM ที่มีอยู่อย่างจำกัดได้อย่างคุ้มค่าสูงสุด
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">2. ความต้องการหน้าเมื่อร้องขอ (Demand Paging)</h3>
+                <p style="text-indent: 30px;">
+                    Demand Paging เป็นระบบที่นำมาใช้บ่อยที่สุดในการติดตั้งหน่วยความจำเสมือน โดยมีหลักการคือ **"จะโหลดหน้า (Page) ของโปรแกรมเข้าสู่ RAM ก็ต่อเมื่อมีความต้องการใช้งานหน้านั้นจริงๆ เท่านั้น"** ในตอนเริ่มต้นรันโปรเซส หน้าทั้งหมดจะอยู่บนดิสก์ และจะค่อยๆ ถูกดึงเข้ามาใน RAM เมื่อถูกเรียกใช้งาน
+                </p>
+                <p style="text-indent: 30px;">
+                    กลไกนี้อาศัยบิตตรวจสอบความถูกต้อง (Valid-Invalid Bit) ในตารางหน้า (Page Table) เพื่อระบุสถานะ:
+                </p>
+                <ul>
+                    <li class="mb-1"><strong>Valid (V):</strong> หน้านั้นถูกโหลดเข้ามาและสถิตอยู่ใน RAM เรียบร้อยแล้ว CPU เข้าถึงได้ทันที</li>
+                    <li class="mb-1"><strong>Invalid (I):</strong> หน้านั้นยังไม่ได้ถูกโหลดเข้ามาใน RAM (ยังอยู่บนดิสก์) หรือเป็นตำแหน่งที่ไม่มีอยู่จริง</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">3. การเกิดความผิดพลาดของหน้า (Page Fault)</h3>
+                <p style="text-indent: 30px;">
+                    เมื่อ CPU พยายามเข้าถึงตำแหน่งที่อยู่ใดๆ แล้วพบว่าบิตใน Page Table ของหน้านั้นเป็น **Invalid** จะทำให้เกิดเหตุการณ์ขัดจังหวะที่เรียกว่า **Page Fault (ความผิดพลาดของหน้า)** ซึ่งระบบปฏิบัติการจะเข้ามาจัดการตามขั้นตอนดังนี้:
+                </p>
+                <ol>
+                    <li class="mb-2">ระบบปฏิบัติการจะหยุดการทำงานของโปรเซสนั้นชั่วคราวเพื่อตรวจสอบว่าเป็นการเข้าถึงข้อมูลที่ถูกต้องหรือไม่</li>
+                    <li class="mb-2">หากถูกต้อง ระบบจะไปค้นหาและระบุตำแหน่งของหน้านั้นบนหน่วยความจำสำรอง (ดิสก์)</li>
+                    <li class="mb-2">ค้นหาเฟรมที่ว่าง (Free Frame) ใน RAM เพื่อเตรียมนำหน้าดังกล่าวเข้ามาจัดเก็บ</li>
+                    <li class="mb-2">เริ่มกระบวนการอ่านข้อมูลจากดิสก์เข้ามายังเฟรมที่ว่างใน RAM (Disk I/O)</li>
+                    <li class="mb-2">เมื่อดาวน์โหลดเสร็จ จะอัปเดตค่าตารางหน้า (Page Table) เปลี่ยนสถานะจาก Invalid เป็น Valid</li>
+                    <li class="mb-2">คืนคำสั่งเดิมให้ CPU เพื่อเริ่มต้นประมวลผลคำสั่งที่หยุดชะงักไปใหม่อีกครั้ง</li>
+                </ol>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">4. การแทนที่หน้า (Page Replacement)</h3>
+                <p style="text-indent: 30px;">
+                    ในกรณีที่เกิด Page Fault แต่พื้นที่ของ RAM เต็มหมดแล้วและไม่มีเฟรมว่างเหลืออยู่เลย ระบบปฏิบัติการจะต้องเลือกเฟรมใดเฟรมหนึ่งที่อยู่ใน RAM ออกไปเก็บไว้ในดิสก์ก่อน (เรียกว่า **Swap Out** หรือ Victim Page) เพื่อเคลียร์พื้นที่ให้เป็นเฟรมว่าง จากนั้นจึงจะนำหน้าใหม่ที่ต้องการโหลดเข้ามาแทนที่ได้ (เรียกว่า **Swap In**)
+                </p>
+                <p style="text-indent: 30px;">
+                    เพื่อลดจำนวนครั้งในการเขียนข้อมูลกลับไปยังดิสก์ ระบบมักใช้ **Modify Bit (Dirty Bit)** เพื่อตรวจสอบว่าหน้านั้นเคยโดนแก้ไขข้อมูลระหว่างอยู่ใน RAM หรือไม่ หากไม่เคยถูกแก้ไข ระบบสามารถเขียนทับหน้านั้นได้ทันทีโดยไม่ต้องทำการ Write กลับลงไปในดิสก์ซ้ำ
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">5. อัลกอริทึมการแทนที่หน้า (Page Replacement Algorithms)</h3>
+                <p style="text-indent: 30px;">
+                    ประสิทธิภาพของหน่วยความจำเสมือนขึ้นอยู่กับอัลกอริทึมในการเลือกหน้าที่จะถูกเตะออก (Victim Page) เพื่อให้เกิด Page Fault น้อยที่สุด มี 3 อัลกอริทึมหลักดังนี้:
+                </p>
+                <ul>
+                    <li class="mb-3"><strong>First-In, First-Out (FIFO):</strong> หน้าใดที่ถูกโหลดเข้ามาใน RAM เป็นอันดับแรกสุด จะถูกเลือกให้ออกจาก RAM เป็นอันดับแรกสุดเมื่อพื้นที่เต็ม แต่อาจเกิดปรากฏการณ์ <em>Belady's Anomaly</em> (การเพิ่มจำนวนเฟรมแต่กลับทำให้เกิด Page Fault มากขึ้น)</li>
+                    <li class="mb-3"><strong>Optimal (OPT):</strong> อัลกอริทึมในอุดมคติ โดยจะเลือกเตะหน้าที่จะ **ไม่ถูกเรียกใช้งานเลยเป็นระยะเวลานานที่สุดในอนาคต** อัลกอริทึมนี้ให้ผลลัพธ์ดีที่สุดแต่ไม่สามารถนำมาใช้จริงในระบบปฏิบัติการได้ เนื่องจากระบบไม่สามารถทำนายอนาคตล่วงหน้าได้</li>
+                    <li class="mb-3"><strong>Least Recently Used (LRU):</strong> เลือกเตะหน้าที่มีการ **ถูกเข้าถึงหรือเรียกใช้งานย้อนหลังยาวนานที่สุดในอดีต** (ใช้สมมติฐานว่าหน้าเก่าที่ไม่ได้ใช้นานแล้ว น่าจะไม่ถูกใช้ต่อในเร็วๆ นี้) เป็นอัลกอริทึมที่นิยมนำมาใช้งานจริงมากที่สุด</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">6. สภาวะการสลับหน้าอย่างรุนแรง (Thrashing)</h3>
+                <p style="text-indent: 30px;">
+                    สภาวะ Thrashing คือ สถานการณ์ที่โปรเซสใช้เวลาส่วนใหญ่ไปกับ **การสลับหน้าเข้าและออก (Swapping In/Out)** ระหว่าง RAM กับดิสก์ มากกว่าเวลาที่ใช้ในการประมวลผลคำสั่งจริงของ CPU ส่งผลให้ประสิทธิภาพของระบบคอมพิวเตอร์ตกลงอย่างรุนแรงและเกิดการค้าง (Freeze)
+                </p>
+                <p style="text-indent: 30px;">
+                    สาเหตุหลักเกิดจากการที่ระบบรันโปรเซสพร้อมกันมากเกินไป (High Degree of Multiprogramming) จนทำให้เฟรมของ RAM ที่จัดสรรให้แต่ละโปรเซสมีไม่เพียงพอต่อการทำงานของกลุ่มคำสั่งชุดนั้นๆ (Working Set) วิธีแก้ไขคือต้องลดจำนวนโปรเซสที่รันอยู่ หรือเพิ่มขนาดของหน่วยความจำกายภาพ (RAM)
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">7. ผังกระบวนการแลกเปลี่ยนข้อมูลหน่วยความจำ (Virtual to Physical Mapping)</h3>
+                <p style="text-indent: 30px;">
+                    แผนภาพการแปลงและเชื่อมโยงข้อมูลระหว่างพื้นที่เสมือนบนดิสก์และพื้นที่จัดเก็บจริงบนแผงหน่วยความจำหลัก RAM ผ่านกลไกจัดสรร:
+                </p>
+
+                <div class="my-4 p-4 border rounded-4 bg-light text-center">
+                    <h5 class="font-kanit mb-4 fw-bold text-dark"><i class="fas fa-exchange-alt me-2 text-primary"></i>กระบวนการ Swapping / Demand Paging</h5>
+                    
+                    <div class="row justify-content-center align-items-center g-2 text-dark font-kanit">
+                        <div class="col-md-5 p-3 border rounded bg-white shadow-sm border-purple fw-bold" style="border-color:#a855f7;">
+                            <span class="text-purple" style="color:#9333ea;">Virtual Memory (บนดิสก์)</span>
+                            <hr class="my-2">
+                            <small class="text-muted d-block font-sans">พื้นที่จองขนาดใหญ่ที่ถูกสร้างขึ้นเพื่อขยายขอบเขตการทำงานของโปรแกรม</small>
+                        </div>
+                        <div class="col-md-1"><i class="fas fa-arrows-alt-h fa-2x text-muted"></i></div>
+                        <div class="col-md-5 p-3 border rounded bg-danger text-white shadow-sm fw-bold">
+                            <span>Physical RAM (บนบอร์ดจริง)</span>
+                            <hr class="my-2 bg-white">
+                            <small class="text-white-50 d-block font-sans">แผงวงจรความเร็วสูงที่มีขนาดจำกัด สำหรับใช้ประมวลผลงาน Active จริง</small>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">8. Animation แอนิเมชันจำลองขั้นตอนการเกิด Page Fault และ Swap Space</h3>
+                <p style="text-indent: 30px;">
+                    แบบจำลองสถานการณ์จำลองขณะที่ CPU มีการร้องขอหน้าข้อมูลที่เป็นโมเดลเสมือน (Virtual Page) แล้วตรวจสอบผ่าน MMU พบสถานะ Invalid จึงดึงข้อมูลสลับบล็อกจากหน่วยความจำสำรอง (Swap Space) เข้าแทนที่ RAM จริง
+                </p>
+                <p class="small text-muted">นักศึกษาสามารถคลิกปุ่มรันตัวจำลองเพื่อดูการทำ Page Replacement:</p>
+
+                <div class="simulation-space my-4 shadow-sm" id="process-anim-space">
+                    <div class="state-container-wrapper py-4">
+                        <div class="simulation-node" id="sim-node-virtual">Virtual Page</div>
+                        <div class="sim-arrow" id="arrow-1"></div>
+                        <div class="simulation-node" id="sim-node-mmu">MMU (Check)</div>
+                        <div class="sim-arrow" id="arrow-2"></div>
+                        <div class="simulation-node" id="sim-node-ram">Physical RAM</div>
+                    </div>
+
+                    <div class="row mt-4 pt-2 text-dark font-kanit">
+                        <div class="col-md-12 mb-2">
+                            <h6 class="text-white-50 small mb-2"><i class="fas fa-hdd me-2"></i>จำลองสถานะข้อมูลบน RAM และดิสก์ (Swap Space)</h6>
+                            <div class="queue-box-list" id="cpu-queue-injector">
+                                <span class="pcb-token ram-slot">Page 1 (ใน RAM)</span>
+                                <span class="pcb-token ram-slot">Page 2 (ใน RAM)</span>
+                                <span class="pcb-token swap-slot" id="p3-sim">Page 3 (บนดิสก์)</span>
+                                <span class="pcb-token swap-slot" id="p4-sim">Page 4 (บนดิสก์)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button class="btn btn-primary font-kanit px-4 py-2 rounded-3 shadow" onclick="triggerVirtualMemorySimulation()">
+                            <i class="fas fa-play-circle me-2"></i>เริ่มจำลองสถานการณ์เรียกใช้ Page 3 (เกิด Page Fault -> สลับหน้าแบบ FIFO)
+                        </button>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">9. ตัวอย่างตารางการคำนวณแทนที่หน้า (Page Replacement Tracing)</h3>
+                <p style="text-indent: 30px;">
+                    พิจารณาสถานการณ์จำลองการป้อนสายอ้างอิงหน้าข้อมูล (Page Reference String) เพื่อเปรียบเทียบหาจำนวนครั้งการเกิด Page Fault
+                </p>
+                <div class="p-3 bg-light rounded-3 border-start border-4 border-info my-3">
+                    <h6 class="font-kanit fw-bold text-dark mb-2">สถานการณ์จำลองสำหรับการศึกษา:</h6>
+                    <p class="small text-muted mb-2">สมมติให้ระบบคอมพิวเตอร์มีจำนวนเฟรมว่างใน RAM ทั้งหมด <strong>3 เฟรม</strong> และมีลำดับการเรียกหน้าดังนี้:</p>
+                    <div class="bg-white p-2 border rounded font-monospace text-center mb-2 fw-bold text-dark">7, 0, 1, 2, 0, 3</div>
+                    <hr class="my-2">
+                    <p class="small mb-0"><strong>ผลลัพธ์ขั้นตอนการทำงานด้วยอัลกอริทึม FIFO:</strong></p>
+                    <ul class="small mb-0">
+                        <li class="mb-2">เรียกหน้า 7 -> RAM ว่าง -> บรรจุ [7, -, -] <span class="text-danger fw-bold">(เกิด Page Fault ครั้งที่ 1)</span></li>
+                        <li class="mb-2">เรียกหน้า 0 -> RAM ว่าง -> บรรจุ [7, 0, -] <span class="text-danger fw-bold">(เกิด Page Fault ครั้งที่ 2)</span></li>
+                        <li class="mb-2">เรียกหน้า 1 -> RAM ว่าง -> บรรจุ [7, 0, 1] <span class="text-danger fw-bold">(เกิด Page Fault ครั้งที่ 3)</span></li>
+                        <li class="mb-2">เรียกหน้า 2 -> RAM เต็ม -> เตะหน้า 7 ที่เก่าสุดออก -> บรรจุ [2, 0, 1] <span class="text-danger fw-bold">(เกิด Page Fault ครั้งที่ 4)</span></li>
+                        <li class="mb-2">เรียกหน้า 0 -> มีหน้า 0 อยู่แล้วใน RAM -> บรรจุ [2, 0, 1] <span class="text-success fw-bold">(Page Hit! ไม่เกิด Fault)</span></li>
+                        <li>    เรียกหน้า 3 -> RAM เต็ม -> เตะหน้า 0 ที่เก่าเป็นลำดับถัดมาออก -> บรรจุ [2, 3, 1] <span class="text-danger fw-bold">(เกิด Page Fault ครั้งที่ 5)</span></li>
+                    </ul>
+                </div>
+
+                <div class="row my-4 justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="ratio ratio-16x9 shadow-sm rounded-3 overflow-hidden border">
+                            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="วิดีโอประกอบบทเรียนหน่วยความจำเสมือน" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+
+            </article>
+
+            <section class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 border-top border-4 border-success" data-aos="fade-up">
+                <div class="d-flex align-items-center justify-content-between border-bottom pb-3 mb-4">
+                    <h3 class="font-kanit text-dark-primary font-weight-bold mb-0">
+                        <i class="fas fa-user-check me-2 text-success"></i>แบบทดสอบหลังเรียนประจำหน่วยการเรียนที่ 6
+                    </h3>
+                    <span class="badge bg-success px-3 py-2 fs-6" id="quiz-progress-badge">ข้อที่ 1 / 20</span>
+                </div>
+                
+                <div id="quiz-question-container" class="my-3"></div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-3">
+                    <button class="btn btn-outline-secondary px-4 py-2 rounded-3" id="prev-question-btn" disabled><i class="fas fa-arrow-left me-2"></i>ข้อก่อนหน้า</button>
+                    <button class="btn btn-primary px-4 py-2 rounded-3" id="next-question-btn">ส่งคำตอบและไปต่อ <i class="fas fa-arrow-right ms-2"></i></button>
+                </div>
+            </section>
+
+            <div class="d-flex justify-content-between align-items-center mb-5" data-aos="fade-up">
+                <a href="unit-05.html" class="btn btn-outline-dark px-4 py-2 rounded-3"><i class="fas fa-arrow-left me-2"></i>หน่วยก่อนหน้า</a>
+                <button class="btn btn-success btn-lg px-5 py-3 rounded-3 shadow font-kanit" id="mark-complete-btn">
+                    <i class="fas fa-check-double me-2"></i>ทำเครื่องหมายว่าเรียนจบหน่วยเรียนนี้แล้ว
+                </button>
+                <a href="unit-07.html" class="btn btn-outline-dark px-4 py-2 rounded-3">หน่วยถัดไป<i class="fas fa-arrow-right ms-2"></i></a>
+            </div>
+
+        </main>
+    </div>
+
+    <footer class="main-footer-section py-4 text-center mt-auto border-top">
+        <div class="container">
+            <p class="mb-0 text-secondary">© 2026 รายวิชา 31909-1001 ระบบปฏิบัติการ — แผงควบคุมเนื้อหาสถาปัตยกรรมระดับ ปวส.</p>
+        </div>
+    </footer>
+
+    <button id="back-to-top-btn" class="btn btn-primary rounded-circle shadow-lg"><i class="fas fa-chevron-up"></i></button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="D:\OS\js\data.js"></script>
+    <script src="D:\OS\js\storage.js"></script>
+    <script src="D:\OS\js\progress.js"></script>
+    <script src="D:\OS\js\main.js"></script>
+    <script src="D:\OS\js\quiz.js"></script>
+
+    <script>
+        function triggerVirtualMemorySimulation() {
+            const nodeVirtual = document.getElementById("sim-node-virtual");
+            const nodeMmu = document.getElementById("sim-node-mmu");
+            const nodeRam = document.getElementById("sim-node-ram");
+            
+            const arr1 = document.getElementById("arrow-1");
+            const arr2 = document.getElementById("arrow-2");
+            
+            const queueBox = document.getElementById("cpu-queue-injector");
+
+            // รีเซ็ตคลาสแอนิเมชันเก่ากลับคืนค่าเริ่มต้น
+            document.querySelectorAll(".simulation-node").forEach(n => n.classList.remove("active-state"));
+            document.querySelectorAll(".sim-arrow").forEach(a => a.classList.remove("active-arrow"));
+            queueBox.innerHTML = '<span class="pcb-token ram-slot">Page 1 (ใน RAM)</span> <span class="pcb-token ram-slot">Page 2 (ใน RAM)</span> <span class="pcb-token swap-slot" id="p3-sim">Page 3 (บนดิสก์)</span> <span class="pcb-token swap-slot" id="p4-sim">Page 4 (บนดิสก์)</span>';
+
+            // เฟส 1: เรียกข้อมูล Virtual Page 3
+            nodeVirtual.classList.add("active-state");
+            
+            setTimeout(() => {
+                nodeVirtual.classList.remove("active-state");
+                arr1.classList.add("active-arrow");
+                nodeMmu.classList.add("active-state");
+            }, 1200);
+
+            // เฟส 2: ตรวจสอบตารางหน้าเจอ Invalid บิต -> เกิด Page Fault -> ดึงจาก Swap Space ลงมาแทนที่ Page 1 (FIFO)
+            setTimeout(() => {
+                arr1.classList.remove("active-arrow");
+                arr2.classList.add("active-arrow");
+                nodeMmu.classList.remove("active-state");
+                nodeRam.classList.add("active-state");
+                
+                // อัปเดตตาราง: ย้าย Page 1 ออกไปดิสก์ และนำ Page 3 เข้า RAM
+                queueBox.innerHTML = '<span class="pcb-token swap-slot">Page 1 (บนดิสก์)</span> <span class="pcb-token ram-slot">Page 2 (ใน RAM)</span> <span class="pcb-token ram-slot">Page 3 (ใน RAM)</span> <span class="pcb-token swap-slot">Page 4 (บนดิสก์)</span>';
+            }, 2600);
+
+            // เฟส 3: จัดสลับตำแหน่งเสร็จสิ้น
+            setTimeout(() => {
+                nodeRam.classList.remove("active-state");
+                arr2.classList.remove("active-arrow");
+                
+                Swal.fire({
+                    toast: true,
+                    position: 'bottom-end',
+                    title: 'เกิด Page Fault! ดึง Page 3 ขึ้น RAM และเตะ Page 1 ออกสำเร็จ',
+                    icon: 'warning',
+                    showConfirmButton: false,
+                    timer: 2500
+                });
+            }, 3800);
+        }
+    </script>
+</body>
+</html>

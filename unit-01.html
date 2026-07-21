@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หน่วยที่ 1 บทนำสู่ระบบปฏิบัติการ | วิชา 31909-1001</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="D:\OS\css\style.css">
+    <link rel="stylesheet" href="D:\OS\css\responsive.css">
+    <link rel="stylesheet" href="D:\OS\css\dark-mode.css">
+</head>
+<body class="light-mode">
+
+    <div id="loading-screen">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg sticky-top main-navbar">
+        <div class="container-fluid">
+            <button class="btn text-white me-2" id="sidebar-toggle-btn" aria-label="เปิดเมนูด้านข้าง">
+                <i class="fas fa-bars fa-lg"></i>
+            </button>
+            <a class="navbar-brand d-flex align-items-center" href="../index.html">
+                <i class="fas fa-laptop-code me-2"></i>
+                <span>31909-1001 ระบบปฏิบัติการ</span>
+            </a>
+            <div class="ms-auto d-flex align-items-center gap-3">
+                <button class="btn text-white" id="theme-toggle-btn" aria-label="เปลี่ยนโหมดหน้าจอ">
+                    <i class="fas fa-moon fa-lg"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="app-layout">
+        <aside class="sidebar-navigation" id="main-sidebar">
+            <div class="sidebar-profile text-center py-4">
+                <div class="avatar-container mb-2">
+                    <i class="fas fa-book-reader fa-3x text-white bg-primary p-3 rounded-circle"></i>
+                </div>
+                <h6 class="text-white mb-0">อาจารย์ธัญญรัตน์ ตาเล๊ะ</h6>
+                <small class="text-white-50">เทคโนโลยีคอมพิวเตอร์</small>
+            </div>
+            <ul class="sidebar-menu-list px-2" id="sidebar-menu-injector">
+                </ul>
+        </aside>
+
+        <main class="main-content-flow px-3 px-md-5 py-4">
+            
+            <nav aria-label="breadcrumb" class="mb-4" data-aos="fade-down">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="../index.html" class="text-decoration-none"><i class="fas fa-home me-1"></i>หน้าแรก</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">หน่วยที่ 1 บทนำสู่ระบบปฏิบัติการ</li>
+                </ol>
+            </nav>
+
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light text-dark border-start border-5 border-primary" data-aos="fade-up">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <span class="text-primary fw-bold text-uppercase d-block mb-1">Unit 01: Introduction to Operating Systems</span>
+                        <h1 class="font-kanit font-weight-bold text-dark-primary mb-0">หน่วยที่ 1 บทนำสู่ระบบปฏิบัติการ</h1>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary btn-sm rounded-3 px-3" onclick="window.print()"><i class="fas fa-print me-1"></i>พิมพ์บทเรียน</button>
+                        <button class="btn btn-primary btn-sm rounded-3 px-3" id="bookmark-btn"><i class="far fa-bookmark me-1"></i>คั่นหน้าไว้</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-5" data-aos="fade-up" data-aos-delay="50">
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4">
+                        <h5 class="font-kanit text-primary fw-bold"><i class="fas fa-bullseye me-2"></i>วัตถุประสงค์การเรียนรู้</h5>
+                        <ul class="mt-2 text-secondary px-3 mb-0 leading-relaxed">
+                            <li>อธิบายความหมายและสถาปัตยกรรมของคอมพิวเตอร์ได้อย่างถูกต้อง</li>
+                            <li>วิเคราะห์ความแตกต่างระหว่าง Hardware, Software และ Firmware ได้อย่างแจ่มแจ้ง</li>
+                            <li>จำแนกและเปรียบเทียบสถาปัตยกรรมและโครงสร้างของระบบปฏิบัติการแต่ละระบบในชีวิตประจำวัน</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4">
+                        <h5 class="font-kanit text-success fw-bold"><i class="fas fa-star me-2"></i>สมรรถนะรายวิชาที่พึงมี</h5>
+                        <ul class="mt-2 text-secondary px-3 mb-0 leading-relaxed">
+                            <li>แสดงความรู้เกี่ยวกับวิวัฒนาการและการประมวลผลภายในแกนกลางระบบปฏิบัติการ</li>
+                            <li>เลือกระบบปฏิบัติการตามข้อกำหนดของคุณสมบัติงานสถาปัตยกรรมระดับอาชีวศึกษาชั้นสูง</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <article class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 leading-relaxed text-secondary text-justify content-article-body" data-aos="fade-up" data-aos-delay="100">
+                
+                <h3 class="font-kanit text-dark-primary font-weight-bold mb-3 border-bottom pb-2">1. ความหมายของระบบปฏิบัติการและสถาปัตยกรรมคอมพิวเตอร์</h3>
+                <p style="text-indent: 30px;">
+                    <strong>ระบบปฏิบัติการ (Operating System: OS)</strong> คือ ซอฟต์แวร์ระบบ (System Software) ที่ทำหน้าที่เป็นตัวกลางและสะพานเชื่อมโยงระดับแกนระหว่างผู้ใช้คอมพิวเตอร์ (User) แอปพลิเคชันหรือซอฟต์แวร์ประยุกต์ (Application Software) และฮาร์ดแวร์ทางกายภาพ (Hardware) หากไม่มีระบบปฏิบัติการ คอมพิวเตอร์จะเป็นเพียงกลุ่มของแผงวงจรอิเล็กทรอนิกส์ที่ไม่สามารถสื่อสารข้อมูลที่มีความหมายใดๆ กับมนุษย์ได้
+                </p>
+                <p>
+                    ในขณะที่ <strong>สถาปัตยกรรมคอมพิวเตอร์ (Computer Architecture)</strong> หมายถึง โครงสร้าง แผนผัง และระเบียบวิธีการทำงานร่วมกันของอุปกรณ์ฮาร์ดแวร์ต่างๆ ภายในเครื่องคอมพิวเตอร์ ซึ่งประกอบไปด้วยชุดคำสั่ง (Instruction Set), การออกแบบโครงสร้างรีจิสเตอร์, และการบริหารจัดการบัสสัญญาณ โดยระบบปฏิบัติการจะเป็นผู้ควบคุมสถาปัตยกรรมเหล่านี้ให้ทำงานตามตรรกะที่สอดประสานกัน
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">2. ส่วนประกอบพื้นฐานของคอมพิวเตอร์: Hardware, Software, Firmware</h3>
+                <p>ระบบคอมพิวเตอร์จะดำเนินงานได้อย่างสมบูรณ์ ต้องประกอบด้วยการสอดประสานของ 3 องค์ประกอบหลักดังต่อไปนี้:</p>
+                <ul>
+                    <li class="mb-2"><strong>Hardware (ฮาร์ดแวร์):</strong> ชิ้นส่วนทางกายภาพเชิงกลและอิเล็กทรอนิกส์ที่สามารถจับต้องได้ เช่น หน่วยประมวลผลกลาง (CPU), หน่วยความจำหลัก (RAM), แผงวงจรหลัก (Mainboard), และอุปกรณ์แสดงผลข้อมูล (Monitor/SSD)</li>
+                    <li class="mb-2"><strong>Software (ซอฟต์แวร์):</strong> ชุดคำสั่งหรือชุดโปรแกรมที่เขียนขึ้นด้วยภาษาคอมพิวเตอร์เพื่อควบคุมให้ฮาร์ดแวร์ประมวลผลตามเป้าหมาย แบ่งออกเป็นซอฟต์แวร์ระบบ (เช่น Windows, Linux) และซอฟต์แวร์ประยุกต์ (เช่น Web Browser, Line, Office)</li>
+                    <li class="mb-2"><strong>Firmware (เฟิร์มแวร์):</strong> ซอฟต์แวร์ระดับต่ำที่ถูกบันทึกและฝังอยู่อย่างถาวรในชิปหน่วยความจำประเภทไม่ลบเลือน (เช่น ROM, EEPROM) บนบอร์ดอุปกรณ์ ทำหน้าที่เสมือนตัวเริ่มเดินเครื่องและตรวจสอบฮาร์ดแวร์เบื้องต้นทันทีที่เปิดระบบ เช่น BIOS หรือ UEFI บนเมนบอร์ดคอมพิวเตอร์</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">3. วิวัฒนาการของระบบปฏิบัติการในแต่ละยุคสมัย</h3>
+                <p>กลไกการเปลี่ยนผ่านของระบบปฏิบัติการสามารถแบ่งออกตามโครงสร้างวิศวกรรมไฟฟ้าคอมพิวเตอร์ได้ดังนี้:</p>
+                
+                <h5>3.1 ยุคแรกของคอมพิวเตอร์ (หลอดสูญญากาศ - ปลั๊กบอร์ด)</h5>
+                <p>ในช่วงทศวรรษ 1945–1955 เครื่องคอมพิวเตอร์ยังไม่มีระบบปฏิบัติการ การส่งคำสั่งทำโดยการป้อนค่าทางกายภาพผ่านสายเคเบิล สวิตช์ไฟฟ้า และบัตรเจาะรู (Punch Cards) เครื่องทำงานทีละหนึ่งโปรแกรมอย่างเชื่องช้า</p>
+
+                <h5>3.2 ระบบประมวลผลแบบกลุ่ม (Batch Processing System)</h5>
+                <p>เพื่อไม่ให้ CPU อันมีราคาแพงต้องว่างงาน จึงมีการพัฒนาให้ผู้ใช้งานส่งมอบงาน (Jobs) ให้โปรแกรมควบคุมส่วนกลางทำการรวบรวมงานที่มีลักษณะรูปแบบคล้ายคลึงกัน มัดรวมกันเป็นกลุ่ม (Batch) แล้วสั่งรันต่อเนื่องกันไปโดยอัตโนมัติบนแถบบันทึกแม่เหล็ก</p>
+
+                <h5>3.3 ระบบแบ่งส่วนเวลา (Time Sharing System)</h5>
+                <p>พัฒนาขึ้นเพื่อแก้ไขปัญหาระบบ Batch โดยการใช้กลไกของ CPU เมนเฟรมสลับเวลาบริหารจัดการงานของผู้ใช้งานหลายคนผ่านเครื่องเทอร์มินอล (Terminals) ด้วยความเร็วสูงมากในเสี้ยววินาที ทำให้ผู้ใช้ทุกคนมีความรู้สึกว่าตนเองกำลังครอบครองระบบประมวลผลแต่เพียงผู้เดียว</p>
+
+                <h5>3.4 ยุคการปฏิวัติด้วยระบบ GUI และ Personal Computer</h5>
+                <p>การเปิดตัวระบบ Graphical User Interface ช่วยให้ผู้ใช้ทั่วไปเข้าถึงระบบคอมพิวเตอร์ส่วนบุคคลได้ง่ายขึ้น ผ่านการสั่งการด้วยองค์ประกอบกราฟิกอย่าง วินโดว์ หน้าต่าง ไอคอน และการคลิกเมาส์ แทนที่จะเป็นการพิมพ์ชุดคำสั่งข้อความแบบ CLI</p>
+
+                <h5>3.5 ระบบคลาวด์ มหานครมือถือ และ AI Operating System (ปัจจุบัน - 2026)</h5>
+                <p>ปัจจุบันระบบขยายตัวไปสู่ <strong>Cloud Computing</strong> และอุปกรณ์พกพาไร้สาย โดยระบบปฏิบัติการสมัยใหม่ถูกออกแบบให้มีสถาปัตยกรรมแบบกระจาย (Distributed OS) และล่าสุดในปัจจุบันคือ <strong>AI Operating System (AI-Native OS)</strong> ซึ่งรวมโครงสร้างโมเดลปัญญาประดิษฐ์เข้าไปฝังอยู่ในแกน Kernel เพื่อประมวลผลสัญญาณฮาร์ดแวร์ NPU และจัดสรรการใช้หน่วยความจำและพลังงานแบบทำนายอนาคต (Predictive Allocation)</p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">4. ตารางวิเคราะห์เปรียบเทียบระบบปฏิบัติการยอดนิยม</h3>
+                <div class="table-responsive my-4">
+                    <table class="table table-bordered table-striped text-center">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>ระบบปฏิบัติการ</th>
+                                <th>ประเภทโค้ด (Open/Closed)</th>
+                                <th>สถาปัตยกรรมหลัก</th>
+                                <th>ความปลอดภัยพื้นฐาน</th>
+                                <th>ความเหมาะสมกับหน้างาน</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Microsoft Windows</strong></td>
+                                <td>Closed Source</td>
+                                <td>Hybrid Kernel</td>
+                                <td>ปานกลาง (มี Defender)</td>
+                                <td>ผู้ใช้ทั่วไป, สำนักงาน, การเล่นเกม</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Linux / Ubuntu</strong></td>
+                                <td>Open Source</td>
+                                <td>Monolithic Kernel</td>
+                                <td>สูงมาก (เข้มงวดเรื่องสิทธิ์)</td>
+                                <td>เซิร์ฟเวอร์, งานเน็ตเวิร์ก, นักพัฒนา</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Apple macOS</strong></td>
+                                <td>Closed Source</td>
+                                <td>Hybrid (XNU Darwin)</td>
+                                <td>สูงมาก (ระบบ Sandbox)</td>
+                                <td>งานกราฟิกดีไซน์, พัฒนาซอฟต์แวร์</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Android</strong></td>
+                                <td>Open Source (AOSP)</td>
+                                <td>Linux Kernel Modified</td>
+                                <td>ปานกลางถึงสูง</td>
+                                <td>สมาร์ตโฟน, สมาร์ตทีวี, IoT</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Apple iOS</strong></td>
+                                <td>Closed Source</td>
+                                <td>Darwin Architecture</td>
+                                <td>สูงมาก (ปิดกั้นการไซด์โหลด)</td>
+                                <td>อุปกรณ์พกพาในเครือข่ายนิเวศ Apple</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">5. สื่อมัลติมีเดียประกอบบทเรียน</h3>
+                <div class="row my-4 justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="ratio ratio-16x9 shadow-sm rounded-3 overflow-hidden border">
+                            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="วิดีโอประกอบบทเรียนระบบปฏิบัติการ" allowfullscreen></iframe>
+                        </div>
+                        <small class="text-muted d-block text-center mt-2">วิดีโอประกอบการเรียนรู้: เจาะลึกโครงสร้างแกนกลางระบบปฏิบัติการและการสื่อสารระดับฮาร์ดแวร์</small>
+                    </div>
+                </div>
+
+                <div class="card bg-light border-0 rounded-4 p-3 d-flex flex-row justify-content-between align-items-center flex-wrap gap-2">
+                    <span class="fs-6 text-dark fw-medium"><i class="fas fa-cloud-download-alt me-2 text-primary"></i>ดาวน์โหลดเอกสารประกอบการสอนประจำหน่วยเรียน</span>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-danger" onclick="Swal.fire('ข้อความแจ้งเตือน','เอกสาร PDF จะถูกเพิ่มระบบภายหลัง','info')"><i class="far fa-file-pdf me-1"></i>PDF</button>
+                        <button class="btn btn-sm btn-warning text-dark" onclick="Swal.fire('ข้อความแจ้งเตือน','เอกสาร PowerPoint จะถูกเพิ่มระบบภายหลัง','info')"><i class="far fa-file-powerpoint me-1"></i>PowerPoint</button>
+                    </div>
+                </div>
+
+            </article>
+
+            <section class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 border-top border-4 border-success" data-aos="fade-up">
+                <div class="d-flex align-items-center justify-content-between border-bottom pb-3 mb-4">
+                    <h3 class="font-kanit text-dark-primary font-weight-bold mb-0">
+                        <i class="fas fa-user-check me-2 text-success"></i>แบบทดสอบหลังเรียนประจำหน่วยการเรียนที่ 1
+                    </h3>
+                    <span class="badge bg-success px-3 py-2 fs-6" id="quiz-progress-badge">ข้อที่ 1 / 20</span>
+                </div>
+                
+                <div id="quiz-question-container" class="my-3">
+                    </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-3">
+                    <button class="btn btn-outline-secondary px-4 py-2 rounded-3" id="prev-question-btn" disabled><i class="fas fa-arrow-left me-2"></i>ข้อก่อนหน้า</button>
+                    <button class="btn btn-primary px-4 py-2 rounded-3" id="next-question-btn">ส่งคำตอบและไปต่อ <i class="fas fa-arrow-right ms-2"></i></button>
+                </div>
+            </section>
+
+            <div class="d-flex justify-content-between align-items-center mb-5" data-aos="fade-up">
+                <a href="../index.html" class="btn btn-outline-dark px-4 py-2 rounded-3"><i class="fas fa-home me-2"></i>กลับหน้าแรก</a>
+                <button class="btn btn-success btn-lg px-5 py-3 rounded-3 shadow font-kanit" id="mark-complete-btn">
+                    <i class="fas fa-check-double me-2"></i>ทำเครื่องหมายว่าเรียนจบหน่วยเรียนนี้แล้ว
+                </button>
+                <a href="unit-02.html" class="btn btn-outline-dark px-4 py-2 rounded-3">หน่วยถัดไป<i class="fas fa-arrow-right ms-2"></i></a>
+            </div>
+
+        </main>
+    </div>
+
+    <footer class="main-footer-section py-4 text-center mt-auto border-top">
+        <div class="container">
+            <p class="mb-0 text-secondary">© 2026 รายวิชา 31909-1001 ระบบปฏิบัติการ — พัฒนาแบบ Static Web Application</p>
+        </div>
+    </footer>
+
+    <button id="back-to-top-btn" class="btn btn-primary rounded-circle shadow-lg" aria-label="กลับไปด้านบนสุด">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="D:\OS\js\data.js"></script>
+    <script src="D:\OS\js\storage.js"></script>
+    <script src="D:\OS\js\progress.js"></script>
+    <script src="D:\OS\js\main.js"></script>
+    <script src="D:\OS\js\quiz.js"></script>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หน่วยที่ 2 หน้าที่และหลักการทำงานของระบบปฏิบัติการ | วิชา 31909-1001</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/responsive.css">
+    <link rel="stylesheet" href="../css/dark-mode.css">
+</head>
+<body class="light-mode">
+
+    <div id="loading-screen">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg sticky-top main-navbar">
+        <div class="container-fluid">
+            <button class="btn text-white me-2" id="sidebar-toggle-btn" aria-label="เปิดเมนูด้านข้าง">
+                <i class="fas fa-bars fa-lg"></i>
+            </button>
+            <a class="navbar-brand d-flex align-items-center" href="../index.html">
+                <i class="fas fa-laptop-code me-2"></i>
+                <span>31909-1001 ระบบปฏิบัติการ</span>
+            </a>
+            <div class="ms-auto d-flex align-items-center gap-3">
+                <button class="btn text-white" id="theme-toggle-btn" aria-label="เปลี่ยนโหมดหน้าจอ">
+                    <i class="fas fa-moon fa-lg"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="app-layout">
+        <aside class="sidebar-navigation" id="main-sidebar">
+            <div class="sidebar-profile text-center py-4">
+                <div class="avatar-container mb-2">
+                    <i class="fas fa-book-reader fa-3x text-white bg-primary p-3 rounded-circle"></i>
+                </div>
+                <h6 class="text-white mb-0">อาจารย์ธัญญรัตน์ ตาเล๊ะ</h6>
+                <small class="text-white-50">เทคโนโลยีคอมพิวเตอร์</small>
+            </div>
+            <ul class="sidebar-menu-list px-2" id="sidebar-menu-injector">
+                </ul>
+        </aside>
+
+        <main class="main-content-flow px-3 px-md-5 py-4">
+            
+            <nav aria-label="breadcrumb" class="mb-4" data-aos="fade-down">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="../index.html" class="text-decoration-none"><i class="fas fa-home me-1"></i>หน้าแรก</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">หน่วยที่ 2 หน้าที่และหลักการทำงานของระบบปฏิบัติการ</li>
+                </ol>
+            </nav>
+
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light text-dark border-start border-5 border-primary" data-aos="fade-up">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <span class="text-primary fw-bold text-uppercase d-block mb-1">Unit 02: Functions and Operations of Operating Systems</span>
+                        <h1 class="font-kanit font-weight-bold text-dark-primary mb-0">หน่วยที่ 2 หน้าที่และหลักการทำงานของระบบปฏิบัติการ</h1>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary btn-sm rounded-3 px-3" onclick="window.print()"><i class="fas fa-print me-1"></i>พิมพ์บทเรียน</button>
+                        <button class="btn btn-primary btn-sm rounded-3 px-3" id="bookmark-btn"><i class="far fa-bookmark me-1"></i>คั่นหน้าไว้</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-5" data-aos="fade-up" data-aos-delay="50">
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4">
+                        <h5 class="font-kanit text-primary fw-bold"><i class="fas fa-bullseye me-2"></i>วัตถุประสงค์การเรียนรู้</h5>
+                        <ul class="mt-2 text-secondary px-3 mb-0 leading-relaxed">
+                            <li>อธิบายความสัมพันธ์และหน้าที่ของ Kernel และ Shell ได้อย่างชัดเจน</li>
+                            <li>จำแนกความแตกต่างระหว่างระบบแบบอินเทอร์เฟซ CLI และ GUI ได้</li>
+                            <li>วิเคราะห์กลไกการสลับและประมวลผลทรัพยากรของระบบปฏิบัติการแต่ละประเภทได้ถูกต้อง</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4">
+                        <h5 class="font-kanit text-success fw-bold"><i class="fas fa-star me-2"></i>สมรรถนะรายวิชาที่พึงมี</h5>
+                        <ul class="mt-2 text-secondary px-3 mb-0 leading-relaxed">
+                            <li>แสดงความรู้เกี่ยวกับบทบาทของระบบปฏิบัติการในการบริหารจัดการทรัพยากรฮาร์ดแวร์หลัก</li>
+                            <li>จัดจำแนกประเภทของระบบปฏิบัติการตามเงื่อนไขความต้องการของหน้างานเทคโนโลยีเครือข่าย</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <article class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 leading-relaxed text-secondary text-justify content-article-body" data-aos="fade-up" data-aos-delay="100">
+                
+                <h3 class="font-kanit text-dark-primary font-weight-bold mb-3 border-bottom pb-2">1. สถาปัตยกรรมการปฏิสัมพันธ์ของระบบ (Kernel, Shell, และ User Interface)</h3>
+                <p style="text-indent: 30px;">
+                    การทำงานภายในของระบบปฏิบัติการไม่ได้เชื่อมต่อกับผู้ใช้ในชั้นเดียว แต่แบ่งแยกสิทธิเป็นเลเยอร์เพื่อเสถียรภาพและความปลอดภัย โดยโครงสร้างหลักจะประกอบด้วย <strong>Kernel (เคอร์เนล)</strong> ซึ่งเป็นแกนกลางชั้นในสุดที่ทำงานอยู่ในสถานะสิทธิ์สูงสุด (Privileged Mode/Kernel Space) มีหน้าที่ติดต่อ สั่งการ และจัดสรรพลังงานไฟฟ้าให้ฮาร์ดแวร์คอมพิวเตอร์โดยตรง ทั้งควบคุมรอบเวลาสัญญาณนาฬิกาของ CPU และจัดสรรหน้าหน่วยความจำหลัก
+                </p>
+                <p>
+                    ถัดมาในเลเยอร์ที่ห่อหุ้มเคอร์เนลไว้คือ <strong>Shell (เชลล์)</strong> ทำหน้าที่เป็นตัวแปลชุดคำสั่ง (Command Interpreter) คอยรับสัญญาณความต้องการจากโปรแกรมภายนอกหรือผู้ใช้ ตรวจสอบความถูกต้องทางไวยากรณ์โครงสร้าง แล้วส่งผ่านสัญญาณในรูปแบบ System Calls ไปให้ระดับ Kernel ประมวลผลต่อ โดยผู้ใช้จะส่งผ่านความต้องการผ่านตัวกลางที่เรียกว่า <strong>User Interface (UI)</strong> ซึ่งแยกเป็น 2 โครงสร้างย่อย:
+                </p>
+                <ul>
+                    <li><strong>CLI (Command Line Interface):</strong> การสั่งการผ่านบรรทัดข้อความตัวอักษรล้วน เช่น ระบบทุบคำสั่งทราฟฟิกคอนโซล Bash ใน Linux หรือ CMD ใน Windows ประหยัดหน่วยความจำ RAM สูงสุดและทำงานได้รวดเร็วเด็ดขาด</li>
+                    <li><strong>GUI (Graphical User Interface):</strong> การสั่งการผ่านสัญลักษณ์ภาพกราฟิก (WIMP: Windows, Icons, Menus, Pointer) ควบคุมผ่านเมาส์หรือการทัชสกรีนหน้าจอ ช่วยลดความยุ่งยากในการจำคำสั่งของผู้เรียนและผู้ใช้งานทั่วไป</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">2. หน้าที่หลักในการจัดการทรัพยากร (Resource Management)</h3>
+                <p>ระบบปฏิบัติการจะทำหน้าที่เสมือนผู้จัดสรรทรัพยากร (Resource Allocator) ของคอมพิวเตอร์ที่มีจำกัด โดยโฟกัสหน้าที่หลักใน 4 แกนสำคัญ:</p>
+                <ol>
+                    <li class="mb-2"><strong>การจัดการโพรเซส (Process Management):</strong> ควบคุม จัดคิว วนเวลา และสลับโปรแกรมงานเข้าประมวลผลใน CPU รวมถึงแก้ไขสภาวะติดขัดอย่าง Deadlock</li>
+                    <li class="mb-2"><strong>การจัดการหน่วยความจำหลัก (Memory Management):</strong> ทำหน้าที่ Allocate จองพื้นที่ RAM ให้แอปพลิเคชัน และทำหน้าที่คายคืนพื้นที่ (Deallocate) ทันทีเมื่อแอปนั้นปิดตัว เพื่อป้องกันปัญหาความจำรั่ว (Memory Leak)</li>
+                    <li class="mb-2"><strong>การจัดการระบบไฟล์ (File System Management):</strong> จัดเตรียมสารบบและการเข้าถึงตรรกะแฟ้มข้อมูลในฮาร์ดดิสก์/SSD</li>
+                    <li class="mb-2"><strong>การจัดการอุปกรณ์รับส่งข้อมูล (I/O Management):</strong> ประสานงานสัญญาณรับเข้าและแสดงผลผ่านซอฟต์แวร์ไดรเวอร์เฉพาะทาง</li>
+                </ol>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">3. สถาปัตยกรรมและประเภทของระบบปฏิบัติการ</h3>
+                <p>ระบบปฏิบัติการในปัจจุบันสามารถจำแนกออกตามโครงสร้างการแบ่งเวลาและการคำนวณสวิตช์สัญญาณได้ดังนี้:</p>
+                <ul>
+                    <li class="mb-2"><strong>Single Tasking & Multi Tasking:</strong> งานเดี่ยวรันทีละคิว (เช่น MS-DOS) เทียบกับระบบงานหลากหน้าต่างสลับประมวลผลพร้อมกัน (เช่น Windows, macOS)</li>
+                    <li class="mb-2"><strong>Multi Programming & Multi Processing:</strong> มัลติโปรแกรมมิ่งคือการโหลดงานหลายตัวพักไว้ในแรมเพื่อเตรียมสลับรันเมื่อตัวแรกรอข้อมูล I/O ส่วนมัลติโพรเซสซิ่งคือการรันงานกระจายบนชิปตัวประมวลผลซีพียูจริง (Cores) หลายตัวพร้อมกันทางกายภาพ</li>
+                    <li class="mb-2"><strong>Distributed OS & Network OS:</strong> ระบบแบบกระจายคำนวณเชื่อมต่ออิสระหลายเครื่องแยกเครื่องกันแต่จำลองเสมือนรันบนเครื่องเดียว เทียบกับระบบเครือข่ายเซิร์ฟเวอร์ที่เน้นความปลอดภัยเรื่องสิทธิ์ (เช่น Windows Server, Red Hat)</li>
+                    <li class="mb-2"><strong>Embedded OS & Real-Time OS (RTOS):</strong> โอเอสแบบฝังขนาดกะทัดรัดบนอุปกรณ์ไฟฟ้า เทียบกับระบบปฏิบัติการเวลาจริงที่เน้นความเที่ยงตรงด้านการประมวลผลแบบห้ามเรทเดดไลน์วินาทีเด็ดขาด (เช่น กล่องควบคุมเบรกรถยนต์ ABS หรือระบบขีปนาวุธ)</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">4. ตารางเปรียบเทียบประเภทของระบบปฏิบัติการ พร้อมตัวอย่างจริง</h3>
+                <div class="table-responsive my-4">
+                    <table class="table table-bordered table-striped text-center align-middle">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>ประเภทระบบปฏิบัติการ</th>
+                                <th>กลไกการทำงานหลัก</th>
+                                <th>ข้อดี / คุณลักษณะเด่น</th>
+                                <th>ตัวอย่างซอฟต์แวร์จริง</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Single Tasking</strong></td>
+                                <td>รันโพรเซสเดียวจนจบจึงรับงานใหม่</td>
+                                <td>สถาปัตยกรรมง่าย ไม่แย่งทรัพยากร</td>
+                                <td>MS-DOS, FreeDOS</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Multi Tasking</strong></td>
+                                <td>สลับเวลาซีพียูแบ่งส่วนให้แอปต่างๆ</td>
+                                <td>ผู้ใช้งานทำงานได้ต่อเนื่อง ยืดหยุ่นสูง</td>
+                                <td>Windows 11, macOS, Linux</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Multi Processing</strong></td>
+                                <td>แบ่งเธรดงานกระจายลงซีพียูหลาย Core จริง</td>
+                                <td>คำนวณงานใหญ่เสร็จเร็ว ทนทานสูง</td>
+                                <td>Windows Server, Linux Core มัลติคอร์</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Real-Time OS (RTOS)</strong></td>
+                                <td>ตอบสนองทันทีภายใต้เงื่อนไขเวลาจำกัด</td>
+                                <td>รับประกันเวลาประมวลผลเคร่งครัด</td>
+                                <td>VxWorks, FreeRTOS, QNX</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">5. สื่อมัลติมีเดียประกอบบทเรียน</h3>
+                <div class="row my-4 justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="ratio ratio-16x9 shadow-sm rounded-3 overflow-hidden border">
+                            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="วิดีโอประกอบบทเรียนระบบปฏิบัติการ" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card bg-light border-0 rounded-4 p-3 d-flex flex-row justify-content-between align-items-center flex-wrap gap-2">
+                    <span class="fs-6 text-dark fw-medium"><i class="fas fa-cloud-download-alt me-2 text-primary"></i>ดาวน์โหลดเอกสารประกอบการสอนประจำหน่วยเรียน</span>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-danger" onclick="Swal.fire('ข้อความแจ้งเตือน','เอกสาร PDF จะถูกเพิ่มระบบภายหลัง','info')"><i class="far fa-file-pdf me-1"></i>PDF</button>
+                        <button class="btn btn-sm btn-warning text-dark" onclick="Swal.fire('ข้อความแจ้งเตือน','เอกสาร PowerPoint จะถูกเพิ่มระบบภายหลัง','info')"><i class="far fa-file-powerpoint me-1"></i>PowerPoint</button>
+                    </div>
+                </div>
+
+            </article>
+
+            <section class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 border-top border-4 border-success" data-aos="fade-up">
+                <div class="d-flex align-items-center justify-content-between border-bottom pb-3 mb-4">
+                    <h3 class="font-kanit text-dark-primary font-weight-bold mb-0">
+                        <i class="fas fa-user-check me-2 text-success"></i>แบบทดสอบหลังเรียนประจำหน่วยการเรียนที่ 2
+                    </h3>
+                    <span class="badge bg-success px-3 py-2 fs-6" id="quiz-progress-badge">ข้อที่ 1 / 20</span>
+                </div>
+                
+                <div id="quiz-question-container" class="my-3">
+                    </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-3">
+                    <button class="btn btn-outline-secondary px-4 py-2 rounded-3" id="prev-question-btn" disabled><i class="fas fa-arrow-left me-2"></i>ข้อก่อนหน้า</button>
+                    <button class="btn btn-primary px-4 py-2 rounded-3" id="next-question-btn">ส่งคำตอบและไปต่อ <i class="fas fa-arrow-right ms-2"></i></button>
+                </div>
+            </section>
+
+            <div class="d-flex justify-content-between align-items-center mb-5" data-aos="fade-up">
+                <a href="unit-01.html" class="btn btn-outline-dark px-4 py-2 rounded-3"><i class="fas fa-arrow-left me-2"></i>หน่วยก่อนหน้า</a>
+                <button class="btn btn-success btn-lg px-5 py-3 rounded-3 shadow font-kanit" id="mark-complete-btn">
+                    <i class="fas fa-check-double me-2"></i>ทำเครื่องหมายว่าเรียนจบหน่วยเรียนนี้แล้ว
+                </button>
+                <a href="#" class="btn btn-outline-dark px-4 py-2 rounded-3 disabled">หน่วยถัดไป<i class="fas fa-arrow-right ms-2"></i></a>
+            </div>
+
+        </main>
+    </div>
+
+    <footer class="main-footer-section py-4 text-center mt-auto border-top">
+        <div class="container">
+            <p class="mb-0 text-secondary">© 2026 รายวิชา 31909-1001 ระบบปฏิบัติการ — พัฒนาแบบ Static Web Application</p>
+        </div>
+    </footer>
+
+    <button id="back-to-top-btn" class="btn btn-primary rounded-circle shadow-lg" aria-label="กลับไปด้านบนสุด">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="../js/data.js"></script>
+    <script src="../js/storage.js"></script>
+    <script src="../js/progress.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/quiz.js"></script>
+</body>
+</html>

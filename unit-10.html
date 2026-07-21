@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หน่วยที่ 10 การรักษาความปลอดภัย | วิชา 31909-1001 ระบบปฏิบัติการ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="D:\OS\css\style.css">
+    <link rel="stylesheet" href="D:\OS\css\responsive.css">
+    <link rel="stylesheet" href="D:\OS\css\dark-mode.css">
+    <style>
+        /* สไตล์แบบสากลสำหรับการจำลอง Animation ของ Security Management */
+        .simulation-space {
+            background-color: #1e293b;
+            border-radius: 16px;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        body.light-mode .simulation-space {
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+        }
+        .state-container-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        .simulation-node {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Kanit', sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            color: #ffffff;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 4px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        #sim-node-user { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+        #sim-node-firewall { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        #sim-node-system { background: linear-gradient(135deg, #10b981, #059669); }
+
+        /* อนิเมชันกระพริบเมื่อสถานะกำลัง Active */
+        .simulation-node.active-state {
+            transform: scale(1.15);
+            box-shadow: 0 0 25px currentColor;
+            border-color: #ffffff;
+            animation: pulse-glow 1.5s infinite alternate;
+        }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 15px rgba(255,255,255,0.2); }
+            100% { box-shadow: 0 0 30px rgba(255,255,255,0.8); }
+        }
+        
+        .sim-arrow {
+            height: 4px;
+            background-color: #cbd5e1;
+            flex-grow: 1;
+            position: relative;
+            margin: 0 10px;
+            transition: all 0.3s;
+        }
+        body.dark-mode .sim-arrow { background-color: #475569; }
+        .sim-arrow::after {
+            content: '';
+            position: absolute;
+            right: -2px;
+            top: -6px;
+            width: 0; height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 12px solid #cbd5e1;
+        }
+        body.dark-mode .sim-arrow::after { border-left-color: #475569; }
+        .sim-arrow.active-arrow {
+            background-color: #10b981 !important;
+        }
+        .sim-arrow.active-arrow::after {
+            border-left-color: #10b981 !important;
+        }
+        .sim-arrow.blocked-arrow {
+            background-color: #ef4444 !important;
+        }
+        .sim-arrow.blocked-arrow::after {
+            border-left-color: #ef4444 !important;
+        }
+        
+        /* สไตล์ตารางบล็อกจำลอง Security Logs / AAA State */
+        .queue-box-list {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 60px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            border: 1px dashed rgba(0,0,0,0.1);
+            flex-wrap: wrap;
+        }
+        body.dark-mode .queue-box-list { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); }
+        .pcb-token {
+            background: #4b5563;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            animation: bounceIn 0.5s;
+        }
+        .pcb-token.auth-pass { background: #10b981; }
+        .pcb-token.auth-fail { background: #ef4444; }
+        .pcb-token.auth-pending { background: #f59e0b; }
+    </style>
+</head>
+<body class="light-mode">
+    
+    <div id="loading-screen">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    
+    <nav class="navbar navbar-expand-lg sticky-top main-navbar">
+        <div class="container-fluid">
+            <button class="btn text-white me-2" id="sidebar-toggle-btn" aria-label="เปิดเมนูด้านข้าง">
+                <i class="fas fa-bars fa-lg"></i>
+            </button>
+            <a class="navbar-brand d-flex align-items-center" href="../index.html">
+                <i class="fas fa-laptop-code me-2"></i>
+                <span>31909-1001 ระบบปฏิบัติการ</span>
+            </a>
+            <div class="ms-auto">
+                <button class="btn text-white" id="theme-toggle-btn" aria-label="เปลี่ยนโหมดหน้าจอ">
+                    <i class="fas fa-moon fa-lg"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="app-layout">
+        <aside class="sidebar-navigation" id="main-sidebar">
+            <div class="sidebar-profile text-center py-4">
+                <div class="avatar-container mb-2">
+                    <i class="fas fa-book-reader fa-3x text-white bg-primary p-3 rounded-circle"></i>
+                </div>
+                <h6 class="text-white mb-0">อาจารย์ธัญญรัตน์ ตาเล๊ะ</h6>
+                <small class="text-white-50">เทคโนโลยีคอมพิวเตอร์</small>
+            </div>
+            <ul class="sidebar-menu-list px-2" id="sidebar-menu-injector"></ul>
+        </aside>
+    
+        <main class="main-content-flow px-3 px-md-5 py-4">
+            
+            <nav aria-label="breadcrumb" class="mb-4" data-aos="fade-down">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="../index.html" class="text-decoration-none"><i class="fas fa-home me-1"></i>หน้าแรก</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">หน่วยที่ 10 การรักษาความปลอดภัย</li>
+                </ol>
+            </nav>
+            
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light text-dark border-start border-5 border-primary" data-aos="fade-up">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <span class="text-primary fw-bold text-uppercase d-block mb-1">Unit 10: Operating System Security</span>
+                        <h1 class="font-kanit font-weight-bold text-dark-primary mb-0">หน่วยที่ 10 การรักษาความปลอดภัย</h1>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary btn-sm rounded-3 px-3" onclick="window.print()"><i class="fas fa-print me-1"></i>พิมพ์บทเรียน</button>
+                        <button class="btn btn-primary btn-sm rounded-3 px-3" id="bookmark-btn"><i class="far fa-bookmark me-1"></i>คั่นหน้าไว้</button>
+                    </div>
+                </div>
+            </div>
+            
+            <article class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 leading-relaxed text-secondary text-justify content-article-body" data-aos="fade-up" data-aos-delay="100">
+                
+                <h3 class="font-kanit text-dark-primary font-weight-bold mb-3 border-bottom pb-2">1. ภาพรวมการรักษาความปลอดภัยของระบบปฏิบัติการ (Security Concept)</h3>
+                <p style="text-indent: 30px;">
+                    การรักษาความปลอดภัยของระบบปฏิบัติการ (Operating System Security) หมายถึง มาตรการ นโยบาย และกลไกในการปกป้องฮาร์ดแวร์ ซอฟต์แวร์ และข้อมูลคอมพิวเตอร์จากการถูกเข้าถึง การแก้ไข การทำลาย หรือการขัดขวางโดยไม่ได้รับอนุญาต เป้าหมายหลักของการรักษาความปลอดภัยถูกกำหนดขึ้นตามหลักการพื้นฐาน CIA Triad ซึ่งประกอบด้วย:
+                </p>
+                <ul>
+                    <li class="mb-2"><strong>Confidentiality (การรักษาความลับ):</strong> การป้องกันไม่ให้ผู้ที่ไม่ได้รับอนุญาตสามารถแอบดูหรือเข้าถึงข้อมูลสำคัญได้</li>
+                    <li class="mb-2"><strong>Integrity (การรักษาความถูกต้องสมบูรณ์):</strong> การป้องกันและตรวจจับไม่ให้ข้อมูลหรือระบบถูกแก้ไข เปลี่ยนแปลง หรือทำลายโดยไม่ได้รับอนุญาต</li>
+                    <li class="mb-2"><strong>Availability (การความพร้อมใช้งาน):</strong> การรับประกันว่าระบบคอมพิวเตอร์ ทรัพยากร และข้อมูล พร้อมตอบสนองและให้บริการแก่ผู้ใช้ที่มีสิทธิ์อย่างถูกต้องเมื่อมีความต้องการใช้งาน</li>
+                </ul>
+                <p style="text-indent: 30px;">
+                    ระบบปฏิบัติการต้องเผชิญกับภัยคุกคามหลากหลายรูปแบบ เช่น การโจมตีทางเครือข่าย การบุกรุกโดยตรงที่ตัวเครื่อง มัลแวร์ ตลอดจนความผิดพลาดของผู้ใช้งาน (Human Error) การวางระบบความปลอดภัยจึงต้องครอบคลุมทั้งระดับไฟล์ ระบบจัดการสิทธิ์ เครือข่าย และซอฟต์แวร์ระบบ
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">2. กรอบแนวคิด AAA Security Model</h3>
+                <p style="text-indent: 30px;">
+                    กรอบการทำงานหลักที่ใช้ควบคุมการเข้าถึงทรัพยากรในระบบคอมพิวเตอร์เรียกว่า <strong>AAA Security Framework</strong> ซึ่งแบ่งออกเป็น 3 ขั้นตอนสำคัญต่อเนื่องกัน ได้แก่ Authentication, Authorization และ Accounting:
+                </p>
+                
+                <h4 class="font-kanit text-dark fs-5 fw-bold mt-4 mb-2"><i class="fas fa-user-lock me-2 text-primary"></i>2.1 Authentication (การยืนยันตัวตน)</h4>
+                <p style="text-indent: 30px;">
+                    กระบวนการพิสูจน์หรือตรวจสอบว่าผู้ใช้หรือระบบที่กำลังพยายามเข้าสู่ระบบคือใคร (Who are you?) เพื่อให้มั่นใจว่าผู้ขอเข้าใช้เป็นบุคคลหรือตัวตนจริงตามที่กล่าวอ้าง โดยทั่วไปอาศัยปัจจัยพิสูจน์ (Authentication Factors) ดังนี้:
+                </p>
+                <ul>
+                    <li class="mb-1"><strong>Something you know (สิ่งที่คุณรู้):</strong> เช่น รหัสผ่าน (Password), PIN, คำถามกันลืม</li>
+                    <li class="mb-1"><strong>Something you have (สิ่งที่คุณมี):</strong> เช่น สมาร์ตการ์ด, เครื่องรับรหัส OTP, Security Key</li>
+                    <li class="mb-1"><strong>Something you are (สิ่งที่คุณเป็น - Biometrics):</strong> เช่น ลายนิ้วมือ, การสแกนใบหน้า, ม่านตา</li>
+                    <li class="mb-1"><strong>Multi-Factor Authentication (MFA):</strong> การใช้ปัจจัยยืนยันตัวตนมากกว่า 1 ปัจจัยร่วมกันเพื่อเพิ่มระดับความปลอดภัย</li>
+                </ul>
+
+                <h4 class="font-kanit text-dark fs-5 fw-bold mt-4 mb-2"><i class="fas fa-user-shield me-2 text-primary"></i>2.2 Authorization (การอนุมัติสิทธิ์)</h4>
+                <p style="text-indent: 30px;">
+                    กระบวนการกำหนดและตรวจสอบว่าผู้ใช้ที่ผ่านการยืนยันตัวตนแล้ว มีขอบเขตสิทธิ์ในการทำอะไรได้บ้างในระบบ (What are you allowed to do?) เช่น สิทธิ์ในการอ่าน (Read), เขียน (Write), ประมวลผล (Execute) หรือลบไฟล์ข้อมูล
+                </p>
+                <p style="text-indent: 30px;">
+                    กลไกควบคุมการเข้าถึง (Access Control Lists - ACLs) และการระบุสิทธิ์ตามบทบาท (Role-Based Access Control - RBAC) ถูกนำมาใช้ในระบบปฏิบัติการ เพื่อให้มั่นใจว่าผู้ใช้แต่ละคนจะเข้าถึงเฉพาะทรัพยากรที่จำเป็นต่อการปฏิบัติงานเท่านั้น ตามหลักการสิทธิ์ต่ำสุดเท่าที่จำเป็น (Principle of Least Privilege)
+                </p>
+
+                <h4 class="font-kanit text-dark fs-5 fw-bold mt-4 mb-2"><i class="fas fa-file-invoice me-2 text-primary"></i>2.3 Accounting (การบันทึกและตรวจสอบประวัติ)</h4>
+                <p style="text-indent: 30px;">
+                    กระบวนการติดตาม ติดตามผล และบันทึกกิจกรรมการใช้งานระบบของผู้ใช้ (What did you do?) เช่น เวลาที่ล็อกอิน/ล็อกเอาต์ ทรัพยากรที่เรียกใช้ การแก้ไขข้อมูล และคำสั่งที่ประมวลผล ข้อมูลบันทึกประวัติ (Log Files) เหล่านี้มีความสำคัญอย่างยิ่งต่อการตรวจสอบย้อนหลังเมื่อเกิดเหตุการณ์บุกรุก (Forensic Investigation) และการตรวจสอบการปฏิบัติตามมาตรฐานความปลอดภัย (Auditing)
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">3. ไฟร์วอลล์ (Firewall)</h3>
+                <p style="text-indent: 30px;">
+                    <strong>ไฟร์วอลล์ (Firewall)</strong> คือระบบรักษาความปลอดภัยที่ทำหน้าที่เป็นด่านหน้าในการกรองและควบคุมทราฟฟิกข้อมูลที่รับ-ส่งระหว่างเครือข่ายภายในกับเครือข่ายภายนอก (หรือระหว่างโซนต่าง ๆ ในระบบ) โดยอาศัยกฎความปลอดภัย (Security Rules) ที่กำหนดไว้
+                </p>
+                <p style="text-indent: 30px;">
+                    ประเภทของไฟร์วอลล์และการทำงานหลักในระบบปฏิบัติการประกอบด้วย:
+                </p>
+                <ul>
+                    <li class="mb-2"><strong>Packet Filtering Firewall:</strong> ตรวจสอบส่วนหัวของแพ็กเก็ตข้อมูล (เช่น IP Address, Port Number, Protocol) เพื่อตัดสินใจว่าอนุญาต (Allow) หรือปฏิเสธ (Drop/Deny)</li>
+                    <li class="mb-2"><strong>Stateful Inspection Firewall:</strong> ติดตามและตรวจสอบสถานะของการเชื่อมต่อเครือข่าย (Connection State) ทำให้มีความปลอดภัยสูงกว่าการตรวจเฉพาะแพ็กเก็ตเดี่ยว</li>
+                    <li class="mb-2"><strong>Host-based Firewall:</strong> ไฟร์วอลล์ระดับซอฟต์แวร์ที่ติดตั้งอยู่ในระบบปฏิบัติการเครื่องนั้นๆ โดยตรง เช่น Windows Defender Firewall หรือ ufw / iptables บน Linux เพื่อปกป้องเฉพาะเครื่องตนเอง</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">4. การเข้ารหัสข้อมูล (Encryption)</h3>
+                <p style="text-indent: 30px;">
+                    <strong>การเข้ารหัสข้อมูล (Encryption)</strong> คือกระบวนการแปลงข้อความธรรมดา (Plaintext) ให้กลายเป็นข้อความเข้ารหัส (Ciphertext) โดยใช้อัลกอริทึมทางคณิตศาสตร์และกุญแจเข้ารหัส (Encryption Key) เพื่อป้องกันไม่ให้ผู้ไม่มีกุญแจอ่านข้อมูลเข้าใจได้
+                </p>
+                <p style="text-indent: 30px;">
+                    เทคโนโลยีการเข้ารหัสที่ใช้งานในระบบปฏิบัติการแบ่งออกเป็น:
+                </p>
+                <ul>
+                    <li class="mb-2"><strong>Symmetric Encryption (การเข้ารหัสแบบสมมาตร):</strong> ใช้กุญแจดอกเดียวกันทั้งในการเข้ารหัสและถอดรหัส เช่น AES (Advanced Encryption Standard) ซึ่งมีประสิทธิภาพสูง รวดเร็ว นิยมใช้เข้ารหัสไฟล์และดิสก์</li>
+                    <li class="mb-2"><strong>Asymmetric Encryption (การเข้ารหัสแบบไม่สมมาตร):</strong> ใช้กุญแจคู่กัน คือ กุญแจสาธารณะ (Public Key) สำหรับเข้ารหัส และกุญแจส่วนตัว (Private Key) สำหรับถอดรหัส เช่น RSA, ECC นิยมใช้ในกุญแจยืนยันตัวตนดิจิทัล และโปรโตคอลความปลอดภัย เช่น SSH, TLS/SSL</li>
+                    <li class="mb-2"><strong>Full Disk Encryption (FDE):</strong> การเข้ารหัสข้อมูลทั้งหมดทั้งไดรฟ์รวมถึงไฟล์ระบบปฏิบัติการ เช่น BitLocker บน Windows หรือ LUKS บน Linux ช่วยปกป้องข้อมูลเมื่ออุปกรณ์ถูกโจรกรรม</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">5. ซอฟต์แวร์ประสงค์ร้ายและภัยคุกคาม (Malware & Threats)</h3>
+                <p style="text-indent: 30px;">
+                    <strong>มัลแวร์ (Malware - Malicious Software)</strong> หมายถึงโปรแกรมหรือซอฟต์แวร์ประสงค์ร้ายทุกประเภทที่ออกแบบมาเพื่อสร้างความเสียหาย รบกวน ขโมยข้อมูล หรือเข้าถึงระบบคอมพิวเตอร์โดยไม่ได้รับอนุญาต ประเภทมัลแวร์ที่สำคัญ ได้แก่:
+                </p>
+                
+                <div class="row g-3 my-3">
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded-3 bg-light h-100 border-start border-3 border-danger">
+                            <h5 class="font-kanit text-danger fw-bold"><i class="fas fa-bug me-2"></i>Virus (ไวรัสคอมพิวเตอร์)</h5>
+                            <p class="small text-secondary mb-0">โปรแกรมประสงค์ร้ายที่อาศัยการเกาะติดไปกับไฟล์หรือโปรแกรมอื่น (Host File) และต้องอาศัยการสั่งประมวลผลจากผู้ใช้ (เช่น เปิดไฟล์ติดเชื้อ) เพื่อแพร่กระจายตนเองไปยังไฟล์อื่นในเครื่อง</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded-3 bg-light h-100 border-start border-3 border-warning">
+                            <h5 class="font-kanit text-warning fw-bold"><i class="fas fa-disease me-2"></i>Worm (หนอนคอมพิวเตอร์)</h5>
+                            <p class="small text-secondary mb-0">โปรแกรมประสงค์ร้ายที่สามารถคัดลอกและแพร่กระจายตัวเองผ่านระบบเครือข่ายได้โดยอัตโนมัติ ไม่ต้องอาศัยไฟล์โฮสต์หรือการปฏิสัมพันธ์ของผู้ใช้ มักสร้างปัญหาการใช้แบนด์วิดท์เครือข่ายอย่างรุนแรง</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded-3 bg-light h-100 border-start border-3 border-dark">
+                            <h5 class="font-kanit text-dark fw-bold"><i class="fas fa-horse-head me-2"></i>Trojan (ม้าโทรจัน)</h5>
+                            <p class="small text-secondary mb-0">โปรแกรมที่แฝงตัวมาในรูปแบบของซอฟต์แวร์ที่มีประโยชน์หรือน่าเชื่อถือ แต่แอบซ่อนฟังก์ชันประสงค์ร้ายไว้ภายใน เช่น เปิดช่องทางลับ (Backdoor) ให้ผู้บุกรุกเข้ามาควบคุมเครื่อง</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded-3 bg-light h-100 border-start border-3 border-purple" style="border-color:#a855f7;">
+                            <h5 class="font-kanit fw-bold" style="color:#9333ea;"><i class="fas fa-lock me-2"></i>Ransomware (มัลแวร์เรียกค่าไถ่)</h5>
+                            <p class="small text-secondary mb-0">มัลแวร์ที่ทำการเข้ารหัสไฟล์ข้อมูลทั้งหมดในเครื่องเหยื่อหรือบล็อกการเข้าถึงระบบ จากนั้นขู่กวาดต้อนให้ผู้ใช้จ่ายเงินค่าไถ่เพื่อแลกกับกุญแจในการถอดรหัสคืนข้อมูล</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">6. ระบบรักษาความปลอดภัยในระบบปฏิบัติการเฉพาะ (OS Security Implementation)</h3>
+                
+                <h4 class="font-kanit text-dark fs-5 fw-bold mt-4 mb-2"><i class="fab fa-windows me-2 text-primary"></i>6.1 Windows Defender & Windows Security</h4>
+                <p style="text-indent: 30px;">
+                    โซลูชันด้านความปลอดภัยเนทีฟที่บูรณาการอยู่ใน Windows OS มีฟังก์ชันปกป้องที่ครอบคลุมดังนี้:
+                </p>
+                <ul>
+                    <li class="mb-1"><strong>Real-time Protection:</strong> สแกนมัลแวร์และภัยคุกคามในเวลาจริงเมื่อมีการเปิด ดาวน์โหลด หรือรันไฟล์</li>
+                    <li class="mb-1"><strong>Cloud-delivered Protection:</strong> ใช้ปัญญาประดิษฐ์และฐานข้อมูลบนคลาวด์เพื่อตรวจจับภัยคุกคามชนิดใหม่ (Zero-day threats)</li>
+                    <li class="mb-1"><strong>Controlled Folder Access:</strong> ป้องกันไม่ให้แอปพลิเคชันที่ไม่ได้รับอนุญาตทำการเปลี่ยนแปลงแก้ไขไฟล์ในโฟลเดอร์สำคัญ เพื่อยับยั้ง Ransomware</li>
+                    <li class="mb-1"><strong>User Account Control (UAC):</strong> แจ้งเตือนและขออนุมัติจากผู้ใช้เมื่อมีโปรแกรมพยายามทำการเปลี่ยนแปลงในระดับสิทธิ์ผู้ดูแลระบบ (Administrator)</li>
+                </ul>
+
+                <h4 class="font-kanit text-dark fs-5 fw-bold mt-4 mb-2"><i class="fab fa-linux me-2 text-success"></i>6.2 Linux Security Mechanics</h4>
+                <p style="text-indent: 30px;">
+                    ระบบปฏิบัติการ Linux ถูกออกแบบโครงสร้างตามหลักความปลอดภัยแบบมัลติยูสเซอร์และแยกส่วนสิทธิ์อย่างเข้มงวด:
+                </p>
+                <ul>
+                    <li class="mb-1"><strong>File Permissions:</strong> ระบบสิทธิ์ไฟล์แบบคลาสสิก (Owner, Group, Others) ควบคุมการ Read (r), Write (w), Execute (x)</li>
+                    <li class="mb-1"><strong>Root Account & Sudo:</strong> สิทธิ์บัญชี Root (Superuser) จะถูกแยกออกจากผู้ใช้ทั่วไป และใช้คำสั่ง `sudo` ในการดำเนินงานเฉพาะกิจที่ต้องใช้สิทธิ์สูง</li>
+                    <li class="mb-1"><strong>Mandatory Access Control (MAC):</strong> ระบบความปลอดภัยขั้นสูงเพิ่มเติม เช่น SELinux (Security-Enhanced Linux) หรือ AppArmor เพื่อจำกัดขอบเขตการทำงานของแต่ละโปรเซสไม่ให้ละเมิดพื้นที่อื่น</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">7. สำรองและการฟื้นฟูระบบ (Backup & Recovery)</h3>
+                <p style="text-indent: 30px;">
+                    กลไกการสำรองข้อมูล (Backup) และฟื้นฟูระบบ (Recovery) คือมาตรการด่านสุดท้ายในการรับประกันความพร้อมใช้งาน (Availability) และการกู้คืนข้อมูลหากเกิดภัยพิบัติ มัลแวร์ หรือฮาร์ดแวร์ล้มเหลว
+                </p>
+                <p style="text-indent: 30px;">
+                    <strong>รูปแบบการสำรองข้อมูล (Backup Types):</strong>
+                </p>
+                <ul>
+                    <li class="mb-2"><strong>Full Backup:</strong> สำรองข้อมูลทั้งหมดที่มีในระบบ ข้อดีคือกู้คืนง่ายและรวดเร็ว ข้อเสียคือใช้พื้นที่จัดเก็บมากและใช้เวลานาน</li>
+                    <li class="mb-2"><strong>Incremental Backup:</strong> สำรองเฉพาะข้อมูลที่มีการเปลี่ยนแปลงนับจากการสำรองข้อมูลครั้งล่าสุด (ไม่ว่าจะ เป็น Full หรือ Incremental) ข้อดีคือใช้พื้นที่น้อยและรวดเร็ว แต่การกู้คืนต้องใช้ไฟล์สำรองทุกชุดต่อเนื่องกัน</li>
+                    <li class="mb-2"><strong>Differential Backup:</strong> สำรองเฉพาะข้อมูลที่มีการเปลี่ยนแปลงนับจากการทำ Full Backup ครั้งล่าสุด ข้อดีคือใช้เวลาและพื้นที่ปานกลาง กู้คืนได้ง่ายกว่า Incremental (ใช้ชุด Full + ชุด Differential ล่าสุด)</li>
+                </ul>
+                <p style="text-indent: 30px;">
+                    <strong>กฎการสำรองข้อมูล 3-2-1 Rule:</strong> กฎมาตรฐานสากล ได้แก่ สำรองข้อมูลไว้ <strong>3</strong> ชุด (ชุดจริง 1 + สำรอง 2), บนสื่อจัดเก็บอย่างน้อย <strong>2</strong> ประเภทที่ต่างกัน, และเก็บไว้นอกสถานที่ (Off-site / Cloud) อย่างน้อย <strong>1</strong> ชุด
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">8. Case Study: เหตุการณ์ด้านความปลอดภัยที่เกิดขึ้นจริงในโลกไซเบอร์</h3>
+                
+                <div class="my-4 p-4 border rounded-4 bg-light text-dark">
+                    <h5 class="font-kanit fw-bold text-danger mb-3"><i class="fas fa-exclamation-triangle me-2"></i>กรณีศึกษาที่ 1: เหตุการณ์การแพร่ระบาดของ WannaCry Ransomware (ปี 2017)</h5>
+                    <p class="small text-secondary mb-2" style="text-indent: 20px;">
+                        <strong>รายละเอียดเหตุการณ์:</strong> ในเดือนพฤษภาคม ค.ศ. 2017 เกิดการแพร่ระบาดอย่างรุนแรงของมัลแวร์เรียกค่าไถ่ชื่อ WannaCry ส่งผลกระทบต่อคอมพิวเตอร์มากกว่า 200,000 เครื่องใน 150 ประเทศทั่วโลก รวมถึงองค์กรสำคัญ เช่น ระบบบริการสุขภาพแห่งชาติของอังกฤษ (NHS)
+                    </p>
+                    <p class="small text-secondary mb-2" style="text-indent: 20px;">
+                        <strong>กลไกการโจมตี:</strong> WannaCry รวมความสามารถของ <em>Ransomware</em> และ <em>Worm</em> เข้าด้วยกัน โดยใช้ประโยชน์จากช่องโหว่การสื่อสารโปรโตคอล SMBv1 ของ Windows (รหัสช่องโหว่ EternalBlue) ทำให้สามารถแพร่กระจายผ่านเครือข่ายไปยังเครื่องอื่นได้โดยอัตโนมัติโดยที่ผู้ใช้ไม่ต้องคลิกใดๆ
+                    </p>
+                    <p class="small text-secondary mb-0" style="text-indent: 20px;">
+                        <strong>บทเรียนและการป้องกัน:</strong> การอัปเดตแพตช์ความปลอดภัยของระบบปฏิบัติการอย่างสม่ำเสมอ (Patch Management), การปิดโปรโตคอลเก่าที่ไม่ปลอดภัย (SMBv1), การสำรองข้อมูลตามกฎ 3-2-1, และการใช้ซอฟต์แวร์ป้องกันมัลแวร์ที่มีประสิทธิภาพ
+                    </p>
+                </div>
+
+                <div class="my-4 p-4 border rounded-4 bg-light text-dark">
+                    <h5 class="font-kanit fw-bold text-warning mb-3"><i class="fas fa-bug me-2"></i>กรณีศึกษาที่ 2: การโจมตีห่วงโซ่อุปทาน SolarSun / SolarWinds Supply Chain Attack (ปี 2020)</h5>
+                    <p class="small text-secondary mb-2" style="text-indent: 20px;">
+                        <strong>รายละเอียดเหตุการณ์:</strong> กลุ่มแฮกเกอร์ระดับสูงเข้าแทรกซึมระบบของบริษัท SolarWinds ผู้พัฒนาซอฟต์แวร์จัดการเครือข่าย Orion และฝังมัลแวร์ม้าโทรจัน (Trojan) ลงในซอฟต์แวร์อัปเดตที่เป็นทางการ
+                    </p>
+                    <p class="small text-secondary mb-2" style="text-indent: 20px;">
+                        <strong>กลไกการโจมตี:</strong> เมื่อลูกค้าดาวน์โหลดไฟล์อัปเดตที่เซ็นลายเซ็นดิจิทัลถูกต้อง มัลแวร์ฝังตัวจะเปิดแบล็กดอร์ (Backdoor) ส่งผลให้แฮกเกอร์สามารถเข้าถึงระบบของหน่วยงานรัฐบาลและบริษัทเทคโนโลยีชั้นนำระดับโลกจำนวนมาก
+                    </p>
+                    <p class="small text-secondary mb-0" style="text-indent: 20px;">
+                        <strong>บทเรียนและการป้องกัน:</strong> การตรวจสอบและบังคับใช้สิทธิ์ด้วยหลักการ Zero Trust Architecture, การตรวจสอบพฤติกรรมผิดปกติผ่านการจดบันทึก Log (Accounting) และการกำกับดูแลความปลอดภัยซอฟต์แวร์ภายนอกอย่างเคร่งครัด
+                    </p>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">9. ผังกระบวนการตรวจสอบและกรองข้อมูลการเข้าถึงระบบ (Security Access Control Flow)</h3>
+                <p style="text-indent: 30px;">
+                    แผนภาพแสดงลำดับขั้นตอนการตรวจสอบความปลอดภัย ตั้งแต่ผู้ใช้ร้องขอเข้าใช้งานผ่านไฟร์วอลล์ เข้าสู่กระบวนการยืนยันตัวตน (Authentication) ตรวจสอบสิทธิ์ (Authorization) และบันทึกกิจกรรม (Accounting):
+                </p>
+
+                <div class="my-4 p-4 border rounded-4 bg-light text-center">
+                    <h5 class="font-kanit mb-4 fw-bold text-dark"><i class="fas fa-shield-alt me-2 text-primary"></i>กระบวนการควบคุมและกรองความปลอดภัย (AAA & Firewall Flow)</h5>
+                    <div class="row justify-content-center align-items-center g-2 text-dark font-kanit">
+                        <div class="col-md-3 p-3 border rounded bg-white shadow-sm border-info fw-bold">
+                            <span class="text-info">1. Request / User Input</span>
+                            <hr class="my-2">
+                            <small class="text-muted d-block font-sans">คำขอเข้าใช้จากผู้ใช้งานหรือเครือข่ายภายนอก</small>
+                        </div>
+                        <div class="col-md-1"><i class="fas fa-arrow-right fa-2x text-muted"></i></div>
+                        <div class="col-md-3 p-3 border rounded bg-warning text-dark shadow-sm fw-bold">
+                            <span>2. Firewall Filtering</span>
+                            <hr class="my-2 border-dark">
+                            <small class="text-dark d-block font-sans">ตรวจกรอง Packet / Port อนุญาตหรือบล็อกทราฟฟิก</small>
+                        </div>
+                        <div class="col-md-1"><i class="fas fa-arrow-right fa-2x text-muted"></i></div>
+                        <div class="col-md-3 p-3 border rounded bg-success text-white shadow-sm fw-bold">
+                            <span>3. AAA Processing</span>
+                            <hr class="my-2 bg-white">
+                            <small class="text-white-50 d-block font-sans">AuthN -> AuthZ -> Accounting (Log Event)</small>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">10. Animation แอนิเมชันจำลองขั้นตอนการกรองความปลอดภัยและสิทธิ์ใช้งาน</h3>
+                <p style="text-indent: 30px;">
+                    แบบจำลองสถานการณ์จำลองกระบวนการกรองข้อมูลความปลอดภัยเมื่อผู้ใช้ส่งคำขอเข้าใช้งานระบบ ผ่านการตรวจสอบโดย Firewall และกระบวนการยืนยันตัวตน AAA
+                </p>
+                <p class="small text-muted">นักศึกษาสามารถคลิกปุ่มรันตัวจำลองเพื่อดูขั้นตอนการรักษาความปลอดภัย:</p>
+
+                <div class="simulation-space my-4 shadow-sm" id="process-anim-space">
+                    <div class="state-container-wrapper py-4">
+                        <div class="simulation-node" id="sim-node-user">User Request</div>
+                        <div class="sim-arrow" id="arrow-1"></div>
+                        <div class="simulation-node" id="sim-node-firewall">Firewall Check</div>
+                        <div class="sim-arrow" id="arrow-2"></div>
+                        <div class="simulation-node" id="sim-node-system">AAA System</div>
+                    </div>
+
+                    <div class="row mt-4 pt-2 text-dark font-kanit">
+                        <div class="col-md-12 mb-2">
+                            <h6 class="text-white-50 small mb-2"><i class="fas fa-list-alt me-2"></i>บันทึกไดอารี่ความปลอดภัยและสถานะการยืนยันตัวตน (Security Log & AAA State)</h6>
+                            <div class="queue-box-list" id="cpu-queue-injector">
+                                <span class="pcb-token auth-pending">User: Student_01 (Pending Check)</span>
+                                <span class="pcb-token auth-pending">Port: 443 (HTTPS)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button class="btn btn-primary font-kanit px-4 py-2 rounded-3 shadow" onclick="triggerSecuritySimulation()">
+                            <i class="fas fa-play-circle me-2"></i>เริ่มจำลองสถานการณ์ตรวจสอบความปลอดภัย (Firewall PASS -> AuthN PASS -> Grant Access)
+                        </button>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">11. ตัวอย่างตารางเปรียบเทียบสเปกและประเภทของภัยคุกคาม (Security Comparison)</h3>
+                <p style="text-indent: 30px;">
+                    การสรุปและเปรียบเทียบคุณลักษณะของภัยคุกคามมัลแวร์แต่ละประเภทเพื่อการวิเคราะห์และป้องกันในระบบปฏิบัติการ:
+                </p>
+
+                <div class="table-responsive my-3">
+                    <table class="table table-bordered table-striped align-middle font-kanit">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ประเภทมัลแวร์</th>
+                                <th>รูปแบบการแพร่กระจาย</th>
+                                <th>ต้องการ Host File?</th>
+                                <th>ผลกระทบหลักต่อระบบ</th>
+                                <th>แนวทางป้องกันหลัก</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Virus</strong></td>
+                                <td>พ่วงติดกับไฟล์โปรแกรมอื่น</td>
+                                <td><span class="badge bg-danger">ต้องการ</span></td>
+                                <td>ทำลายไฟล์ แก้ไขข้อมูล ระบบทำงานผิดปกติ</td>
+                                <td>Antivirus, ไม่เปิดไฟล์สงสัย</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Worm</strong></td>
+                                <td>แพร่ผ่านเครือข่ายอัตโนมัติ</td>
+                                <td><span class="badge bg-secondary">ไม่ต้องการ</span></td>
+                                <td>กินแบนด์วิดท์เครือข่าย สร้างช่องโหว่</td>
+                                <td>Firewall, Patch OS อย่างสม่ำเสมอ</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Trojan</strong></td>
+                                <td>หลอกลวงว่าเป็นโปรแกรมดี</td>
+                                <td><span class="badge bg-secondary">ไม่ต้องการ</span></td>
+                                <td>แอบเปิด Backdoor, ขโมยข้อมูลรหัสผ่าน</td>
+                                <td>ดาวน์โหลดจากแหล่งน่าเชื่อถือเท่านั้น</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Ransomware</strong></td>
+                                <td>อีเมล Phishing, ช่องโหว่ OS</td>
+                                <td><span class="badge bg-secondary">แปรผัน</span></td>
+                                <td>เข้ารหัสลับไฟล์ข้อมูลเพื่อเรียกค่าไถ่</td>
+                                <td>Backup 3-2-1, Defender Folder Access</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="row my-4 justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="ratio ratio-16x9 shadow-sm rounded-3 overflow-hidden border">
+                            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="วิดีโอประกอบบทเรียนการรักษาความปลอดภัยระบบปฏิบัติการ" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+
+            </article>
+
+            <section class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 border-top border-4 border-success" data-aos="fade-up">
+                <div class="d-flex align-items-center justify-content-between border-bottom pb-3 mb-4">
+                    <h3 class="font-kanit text-dark-primary font-weight-bold mb-0">
+                        <i class="fas fa-user-check me-2 text-success"></i>แบบทดสอบหลังเรียนประจำหน่วยการเรียนที่ 10
+                    </h3>
+                    <span class="badge bg-success px-3 py-2 fs-6" id="quiz-progress-badge">ข้อที่ 1 / 20</span>
+                </div>
+                
+                <div id="quiz-question-container" class="my-3"></div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-3">
+                    <button class="btn btn-outline-secondary px-4 py-2 rounded-3" id="prev-question-btn" disabled><i class="fas fa-arrow-left me-2"></i>ข้อก่อนหน้า</button>
+                    <button class="btn btn-primary px-4 py-2 rounded-3" id="next-question-btn">ส่งคำตอบและไปต่อ <i class="fas fa-arrow-right ms-2"></i></button>
+                </div>
+            </section>
+
+            <div class="d-flex justify-content-between align-items-center mb-5" data-aos="fade-up">
+                <a href="unit-09.html" class="btn btn-outline-dark px-4 py-2 rounded-3"><i class="fas fa-arrow-left me-2"></i>หน่วยก่อนหน้า</a>
+                <button class="btn btn-success btn-lg px-5 py-3 rounded-3 shadow font-kanit" id="mark-complete-btn">
+                    <i class="fas fa-check-double me-2"></i>ทำเครื่องหมายว่าเรียนจบหน่วยเรียนนี้แล้ว
+                </button>
+                <a href="unit-11.html" class="btn btn-outline-dark px-4 py-2 rounded-3">หน่วยถัดไป<i class="fas fa-arrow-right ms-2"></i></a>
+            </div>
+
+        </main>
+    </div>
+
+    <footer class="main-footer-section py-4 text-center mt-auto border-top">
+        <div class="container">
+            <p class="mb-0 text-secondary">© 2026 รายวิชา 31909-1001 ระบบปฏิบัติการ — แผงควบคุมเนื้อหาสถาปัตยกรรมระดับ ปวส.</p>
+        </div>
+    </footer>
+
+    <button id="back-to-top-btn" class="btn btn-primary rounded-circle shadow-lg"><i class="fas fa-chevron-up"></i></button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="D:\OS\js\data.js"></script>
+    <script src="D:\OS\js\storage.js"></script>
+    <script src="D:\OS\js\progress.js"></script>
+    <script src="D:\OS\js\main.js"></script>
+    <script src="D:\OS\js\quiz.js"></script>
+
+    <script>
+        function triggerSecuritySimulation() {
+            const nodeUser = document.getElementById("sim-node-user");
+            const nodeFirewall = document.getElementById("sim-node-firewall");
+            const nodeSystem = document.getElementById("sim-node-system");
+            
+            const arr1 = document.getElementById("arrow-1");
+            const arr2 = document.getElementById("arrow-2");
+            
+            const queueBox = document.getElementById("cpu-queue-injector");
+
+            // รีเซ็ตคลาสแอนิเมชันเก่ากลับคืนค่าเริ่มต้น
+            document.querySelectorAll(".simulation-node").forEach(n => n.classList.remove("active-state"));
+            document.querySelectorAll(".sim-arrow").forEach(a => {
+                a.classList.remove("active-arrow");
+                a.classList.remove("blocked-arrow");
+            });
+            queueBox.innerHTML = '<span class="pcb-token auth-pending">User: Student_01 (Pending Check)</span> <span class="pcb-token auth-pending">Port: 443 (HTTPS)</span>';
+
+            // เฟส 1: ผู้ใช้ส่ง Request
+            nodeUser.classList.add("active-state");
+            
+            setTimeout(() => {
+                nodeUser.classList.remove("active-state");
+                arr1.classList.add("active-arrow");
+                nodeFirewall.classList.add("active-state");
+                queueBox.innerHTML = '<span class="pcb-token auth-pending">Firewall: Inspecting Packet Headers...</span>';
+            }, 1200);
+
+            // เฟส 2: Firewall ผ่าน -> ตรวจสอบ AAA
+            setTimeout(() => {
+                arr1.classList.remove("active-arrow");
+                arr2.classList.add("active-arrow");
+                nodeFirewall.classList.remove("active-state");
+                nodeSystem.classList.add("active-state");
+                
+                queueBox.innerHTML = '<span class="pcb-token auth-pass">Firewall: ALLOW</span> <span class="pcb-token auth-pending">AAA: Verifying Password & MFA...</span>';
+            }, 2600);
+
+            // เฟส 3: ยืนยันตัวตนและอนุมัติสิทธิ์สำเร็จ
+            setTimeout(() => {
+                nodeSystem.classList.remove("active-state");
+                arr2.classList.remove("active-arrow");
+                
+                queueBox.innerHTML = '<span class="pcb-token auth-pass">Firewall: ALLOW</span> <span class="pcb-token auth-pass">AuthN: PASSED</span> <span class="pcb-token auth-pass">AuthZ: Granted (User Level)</span> <span class="pcb-token auth-pass">Accounting: Logged Event #1042</span>';
+                
+                Swal.fire({
+                    toast: true,
+                    position: 'bottom-end',
+                    title: 'ผ่านการตรวจสอบความปลอดภัย! อนุญาตให้เข้าถึงระบบสำเร็จ',
+                    icon: 'success',
+                    showConfirmButton: false,
+                    timer: 2500
+                });
+            }, 3800);
+        }
+    </script>
+</body>
+</html>

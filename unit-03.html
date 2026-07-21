@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หน่วยที่ 3 การจัดการโพรเซส | วิชา 31909-1001 ระบบปฏิบัติการ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="D:\OS\css\style.css">
+    <link rel="stylesheet" href="D:\OS\css\responsive.css">
+    <link rel="stylesheet" href="D:\OS\css\dark-mode.css">
+    <style>
+        /* สไตล์แบบสากลสำหรับการจำลอง Animation และผังคิวสถานะโพรเซส */
+        .simulation-space {
+            background-color: #1e293b;
+            border-radius: 16px;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        body.light-mode .simulation-space {
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+        }
+        .state-container-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        .simulation-node {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Kanit', sans-serif;
+            font-weight: 600;
+            font-size: 16px;
+            color: #ffffff;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 4px solid rgba(255,255,255,0.1);
+        }
+        #sim-node-new { background: linear-gradient(135deg, #64748b, #475569); }
+        #sim-node-ready { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+        #sim-node-running { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+        #sim-node-waiting { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        #sim-node-terminated { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+        /* อนิเมชันกระพริบเมื่อสถานะกำลัง Active */
+        .simulation-node.active-state {
+            transform: scale(1.15);
+            box-shadow: 0 0 25px currentColor;
+            border-color: #ffffff;
+            animation: pulse-glow 1.5s infinite alternate;
+        }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 15px rgba(255,255,255,0.2); }
+            100% { box-shadow: 0 0 30px rgba(255,255,255,0.8); }
+        }
+        
+        .sim-arrow {
+            height: 4px;
+            background-color: #cbd5e1;
+            flex-grow: 1;
+            position: relative;
+            margin: 0 10px;
+            transition: all 0.3s;
+        }
+        body.dark-mode .sim-arrow { background-color: #475569; }
+        .sim-arrow::after {
+            content: '';
+            position: absolute;
+            right: -2px;
+            top: -6px;
+            width: 0; height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 12px solid #cbd5e1;
+        }
+        body.dark-mode .sim-arrow::after { border-left-color: #475569; }
+        .sim-arrow.active-arrow {
+            background-color: #10b981 !important;
+        }
+        .sim-arrow.active-arrow::after {
+            border-left-color: #10b981 !important;
+        }
+        
+        /* สไตล์ตารางคิวจำลอง */
+        .queue-box-list {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 60px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            border: 1px dashed rgba(0,0,0,0.1);
+        }
+        body.dark-mode .queue-box-list { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); }
+        .pcb-token {
+            background: #2563eb;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            animation: bounceIn 0.5s;
+        }
+    </style>
+</head>
+<body class="light-mode">
+
+    <div id="loading-screen">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg sticky-top main-navbar">
+        <div class="container-fluid">
+            <button class="btn text-white me-2" id="sidebar-toggle-btn" aria-label="เปิดเมนูด้านข้าง">
+                <i class="fas fa-bars fa-lg"></i>
+            </button>
+            <a class="navbar-brand d-flex align-items-center" href="../index.html">
+                <i class="fas fa-laptop-code me-2"></i>
+                <span>31909-1001 ระบบปฏิบัติการ</span>
+            </a>
+            <div class="ms-auto">
+                <button class="btn text-white" id="theme-toggle-btn" aria-label="เปลี่ยนโหมดหน้าจอ">
+                    <i class="fas fa-moon fa-lg"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="app-layout">
+        <aside class="sidebar-navigation" id="main-sidebar">
+            <div class="sidebar-profile text-center py-4">
+                <div class="avatar-container mb-2">
+                    <i class="fas fa-book-reader fa-3x text-white bg-primary p-3 rounded-circle"></i>
+                </div>
+                <h6 class="text-white mb-0">อาจารย์ธัญญรัตน์ ตาเล๊ะ</h6>
+                <small class="text-white-50">เทคโนโลยีคอมพิวเตอร์</small>
+            </div>
+            <ul class="sidebar-menu-list px-2" id="sidebar-menu-injector"></ul>
+        </aside>
+
+        <main class="main-content-flow px-3 px-md-5 py-4">
+            
+            <nav aria-label="breadcrumb" class="mb-4" data-aos="fade-down">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="../index.html" class="text-decoration-none"><i class="fas fa-home me-1"></i>หน้าแรก</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">หน่วยที่ 3 การจัดการโพรเซส</li>
+                </ol>
+            </nav>
+
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light text-dark border-start border-5 border-primary" data-aos="fade-up">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <span class="text-primary fw-bold text-uppercase d-block mb-1">Unit 03: Process Architecture & State Transitions</span>
+                        <h1 class="font-kanit font-weight-bold text-dark-primary mb-0">หน่วยที่ 3 การจัดการโพรเซส</h1>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary btn-sm rounded-3 px-3" onclick="window.print()"><i class="fas fa-print me-1"></i>พิมพ์บทเรียน</button>
+                        <button class="btn btn-primary btn-sm rounded-3 px-3" id="bookmark-btn"><i class="far fa-bookmark me-1"></i>คั่นหน้าไว้</button>
+                    </div>
+                </div>
+            </div>
+
+            <article class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 leading-relaxed text-secondary text-justify content-article-body" data-aos="fade-up" data-aos-delay="100">
+                
+                <h3 class="font-kanit text-dark-primary font-weight-bold mb-3 border-bottom pb-2">1. ความแตกต่างระหว่าง Program, Process และ Thread</h3>
+                <p style="text-indent: 30px;">
+                    ในโครงสร้างสถาปัตยกรรมระบบคอมพิวเตอร์ <strong>โปรแกรม (Program)</strong> จัดเป็นองค์ประกอบสถานะสแตติก (Passive Entity) หมายถึงชุดของข้อคำสั่ง (Instructions) ที่บันทึกอยู่บนระบบไฟล์คอมพิวเตอร์อย่างถาวร เช่น บนฮาร์ดดิสก์ หรือ SSD โดยที่ยังไม่มีการจัดสรรหน่วยความจำหรือรอบเวลาทำงานจากซีพียู
+                </p>
+                <p style="text-indent: 30px;">
+                    ในขณะที่ <strong>โพรเซส (Process)</strong> คือออบเจกต์สถานะไดนามิก (Active Entity) เกิดขึ้นเมื่อโปรแกรมดังกล่าวถูกโหลดเข้าสู่หน่วยความจำหลัก (RAM) และกำลังทำงานอยู่ภายใต้การควบคุมของระบบปฏิบัติการ โดยแต่ละโพรเซสจะมีขอบเขตหน่วยความจำส่วนตัว (Address Space) ประกอบด้วย Text Section (เก็บโค้ดคำสั่ง), Data Section (เก็บตัวแปรโกลบอล), Heap (พื้นที่จองแรมแบบไดนามิก) และ Stack (เก็บตัวแปรท้องถิ่นและฟังก์ชันคอล)
+                </p>
+                <p style="text-indent: 30px;">
+                    ส่วน <strong>เธรด (Thread)</strong> คือหน่วยย่อยที่สุดของการรันคำสั่งภายในโพรเซส (Lightweight Process) โพรเซสหนึ่งตัวสามารถแยกโครงสร้างการคำนวณออกเป็นหลายเธรดทำงานพร้อมกัน (Multi-threading) โดยทุกเธรดภายใต้โพรเซสแม่เดียวกันจะสามารถแบ่งปัน (Share) พื้นที่โค้ด ข้อมูล และไฟล์ร่วมกันได้ทันที ทำให้ใช้ทรัพยากรน้อยกว่าการสร้างโพรเซสใหม่แยกอิสระเป็นอย่างมาก
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">2. โครงสร้างบล็อกควบคุมโพรเซส (Process Control Block: PCB)</h3>
+                <p style="text-indent: 30px;">
+                    เพื่อรักษาสถานะและควบคุมดูแลทุกโพรเซสภายในระบบปฏิบัติการ Kernel จะสร้างโครงสร้างข้อมูลชุดหนึ่งขึ้นมาเรียกว่า <strong>Process Control Block (PCB)</strong> ทำหน้าที่เปรียบเสมือนสมุดบันทึกประวัติการทำงานประจำตัวของโพรเซสนั้นๆ ข้อมูลสำคัญภายใน PCB ประกอบด้วย:
+                </p>
+                <ul>
+                    <li class="mb-2"><strong>Process ID (PID):</strong> หมายเลขรหัสจำนวนเต็มบวกที่ระบบสลักไว้ระบุตัวตนโพรเซสไม่ให้ซ้ำกัน</li>
+                    <li class="mb-2"><strong>Process State:</strong> สถานะปัจจุบัน (เช่น Ready, Running, Waiting)</li>
+                    <li class="mb-2"><strong>Program Counter (PC):</strong> พอยน์เตอร์ชี้พิกัดหน่วยความจำถาวรของคำสั่งถัดไปที่ต้องประมวลผลต่อ</li>
+                    <li class="mb-2"><strong>CPU Registers:</strong> ค่าข้อมูลที่ค้างอยู่ในรีจิสเตอร์ของสถาปัตยกรรมซีพียู ซึ่งต้องบันทึกเก็บไว้เมื่อเกิดการสลับงาน</li>
+                    <li class="mb-2"><strong>Memory Management Information:</strong> ตารางระบุขอบเขตพิกัดหน่วยความจำ เช่น Page Tables หรือ Segment Tables</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">3. โครงสร้างคิวการจัดตารางเวลา (Scheduling Queue)</h3>
+                <p style="text-indent: 30px;">
+                    เมื่อมีโพรเซสเข้าสู่ระบบพร้อมกันเป็นจำนวนมาก ระบบปฏิบัติการจะนำโพรเซส (ในรูปของโทเค็น PCB) ไปจัดเรียงลำดับลงในคิวจัดการข้อมูล <strong>Scheduling Queue</strong> เพื่อรอรับการจัดสรรทรัพยากรตามลำดับขั้น โดยแบ่งออกเป็น 3 คิวแกนหลักในระบบ:
+                </p>
+                <div class="row g-3 my-3">
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded-3 border-top border-4 border-secondary h-100">
+                            <h6 class="font-kanit fw-bold text-dark"><i class="fas fa-list-ol me-2 text-muted"></i>Job Queue</h6>
+                            <p class="small text-muted mb-0">คิวรวบรวมรายชื่อโพรเซสทั้งหมดที่เกิดขึ้นภายในระบบคอมพิวเตอร์ ณ ช่วงเวลานั้นๆ ไม่ว่าจะสแตนด์บายอยู่บนดิสก์หรือแรม</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded-3 border-top border-4 border-info h-100">
+                            <h6 class="font-kanit fw-bold text-info"><i class="fas fa-memory me-2"></i>Ready Queue</h6>
+                            <p class="small text-muted mb-0">คิวเก็บรายชื่อโพรเซสทั้งหมดที่โหลดเข้ามาฝังตัวอยู่ภายในหน่วยความจำหลัก (RAM) เรียบร้อยแล้ว มีสภาพพร้อมคำนวณรันคำสั่ง ขาดเพียงรอตัวจัดสรรส่งเข้าสู่ CPU</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded-3 border-top border-4 border-warning h-100">
+                            <h6 class="font-kanit fw-bold text-warning"><i class="fas fa-hdd me-2"></i>Device Queue</h6>
+                            <p class="small text-muted mb-0">หรือ I/O Queue คือคิวของกลุ่มโพรเซสที่ติดขัดสถานะ ต้องหยุดรอความพร้อมประมวลผลข้อมูลจากอุปกรณ์อินพุตเอาต์พุตภายนอกเฉพาะตัวชิ้นนั้นๆ</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">4. Flowchart แสดงวงจรชีวิตและสถานะของ Process (5-State Model)</h3>
+                <p style="text-indent: 30px;">
+                    ในระหว่างวงรอบชีวิต โพรเซสจะถูกปรับเปลี่ยนสถานะตามแผนผังกลไก 5-State Model ซึ่งเป็นมาตรฐานโครงสร้างระบบปฏิบัติการระดับสากล โดยมีรายละเอียดขั้นตอนความเชื่อมโยงตาม Flowchart ด้านล่างนี้:
+                </p>
+
+                <div class="my-4 p-4 border rounded-4 bg-light text-center">
+                    <h5 class="font-kanit mb-4 fw-bold text-dark"><i class="fas fa-project-diagram me-2 text-primary"></i>Flowchart: โครงสร้างการย้ายสถานะโพรเซสสากล</h5>
+                    
+                    <div class="row justify-content-center align-items-center g-2 text-dark font-kanit">
+                        <div class="col-md-2 p-2 border rounded bg-white shadow-sm border-secondary fw-bold">[ New ]</div>
+                        <div class="col-md-1"><i class="fas fa-long-arrow-alt-right fa-2x text-muted"></i></div>
+                        <div class="col-md-2 p-2 border rounded bg-info text-white shadow-sm fw-bold">[ Ready ]</div>
+                        <div class="col-md-1">
+                            <div class="small text-muted mb-1">Dispatch</div>
+                            <i class="fas fa-long-arrow-alt-right fa-2x text-success"></i>
+                            <div class="small text-muted mt-1">Interrupt</div>
+                            <i class="fas fa-long-arrow-alt-left fa-2x text-danger"></i>
+                        </div>
+                        <div class="col-md-2 p-2 border rounded bg-primary text-white shadow-sm fw-bold">[ Running ]</div>
+                        <div class="col-md-1"><i class="fas fa-long-arrow-alt-right fa-2x text-muted"></i></div>
+                        <div class="col-md-2 p-2 border rounded bg-dark text-white shadow-sm fw-bold">[ Terminated ]</div>
+                    </div>
+                    
+                    <div class="row justify-content-center align-items-center g-2 text-dark font-kanit mt-4">
+                        <div class="col-md-3"></div>
+                        <div class="col-md-2 p-2 border rounded bg-warning text-dark shadow-sm fw-bold">[ Waiting / Blocked ]</div>
+                        <div class="col-md-5 text-start fs-7 text-muted ps-4">
+                            🔄 <strong>คำอธิบายเส้นทางคิว:</strong><br>
+                            1. เมื่ออยู่สถานะ <strong>Running</strong> แล้วเกิดการเรียกใช้ I/O โพรเซสจะถูกดิ่งลงมาที่คิว <strong>Waiting</strong><br>
+                            2. เมื่ออุปกรณ์ประมวลผลข้อมูล I/O เสร็จสิ้น โพรเซสจะดีดกลับไปต่อแถวคิวที่สถานะ <strong>Ready</strong> เสมอ ไม่สามารถแซงคิวเข้าหา CPU โดยตรงได้
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">5. Animation แอนิเมชันจำลองการเปลี่ยนสถานะและกลไก Context Switching</h3>
+                <p style="text-indent: 30px;">
+                    <strong>Context Switching</strong> คือกระบวนการที่เกิดขึ้นเมื่อระบบปฏิบัติการทำการสลับเปลี่ยนงานให้ซีพียู โดย Kernel จะหยุดทำงานโพรเซสเดิม บันทึกค่ารีจิสเตอร์และสภาพแวดล้อมลง PCB เก่า และทำการย้ายไปดึงเอาค่าจาก PCB ตัวถัดไปมาสวมรอยรันต่อบนฮาร์ดแวร์ซีพียู 
+                </p>
+                <p class="small text-muted">นักศึกษาสามารถคลิกปุ่มรันตัวจำลองเพื่อสังเกตการไหลของโทเค็นโพรเซสและไฟสัญญาณนำทาง Context Switching แบบเรียลไทม์:</p>
+
+                <div class="simulation-space my-4 shadow-sm" id="process-anim-space">
+                    <div class="state-container-wrapper py-4">
+                        <div class="simulation-node" id="sim-node-new" style="color: #cbd5e1;">New</div>
+                        <div class="sim-arrow" id="arrow-1"></div>
+                        <div class="simulation-node" id="sim-node-ready" style="color: #0ea5e9;">Ready</div>
+                        <div class="sim-arrow" id="arrow-2"></div>
+                        <div class="simulation-node" id="sim-node-running" style="color: #6366f1;">Running</div>
+                        <div class="sim-arrow" id="arrow-3"></div>
+                        <div class="simulation-node" id="sim-node-waiting" style="color: #f59e0b;">Waiting</div>
+                        <div class="sim-arrow" id="arrow-4"></div>
+                        <div class="simulation-node" id="sim-node-terminated" style="color: #ef4444;">Terminated</div>
+                    </div>
+
+                    <div class="row mt-4 pt-2 text-dark font-kanit">
+                        <div class="col-md-6 mb-2">
+                            <h6 class="text-white-50 small mb-2"><i class="fas fa-layer-group me-2"></i>จำลอง Ready Queue (ในหน่วยความจำ RAM)</h6>
+                            <div class="queue-box-list" id="ready-queue-box-injector">
+                                <span class="pcb-token" id="token-pid101">PID: 101</span>
+                                <span class="pcb-token" id="token-pid102">PID: 102</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-white-50 small mb-2"><i class="fas fa-hourglass-half me-2"></i>จำลอง Waiting Queue (รออุปกรณ์ I/O)</h6>
+                            <div class="queue-box-list" id="waiting-queue-box-injector">
+                                <span class="text-muted small" id="empty-queue-text">คิวว่างเปล่า</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button class="btn btn-primary font-kanit px-4 py-2 rounded-3 shadow" onclick="triggerProcessLifecycleSimulation()">
+                            <i class="fas fa-play-circle me-2"></i>เปิดสัญญาณไฟรันแอนิเมชันสถานะ
+                        </button>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">6. วิกฤตสภาวะการติดหล่มถาวร (Deadlock)</h3>
+                <p style="text-indent: 30px;">
+                    หากระบบปฏิบัติการจัดการคิวและทรัพยากรผิดพลาด อาจก่อให้เกิดสภาวะ <strong>Deadlock (การติดล็อกตาย)</strong> หมายถึงสถานการณ์ที่โพรเซสตั้งแต่ 2 ตัวขึ้นไป ติดคิวรอคอยทรัพยากรซึ่งกันและกันเป็นวงกลมไม่รู้จบ โดยโพรเซส A ถือครองทรัพยากรที่ 1 และรอทรัพยากรที่ 2 ส่วนโพรเซส B ถือครองทรัพยากรที่ 2 และร้องขอทรัพยากรที่ 1 ต่างฝ่ายต่างไม่สามารถขยับรันข้อคำสั่งต่อได้ ส่งผลให้โปรแกรมระบบค้างนิ่ง (System Freeze) ถาวร
+                </p>
+
+                <div class="row my-4 justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="ratio ratio-16x9 shadow-sm rounded-3 overflow-hidden border">
+                            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="วิดีโอประกอบบทเรียนระบบปฏิบัติการ" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+
+            </article>
+
+            <section class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 border-top border-4 border-success" data-aos="fade-up">
+                <div class="d-flex align-items-center justify-content-between border-bottom pb-3 mb-4">
+                    <h3 class="font-kanit text-dark-primary font-weight-bold mb-0">
+                        <i class="fas fa-user-check me-2 text-success"></i>แบบทดสอบหลังเรียนประจำหน่วยการเรียนที่ 3
+                    </h3>
+                    <span class="badge bg-success px-3 py-2 fs-6" id="quiz-progress-badge">ข้อที่ 1 / 20</span>
+                </div>
+                
+                <div id="quiz-question-container" class="my-3"></div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-3">
+                    <button class="btn btn-outline-secondary px-4 py-2 rounded-3" id="prev-question-btn" disabled><i class="fas fa-arrow-left me-2"></i>ข้อก่อนหน้า</button>
+                    <button class="btn btn-primary px-4 py-2 rounded-3" id="next-question-btn">ส่งคำตอบและไปต่อ <i class="fas fa-arrow-right ms-2"></i></button>
+                </div>
+            </section>
+
+            <div class="d-flex justify-content-between align-items-center mb-5" data-aos="fade-up">
+                <a href="unit-02.html" class="btn btn-outline-dark px-4 py-2 rounded-3"><i class="fas fa-arrow-left me-2"></i>หน่วยก่อนหน้า</a>
+                <button class="btn btn-success btn-lg px-5 py-3 rounded-3 shadow font-kanit" id="mark-complete-btn">
+                    <i class="fas fa-check-double me-2"></i>ทำเครื่องหมายว่าเรียนจบหน่วยเรียนนี้แล้ว
+                </button>
+                <a href="unit-04.html" class="btn btn-outline-dark px-4 py-2 rounded-3">หน่วยถัดไป<i class="fas fa-arrow-right ms-2"></i></a>
+            </div>
+
+        </main>
+    </div>
+
+    <footer class="main-footer-section py-4 text-center mt-auto border-top">
+        <div class="container">
+            <p class="mb-0 text-secondary">© 2026 รายวิชา 31909-1001 ระบบปฏิบัติการ — แผงควบคุมเนื้อหาสถาปัตยกรรมระดับ ปวส.</p>
+        </div>
+    </footer>
+
+    <button id="back-to-top-btn" class="btn btn-primary rounded-circle shadow-lg"><i class="fas fa-chevron-up"></i></button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="D:\OS\js\data.js"></script>
+    <script src="D:\OS\js\storage.js"></script>
+    <script src="D:\OS\js\progress.js"></script>
+    <script src="D:\OS\js\main.js"></script>
+    <script src="D:\OS\js\quiz.js"></script>
+
+    <script>
+        function triggerProcessLifecycleSimulation() {
+            const nodeNew = document.getElementById("sim-node-new");
+            const nodeReady = document.getElementById("sim-node-ready");
+            const nodeRunning = document.getElementById("sim-node-running");
+            const nodeWaiting = document.getElementById("sim-node-waiting");
+            const nodeTerminated = document.getElementById("sim-node-terminated");
+            
+            const arr1 = document.getElementById("arrow-1");
+            const arr2 = document.getElementById("arrow-2");
+            const arr3 = document.getElementById("arrow-3");
+            const arr4 = document.getElementById("arrow-4");
+            
+            const readyBox = document.getElementById("ready-queue-box-injector");
+            const waitingBox = document.getElementById("waiting-queue-box-injector");
+
+            // ล้างสีไฮไลต์คลาสเก่าทั้งหมดออกก่อนรันลูปใหม่
+            document.querySelectorAll(".simulation-node").forEach(n => n.classList.remove("active-state"));
+            document.querySelectorAll(".sim-arrow").forEach(a => a.classList.remove("active-arrow"));
+
+            // เฟสที่ 1: โพสเซสถูกสร้างขึ้น (New)
+            nodeNew.classList.add("active-state");
+            
+            // เฟสที่ 2: โหลดเข้าคิวหน่วยความจำ (Ready)
+            setTimeout(() => {
+                nodeNew.classList.remove("active-state");
+                arr1.classList.add("active-arrow");
+                nodeReady.classList.add("active-state");
+            }, 1000);
+
+            // เฟสที่ 3: ตัวคัดเลือกดึงงานเข้าสู่ CPU (Dispatch to Running)
+            setTimeout(() => {
+                nodeReady.classList.remove("active-state");
+                arr1.classList.remove("active-arrow");
+                arr2.classList.add("active-arrow");
+                nodeRunning.classList.add("active-state");
+                
+                // ถอนโทเค็น PID 101 ออกจาก Ready Queue ในจอภาพจำลอง
+                readyBox.innerHTML = '<span class="pcb-token">PID: 102</span>';
+            }, 2300);
+
+            // เฟสที่ 4: เกิดการร้องขอข้อมูล I/O ดีดลงสู่คิว Waiting
+            setTimeout(() => {
+                nodeRunning.classList.remove("active-state");
+                arr2.classList.remove("active-arrow");
+                arr3.classList.add("active-arrow");
+                nodeWaiting.classList.add("active-state");
+                
+                // ย้ายตัวจองจำเข้า Waiting Queue
+                waitingBox.innerHTML = '<span class="pcb-token" style="background:#d97706;">PID: 101</span>';
+            }, 3800);
+
+            // เฟสที่ 5: อุปกรณ์ตอบรับข้อมูลเสร็จสิ้น ส่งงานกลับมา Ready Queue
+            setTimeout(() => {
+                nodeWaiting.classList.remove("active-state");
+                arr3.classList.remove("active-arrow");
+                arr4.classList.add("active-arrow");
+                nodeReady.classList.add("active-state");
+                
+                // คืนค่าผังกล่องคิวจอภาพ
+                readyBox.innerHTML = '<span class="pcb-token">PID: 102</span> <span class="pcb-token">PID: 101</span>';
+                waitingBox.innerHTML = '<span class="text-muted small">คิวว่างเปล่า</span>';
+            }, 5300);
+
+            // เฟสที่ 6: งานคำนวณโค้ดผ่านพ้นคำสั่งสำเร็จ (Terminated)
+            setTimeout(() => {
+                nodeReady.classList.remove("active-state");
+                arr4.classList.remove("active-arrow");
+                nodeRunning.classList.add("active-state");
+            }, 6500);
+
+            setTimeout(() => {
+                nodeRunning.classList.remove("active-state");
+                nodeTerminated.classList.add("active-state");
+                
+                readyBox.innerHTML = '<span class="text-muted small">คิวว่างเปล่า</span>';
+                
+                Swal.fire({
+                    toast: true,
+                    position: 'bottom-end',
+                    title: 'Process คำนวณเสร็จสิ้น (PID 101/102)',
+                    icon: 'success',
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+            }, 7800);
+        }
+    </script>
+</body>
+</html>

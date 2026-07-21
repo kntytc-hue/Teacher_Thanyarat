@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หน่วยที่ 7 การจัดการ I/O | วิชา 31909-1001 ระบบปฏิบัติการ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="D:\OS\css\style.css">
+    <link rel="stylesheet" href="D:\OS\css\responsive.css">
+    <link rel="stylesheet" href="D:\OS\css\dark-mode.css">
+    <style>
+        /* สไตล์แบบสากลสำหรับการจำลอง Animation ของ I/O และ Disk Scheduling Management */
+        .simulation-space {
+            background-color: #1e293b;
+            border-radius: 16px;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        body.light-mode .simulation-space {
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+        }
+        .state-container-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        .simulation-node {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Kanit', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            color: #ffffff;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 4px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        #sim-node-cpu { background: linear-gradient(135deg, #a855f7, #9333ea); }
+        #sim-node-controller { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+        #sim-node-device { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+        /* อนิเมชันกระพริบเมื่อสถานะกำลัง Active */
+        .simulation-node.active-state {
+            transform: scale(1.15);
+            box-shadow: 0 0 25px currentColor;
+            border-color: #ffffff;
+            animation: pulse-glow 1.5s infinite alternate;
+        }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 15px rgba(255,255,255,0.2); }
+            100% { box-shadow: 0 0 30px rgba(255,255,255,0.8); }
+        }
+        
+        .sim-arrow {
+            height: 4px;
+            background-color: #cbd5e1;
+            flex-grow: 1;
+            position: relative;
+            margin: 0 10px;
+            transition: all 0.3s;
+        }
+        body.dark-mode .sim-arrow { background-color: #475569; }
+        .sim-arrow::after {
+            content: '';
+            position: absolute;
+            right: -2px;
+            top: -6px;
+            width: 0; height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 12px solid #cbd5e1;
+        }
+        body.dark-mode .sim-arrow::after { border-left-color: #475569; }
+        .sim-arrow.active-arrow {
+            background-color: #10b981 !important;
+        }
+        .sim-arrow.active-arrow::after {
+            border-left-color: #10b981 !important;
+        }
+        
+        /* สไตล์ตารางบล็อกจำลอง I/O Buffering / Spooling Queue */
+        .queue-box-list {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 60px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            border: 1px dashed rgba(0,0,0,0.1);
+        }
+        body.dark-mode .queue-box-list { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); }
+        .pcb-token {
+            background: #4b5563;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            animation: bounceIn 0.5s;
+        }
+        .pcb-token.buffer-slot { background: #3b82f6; }
+        .pcb-token.disk-slot { background: #f59e0b; }
+        .pcb-token.io-active { background: #10b981; }
+
+        /* สไตล์จำลองแทร็กของฮาร์ดดิสก์ */
+        .disk-track-visual {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: monospace;
+            color: #38bdf8;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        .track-node {
+            display: inline-block;
+            width: 35px;
+            height: 35px;
+            line-height: 35px;
+            text-align: center;
+            background: #334155;
+            color: #f8fafc;
+            margin: 0 2px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .track-node.head-active {
+            background: #e11d48;
+            color: #ffffff;
+            font-weight: bold;
+            box-shadow: 0 0 10px #e11d48;
+        }
+    </style>
+</head>
+<body class="light-mode">
+
+    <div id="loading-screen">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg sticky-top main-navbar">
+        <div class="container-fluid">
+            <button class="btn text-white me-2" id="sidebar-toggle-btn" aria-label="เปิดเมนูด้านข้าง">
+                <i class="fas fa-bars fa-lg"></i>
+            </button>
+            <a class="navbar-brand d-flex align-items-center" href="../index.html">
+                <i class="fas fa-laptop-code me-2"></i>
+                <span>31909-1001 ระบบปฏิบัติการ</span>
+            </a>
+            <div class="ms-auto">
+                <button class="btn text-white" id="theme-toggle-btn" aria-label="เปลี่ยนโหมดหน้าจอ">
+                    <i class="fas fa-moon fa-lg"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="app-layout">
+        <aside class="sidebar-navigation" id="main-sidebar">
+            <div class="sidebar-profile text-center py-4">
+                <div class="avatar-container mb-2">
+                    <i class="fas fa-book-reader fa-3x text-white bg-primary p-3 rounded-circle"></i>
+                </div>
+                <h6 class="text-white mb-0">อาจารย์ธัญญรัตน์ ตาเล๊ะ</h6>
+                <small class="text-white-50">เทคโนโลยีคอมพิวเตอร์</small>
+            </div>
+            <ul class="sidebar-menu-list px-2" id="sidebar-menu-injector"></ul>
+        </aside>
+
+        <main class="main-content-flow px-3 px-md-5 py-4">
+            
+            <nav aria-label="breadcrumb" class="mb-4" data-aos="fade-down">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="../index.html" class="text-decoration-none"><i class="fas fa-home me-1"></i>หน้าแรก</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">หน่วยที่ 7 การจัดการ I/O</li>
+                </ol>
+            </nav>
+
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light text-dark border-start border-5 border-primary" data-aos="fade-up">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <span class="text-primary fw-bold text-uppercase d-block mb-1">Unit 07: Input/Output Management</span>
+                        <h1 class="font-kanit font-weight-bold text-dark-primary mb-0">หน่วยที่ 7 การจัดการ I/O</h1>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary btn-sm rounded-3 px-3" onclick="window.print()"><i class="fas fa-print me-1"></i>พิมพ์บทเรียน</button>
+                        <button class="btn btn-primary btn-sm rounded-3 px-3" id="bookmark-btn"><i class="far fa-bookmark me-1"></i>คั่นหน้าไว้</button>
+                    </div>
+                </div>
+            </div>
+
+            <article class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 leading-relaxed text-secondary text-justify content-article-body" data-aos="fade-up" data-aos-delay="100">
+                
+                <h3 class="font-kanit text-dark-primary font-weight-bold mb-3 border-bottom pb-2">1. การจัดการไอโอ (I/O Management)</h3>
+                <p style="text-indent: 30px;">
+                    หน้าที่ที่สำคัญประการหนึ่งของระบบปฏิบัติการคือการควบคุมอุปกรณ์อินพุตและเอาต์พุต (I/O Devices) ทั้งหมดของคอมพิวเตอร์ ระบบปฏิบัติการจะต้องส่งคำสั่งไปยังอุปกรณ์เหล่านี้ ตรวจจับการขัดจังหวะ (Interrupts) และจัดการกับข้อผิดพลาดที่เกิดขึ้น รวมถึงจัดเตรียมอินเทอร์เฟซที่เรียบง่ายและใช้งานง่ายระหว่างอุปกรณ์กับส่วนที่เหลือของระบบ เพื่อให้ระบบทำงานได้อย่างมีประสิทธิภาพและเป็นอิสระจากฮาร์ดแวร์เฉพาะรุ่น
+                </p>
+                <p style="text-indent: 30px;">
+                    การจัดการ I/O มีความซับซ้อนเนื่องจากอุปกรณ์มีความหลากหลายสูง ทั้งในด้านความเร็ว (เช่น คีย์บอร์ดความเร็วต่ำเทียบกับ NVMe SSD ความเร็วสูง) จุดประสงค์การใช้งาน และรูปแบบการส่งผ่านข้อมูล (แบบบล็อกหรือแบบสตรีมตัวอักษร) ระบบปฏิบัติการจึงจำเป็นต้องใช้โครงสร้างแบบเลเยอร์เพื่อซ่อนความซับซ้อนเหล่านั้นไว้
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">2. โปรแกรมขับเคลื่อนอุปกรณ์ (Device Driver)</h3>
+                <p style="text-indent: 30px;">
+                    <strong>Device Driver</strong> คือโปรแกรมซอฟต์แวร์เฉพาะที่ทำหน้าที่เป็นตัวกลางในการสื่อสารระหว่างระบบปฏิบัติการและอุปกรณ์ฮาร์ดแวร์แต่ละชิ้น รหัสคำสั่งภายใน Device Driver จะถูกเขียนขึ้นโดยผู้ผลิตฮาร์ดแวร์ เพื่อทำหน้าที่แปลงคำสั่งสากลหรือคำสั่งเชิงตรรกะของระบบปฏิบัติการ (เช่น คำสั่ง Read หรือ Write) ให้กลายเป็นคำสั่งควบคุมระดับต่ำ (Low-level commands) ที่บอร์ดควบคุมอุปกรณ์ (Device Controller) เข้าใจได้
+                </p>
+                <p style="text-indent: 30px;">
+                    หากไม่มี Device Driver ระบบปฏิบัติการจะต้องบรรจุโค้ดควบคุมอุปกรณ์ทุกรุ่นทุกแบรนด์ไว้ในเคอร์เนล ซึ่งเป็นไปไม่ได้ในทางปฏิบัติ การมีโครงสร้างนี้ทำให้ระบบปฏิบัติการมีความยืดหยุ่นสูง สามารถเชื่อมต่ออุปกรณ์ใหม่ๆ ได้ทันทีเพียงแค่ติดตั้งโปรแกรมขับเคลื่อนเพิ่มเติม
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">3. การขัดจังหวะ (Interrupt)</h3>
+                <p style="text-indent: 30px;">
+                    <strong>Interrupt</strong> เป็นกลไกหลักของระบบคอมพิวเตอร์ฮาร์ดแวร์ที่ใช้แจ้งเตือน CPU เมื่อมีเหตุการณ์สำคัญเกิดขึ้นในอุปกรณ์ I/O ช่วยให้ CPU ไม่ต้องเสียเวลาคอยตรวจสอบสถานะของอุปกรณ์อยู่ตลอดเวลา (Polling) ซึ่งทำให้สูญเสียรอบการประมวลผลไปโดยเปล่าประโยชน์
+                </p>
+                <p style="text-indent: 30px;">
+                    เมื่ออุปกรณ์ทำงานเสร็จสิ้นหรือต้องการความช่วยเหลือ มันจะส่งสัญญาณผ่านสาย Interrupt Signal ไปยังตัวควบคุมการขัดจังหวะ จากนั้น CPU จะหยุดการทำงานของโปรเซสปัจจุบันชั่วคราว บันทึกสถานะการทำงาน (Context) ลงในสแต็ก แล้วกระโดดไปทำงานยังฟังก์ชันบริการการขัดจังหวะที่เรียกว่า <strong>Interrupt Service Routine (ISR)</strong> เพื่อจัดการข้อมูลจากอุปกรณ์นั้นๆ เมื่อจัดการเสร็จแล้วจึงจะดึงสถานะเดิมกลับมาเพื่อประมวลผลงานค้างต่อไป
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">4. การเข้าถึงหน่วยความจำโดยตรง (DMA - Direct Memory Access)</h3>
+                <p style="text-indent: 30px;">
+                    สำหรับอุปกรณ์ที่ส่งผ่านข้อมูลปริมาณมากและมีความเร็วสูง เช่น ฮาร์ดดิสก์ หรือการ์ดเครือข่ายความเร็วสูง การใช้กลไกขัดจังหวะแบบเดิม (ที่ต้องย้ายข้อมูลทีละไบต์ผ่านรีจิสเตอร์ของ CPU) จะทำให้ CPU เกิดภาระงานหนักเกินไป (CPU Overhead) ระบบคอมพิวเตอร์จึงนำกลไก <strong>DMA (Direct Memory Access)</strong> เข้ามาแก้ไขปัญหานี้
+                </p>
+                <p style="text-indent: 30px;">
+                    ภายใต้การทำงานของ DMA ตัวควบคุม DMA (DMA Controller) จะเข้ามาทำหน้าที่ควบคุมบัสระบบแทน CPU เพื่อทำการคัดลอกหรือถ่ายโอนบล็อกข้อมูลระหว่างอุปกรณ์ I/O และหน่วยความจำหลัก (RAM) โดยตรง โดยกระบวนการทั้งหมดนี้ CPU จะเข้ามาเกี่ยวข้องเฉพาะในขั้นตอนเริ่มต้นสั่งการ (ตั้งค่าที่อยู่ต้นทาง ปลายทาง และขนาดข้อมูล) และขั้นตอนสุดท้ายเมื่อการส่งผ่านข้อมูลทั้งบล็อกเสร็จสิ้น ซึ่ง DMA Controller จะส่ง Interrupt มารายงานเพียงครั้งเดียว ทำให้ CPU มีเวลาไปประมวลผลโปรเซสอื่นได้อย่างเต็มที่
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">5. การจัดเก็บข้อมูลชั่วคราว (Buffering)</h3>
+                <p style="text-indent: 30px;">
+                    <strong>Buffering</strong> คือการสำรองพื้นที่ในหน่วยความจำหลัก (RAM) เพื่อใช้พักข้อมูลชั่วคราวในระหว่างการถ่ายโอนข้อมูลระหว่างอุปกรณ์สองตัว หรือระหว่างอุปกรณ์กับโปรเซส โดยมีวัตถุประสงค์หลัก 3 ประการคือ:
+                </p>
+                <ul>
+                    <li class="mb-2"><strong>เพื่อรองรับความเร็วที่แตกต่างกันของอุปกรณ์:</strong> เช่น การดาวน์โหลดไฟล์จากอินเทอร์เน็ตความเร็วต่ำลงสู่ฮาร์ดดิสก์ความเร็วสูง ข้อมูลจะถูกเก็บในบัฟเฟอร์ก่อนจนครบกลุ่มคำสั่งจึงจะเขียนลงดิสก์พร้อมกัน</li>
+                    <li class="mb-2"><strong>เพื่อปรับขนาดบล็อกข้อมูลที่ไม่เท่ากัน:</strong> เช่น อุปกรณ์ส่งข้อมูลมาทีละไบต์ แต่ระบบปลายทางต้องการรับข้อมูลเป็นบล็อกขนาด 4KB</li>
+                    <li class="mb-2"><strong>เพื่อสนับสนุนระบบเซแมนติกส์แบบไม่มีการบล็อก (Non-blocking I/O):</strong> แอปพลิเคชันสามารถส่งข้อมูลให้บัฟเฟอร์แล้วไปทำงานอื่นต่อได้ทันทีโดยไม่ต้องรอให้อุปกรณ์จริงทำงานเสร็จ</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">6. การทำแคช (Caching)</h3>
+                <p style="text-indent: 30px;">
+                    <strong>Caching</strong> เป็นเทคนิคการจัดสรรพื้นที่หน่วยความจำความเร็วสูงเพื่อเก็บสำเนาของข้อมูลจริงที่มีการใช้งานบ่อยครั้ง แตกต่างจาก Buffering ตรงที่ บัฟเฟอร์ทำหน้าที่พักข้อมูลเพื่อส่งผ่าน แต่แคชทำหน้าที่เก็บสำเนาข้อมูลเพื่อเพิ่มความเร็วในการเข้าถึงซ้ำในอนาคต (Speed up access)
+                </p>
+                <p style="text-indent: 30px;">
+                    ตัวอย่างเช่น <strong>Disk Cache</strong> ซึ่งระบบปฏิบัติการจะเก็บข้อมูลบล็อกของดิสก์ที่ถูกเรียกอ่านบ่อยๆ ไว้ใน RAM เมื่อโปรเซสต้องการอ่านข้อมูลเดิมอีกครั้ง ระบบจะส่งข้อมูลจากแคชใน RAM ให้ทันที โดยไม่ต้องเสียเวลาหมุนจานแม่เหล็กหรือเข้าถึงฮาร์ดดิสก์จริง ซึ่งช่วยลดเวลาการเข้าถึงข้อมูลลงมหาศาล
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">7. การสพูลลิ่ง (Spooling)</h3>
+                <p style="text-indent: 30px;">
+                    <strong>Spooling (Simultaneous Peripheral Operations On-Line)</strong> คือเทคนิคการจัดการอุปกรณ์ I/O ที่ไม่สามารถแชร์การใช้งานพร้อมกันได้ (Non-shareable device) โดยระบบปฏิบัติการจะสร้างพื้นที่คิวพักงานไว้บนฮาร์ดดิสก์ (Spool) เพื่อรับงานจากโปรเซสต่างๆ มาเขียนเก็บลงดิสก์ก่อน แทนที่จะส่งตรงไปยังอุปกรณ์ในทันที
+                </p>
+                <p style="text-indent: 30px;">
+                    ข้อดีของระบบ Spooling คือทำให้โปรเซสผู้ใช้งานทำงานเสร็จสิ้นได้อย่างรวดเร็วและสามารถทำงานอื่นต่อได้ทันที โดยไม่ต้องถูกบล็อกเพื่อรอให้อุปกรณ์ฮาร์ดแวร์อันเชื่องช้าประมวลผลเสร็จทีละงาน คิวงานบนดิสก์จะค่อยๆ ถูกทยอยส่งให้อุปกรณ์ทำงานตามลำดับอย่างเป็นระเบียบ
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">8. การจัดการเครื่องพิมพ์ (Printer Management)</h3>
+                <p style="text-indent: 30px;">
+                    เครื่องพิมพ์เป็นตัวอย่างที่ชัดเจนที่สุดของการประยุกต์ใช้ระบบ <strong>Spooling</strong> เนื่องจากเครื่องพิมพ์เป็นอุปกรณ์ประมวลผลที่ช้าและไม่สามารถจัดพิมพ์เอกสารจากสองโปรเซสพร้อมกันในเวลาเดียวกันได้ (ไม่อย่างนั้นตัวอักษรของทั้งสองไฟล์จะพิมพ์ปนกันในหน้าเดียว)
+                </p>
+                <p style="text-indent: 30px;">
+                    ในระบบการจัดการเครื่องพิมพ์ เมื่อผู้ใช้กดสั่งพิมพ์เอกสาร ระบบปฏิบัติการจะแปลงเอกสารนั้นเป็นไฟล์งานพิมพ์ชั่วคราวแล้วนำไปจัดเก็บไว้ในโฟลเดอร์คิวพิมพ์ (Print Spooler) บนดิสก์ ตัวจัดการคิวพิมพ์จะเรียงลำดับงานพิมพ์และทยอยส่งข้อมูลให้เครื่องพิมพ์ทีละงานจนเสร็จสมบูรณ์ ทำให้ผู้ใช้หลายคนสามารถสั่งพิมพ์งานพร้อมกันได้โดยระบบไม่ขัดข้อง
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">9. การจัดกำหนดการดิสก์ (Disk Scheduling)</h3>
+                <p style="text-indent: 30px;">
+                    ฮาร์ดดิสก์แบบจานแม่เหล็กมีความเร็วในการทำงานต่ำกว่า CPU และ RAM มาก เนื่องจากมีส่วนประกอบที่เป็นกลไกเคลื่อนไหว การเข้าถึงข้อมูลบนดิสก์จึงใช้เวลาส่วนใหญ่ไปกับ <strong>Seek Time (เวลาที่หัวอ่านใช้เคลื่อนที่ไปยังแทร็กที่ต้องการ)</strong> ระบบปฏิบัติการจึงต้องมีอัลกอริทึมการจัดกำหนดการดิสก์ (Disk Scheduling) เพื่อจัดลำดับคำร้องขอเข้าถึงดิสก์ (I/O Requests) ใหม่ เพื่อให้หัวอ่านเคลื่อนที่สั้นที่สุดและทำงานได้เร็วที่สุด
+                </p>
+
+                <h4 class="font-kanit fw-bold mt-4 text-dark"><i class="fas fa-arrow-right text-primary me-2"></i>9.1 FCFS Disk Scheduling (First-Come, First-Served)</h4>
+                <p style="text-indent: 30px;">
+                    เป็นอัลกอริทึมที่ง่ายที่สุด ทำงานแบบใครมาก่อนได้บริการก่อนตามลำดับคำร้องขอ ไม่มีการคำนวณตำแหน่งหัวอ่านปัจจุบัน ข้อดีคือมีความยุติธรรมและไม่มีปัญหา Starvation แต่ข้อเสียร้ายแรงคือหัวอ่านอาจต้องเคลื่อนที่สลับไปสลับมาข้ามแทร็กอย่างรุนแรง (Wild swing) ทำให้ประสิทธิภาพโดยรวมต่ำมาก
+                </p>
+
+                <h4 class="font-kanit fw-bold mt-4 text-dark"><i class="fas fa-arrow-right text-primary me-2"></i>9.2 SSTF Disk Scheduling (Shortest Seek Time First)</h4>
+                <p style="text-indent: 30px;">
+                    อัลกอริทึมนี้จะเลือกบริการคำร้องขอที่อยู่ **ใกล้กับตำแหน่งปัจจุบันของหัวอ่านมากที่สุด** เป็นลำดับถัดไป เพื่อลดระยะทางการเคลื่อนที่ของหัวอ่านให้เหลือน้อยที่สุดในแต่ละก้าว ข้อดีคือเพิ่มประสิทธิภาพการทำงานได้ดีกว่า FCFS มาก แต่ข้อเสียคืออาจเกิดปัญหา <strong>Starvation</strong> กับคำร้องขอที่อยู่แทร็กไกลๆ หากมีคำร้องขอใหม่ๆ ป้อนเข้ามาในตำแหน่งแทร็กใกล้ๆ หัวอ่านอย่างต่อเนื่อง
+                </p>
+
+                <h4 class="font-kanit fw-bold mt-4 text-dark"><i class="fas fa-arrow-right text-primary me-2"></i>9.3 SCAN Disk Scheduling (Elevator Algorithm)</h4>
+                <p style="text-indent: 30px;">
+                    รู้จักกันในชื่อ **"อัลกอริทึมลิฟต์"** หัวอ่านของดิสก์จะเริ่มต้นเคลื่อนที่ไปในทิศทางหนึ่ง (เช่น เคลื่อนที่เข้าสู่แทร็กในสุด) และให้บริการคำร้องขอทั้งหมดที่ขวางหน้าไปเรื่อยๆ จนกระทั่ง **เคลื่อนที่ไปถึงแทร็กปลายสุดของดิสก์** จากนั้นจึงจะเปลี่ยนทิศทางการเดินทางกลับ (เช่น เคลื่อนที่ออกไปยังแทร็กนอกสุด) และให้บริการงานที่เหลือขวางหน้าในทิศทางขากลับ วิธีนี้ช่วยแก้ปัญหา Starvation ได้อย่างสมบูรณ์
+                </p>
+
+                <h4 class="font-kanit fw-bold mt-4 text-dark"><i class="fas fa-arrow-right text-primary me-2"></i>9.4 C-SCAN Disk Scheduling (Circular SCAN)</h4>
+                <p style="text-indent: 30px;">
+                    เป็นรูปแบบที่พัฒนาต่อยอดมาจาก SCAN เพื่อให้ระยะเวลาการรอคอยมีความสม่ำเสมอมากขึ้น โดยหัวอ่านจะเคลื่อนที่บริการคำร้องขอไปในทิศทางเดียวจนถึงปลายสุดของดิสก์ แต่เมื่อถึงจุดปลายสุดแล้ว **หัวอ่านจะเคลื่อนที่กลับมายังจุดเริ่มต้นของอีกฝั่งหนึ่งทันทีโดยไม่มีการให้บริการใดๆ ในระหว่างทางขากลับ** (กวาดข้อมูลทิศทางเดียวเป็นวงกลมต่อเนื่อง)
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">10. ตัวอย่างการจัดการอุปกรณ์จริง (Real Device Management Case Study)</h3>
+                <p style="text-indent: 30px;">
+                    ในการทำงานจริงของระบบปฏิบัติการ เช่น Linux หรือ Windows เมื่อผู้ใช้งานเชื่อมต่อแฟลชไดรฟ์ (USB Mass Storage) ระบบปฏิบัติการจะเริ่มกระบวนการจัดสรรโดยอัตโนมัติ:
+                </p>
+                <ol class="mb-4">
+                    <li class="mb-2">ตัวควบคุมพอร์ต USB ตรวจจับแรงดันไฟฟ้าที่เปลี่ยนไปและส่งสัญญาณ <strong>Interrupt</strong> แจ้ง CPU</li>
+                    <li class="mb-2">เคอร์เนลเรียกใช้งาน <strong>USB Hub Driver</strong> เพื่อระบุประเภทอุปกรณ์และโหลด <strong>USB Mass Storage Driver</strong> มารองรับ</li>
+                    <li class="mb-2">ระบบปฏิบัติการสร้างโครงสร้างย่อยระบุเป็นบล็อกอุปกรณ์ (Block Device File) เพื่อเปิดช่องทางเชื่อมโยงข้อมูล</li>
+                    <li class="mb-2">เมื่อมีการอ่านหรือคัดลอกไฟล์ขนาดใหญ่ ระบบจะสั่งเปิดกลไก <strong>DMA Channel</strong> ร่วมกับระบบ <strong>Buffering</strong> เพื่อส่งข้อมูลตรงเข้าสู่ RAM ช่วยรักษาเสถียรภาพและไม่ทำให้ CPU ทำงานหนักจนระบบค้าง</li>
+                </ol>
+
+                <hr class="my-4">
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">11. แอนิเมชันจำลองขั้นตอนการขัดจังหวะด้วยสัญญาณ Interrupt และระบบ DMA</h3>
+                <p style="text-indent: 30px;">
+                    แบบจำลองปฏิสัมพันธ์จำลองสถานการณ์ควบคุมรับส่งข้อมูล I/O จากอุปกรณ์ปลายทางผ่าน Device Controller เพื่อเข้าถึงสถาปัตยกรรมหน่วยความจำหลัก
+                </p>
+                <p class="small text-muted">นักศึกษาสามารถคลิกปุ่มรันตัวจำลองเพื่อดูการทำงานของสัญญาณควบคุม:</p>
+
+                <div class="simulation-space my-4 shadow-sm" id="io-anim-space">
+                    <div class="state-container-wrapper py-4">
+                        <div class="simulation-node" id="sim-node-device">I/O Device</div>
+                        <div class="sim-arrow" id="io-arrow-1"></div>
+                        <div class="simulation-node" id="sim-node-controller">Controller</div>
+                        <div class="sim-arrow" id="io-arrow-2"></div>
+                        <div class="simulation-node" id="sim-node-cpu">CPU Core</div>
+                    </div>
+
+                    <div class="row mt-4 pt-2 text-dark font-kanit">
+                        <div class="col-md-12 mb-2">
+                            <h6 class="text-white-50 small mb-2"><i class="fas fa-network-wired me-2"></i>สถานะบัฟเฟอร์คิวควบคุมข้อมูล (I/O Spooling & Buffering)</h6>
+                            <div class="queue-box-list" id="io-queue-injector">
+                                <span class="pcb-token buffer-slot">Data Block A (คิวบัฟเฟอร์)</span>
+                                <span class="pcb-token buffer-slot">Data Block B (คิวบัฟเฟอร์)</span>
+                                <span class="pcb-token disk-slot">Printer Spool 1 (บนดิสก์)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button class="btn btn-primary font-kanit px-4 py-2 rounded-3 shadow" onclick="triggerIOSimulation()">
+                            <i class="fas fa-play-circle me-2"></i>เริ่มจำลองส่งสัญญาณ Interrupt & ถ่ายโอนข้อมูลแบบ DMA
+                        </button>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">12. แบบจำลองเปรียบเทียบตารางแทร็กหัวอ่านการจัดกำหนดการดิสก์ (Disk Scheduling Tracing)</h3>
+                <p style="text-indent: 30px;">
+                    พิจารณาสายลำดับคำร้องขอเข้าถึงแทร็กบนฮาร์ดดิสก์ (Disk Queue Request) ดังต่อไปนี้เพื่อจำลองตำแหน่งการขยับหัวอ่าน
+                </p>
+                <div class="p-3 bg-light rounded-3 border-start border-4 border-info my-3">
+                    <h6 class="font-kanit fw-bold text-dark mb-2">สถานการณ์ตัวอย่างคำนวณการเคลื่อนหัวอ่าน:</h6>
+                    <p class="small text-muted mb-2">สมมติให้หัวอ่านเริ่มต้นที่แทร็ก <strong>50</strong> และมีคิวลำดับคำร้องขอที่จองเข้ามาดังนี้:</p>
+                    <div class="bg-white p-2 border rounded font-monospace text-center mb-2 fw-bold text-dark">55, 10, 85, 45, 120</div>
+                    <hr class="my-2">
+                    <p class="small mb-2"><strong>สถานะการเคลื่อนที่จำลองจริงของหัวอ่านปัจจุบัน:</strong></p>
+                    <div class="disk-track-visual mb-3" id="disk-track-visualizer">
+                        <div class="track-node" id="tn-10">10</div>
+                        <div class="track-node" id="tn-45">45</div>
+                        <div class="track-node head-active" id="tn-50">50 (Head)</div>
+                        <div class="track-node" id="tn-55">55</div>
+                        <div class="track-node" id="tn-85">85</div>
+                        <div class="track-node" id="tn-120">120</div>
+                    </div>
+                    <div class="d-flex gap-2 justify-content-center flex-wrap">
+                        <button class="btn btn-sm btn-outline-dark font-kanit px-3" onclick="simulateDiskAlgorithm('FCFS')">แสดงผลลัพธ์แบบ FCFS</button>
+                        <button class="btn btn-sm btn-outline-dark font-kanit px-3" onclick="simulateDiskAlgorithm('SSTF')">แสดงผลลัพธ์แบบ SSTF</button>
+                    </div>
+                </div>
+
+                <div class="row my-4 justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="ratio ratio-16x9 shadow-sm rounded-3 overflow-hidden border">
+                            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="วิดีโอประกอบบทเรียนการจัดการไอโอและส่วนจัดตารางดิสก์" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+
+            </article>
+
+            <section class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 border-top border-4 border-success" data-aos="fade-up">
+                <div class="d-flex align-items-center justify-content-between border-bottom pb-3 mb-4">
+                    <h3 class="font-kanit text-dark-primary font-weight-bold mb-0">
+                        <i class="fas fa-user-check me-2 text-success"></i>แบบทดสอบหลังเรียนประจำหน่วยการเรียนที่ 7
+                    </h3>
+                    <span class="badge bg-success px-3 py-2 fs-6" id="quiz-progress-badge">ข้อที่ 1 / 20</span>
+                </div>
+                
+                <div id="quiz-question-container" class="my-3">
+                    </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-3">
+                    <button class="btn btn-outline-secondary px-4 py-2 rounded-3" id="prev-question-btn" disabled><i class="fas fa-arrow-left me-2"></i>ข้อก่อนหน้า</button>
+                    <button class="btn btn-primary px-4 py-2 rounded-3" id="next-question-btn">ส่งคำตอบและไปต่อ <i class="fas fa-arrow-right ms-2"></i></button>
+                </div>
+            </section>
+
+            <div class="d-flex justify-content-between align-items-center mb-5" data-aos="fade-up">
+                <a href="unit-06.html" class="btn btn-outline-dark px-4 py-2 rounded-3"><i class="fas fa-arrow-left me-2"></i>หน่วยก่อนหน้า</a>
+                <button class="btn btn-success btn-lg px-5 py-3 rounded-3 shadow font-kanit" id="mark-complete-btn">
+                    <i class="fas fa-check-double me-2"></i>ทำเครื่องหมายว่าเรียนจบหน่วยเรียนนี้แล้ว
+                </button>
+                <a href="unit-08.html" class="btn btn-outline-dark px-4 py-2 rounded-3">หน่วยถัดไป<i class="fas fa-arrow-right ms-2"></i></a>
+            </div>
+
+        </main>
+    </div>
+
+    <footer class="main-footer-section py-4 text-center mt-auto border-top">
+        <div class="container">
+            <p class="mb-0 text-secondary">© 2026 รายวิชา 31909-1001 ระบบปฏิบัติการ — แผงควบคุมเนื้อหาสถาปัตยกรรมระดับ ปวส.</p>
+        </div>
+    </footer>
+
+    <button id="back-to-top-btn" class="btn btn-primary rounded-circle shadow-lg"><i class="fas fa-chevron-up"></i></button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="D:\OS\js\data.js"></script>
+    <script src="D:\OS\js\storage.js"></script>
+    <script src="D:\OS\js\progress.js"></script>
+    <script src="D:\OS\js\main.js"></script>
+    <script src="D:\OS\js\quiz.js"></script>
+
+    <script>
+        // ฟังก์ชันจำลองแอนิเมชันสำหรับระบบจัดการ I/O
+        function triggerIOSimulation() {
+            const nodeDevice = document.getElementById("sim-node-device");
+            const nodeController = document.getElementById("sim-node-controller");
+            const nodeCpu = document.getElementById("sim-node-cpu");
+            
+            const arr1 = document.getElementById("io-arrow-1");
+            const arr2 = document.getElementById("io-arrow-2");
+            
+            const queueBox = document.getElementById("io-queue-injector");
+
+            // ล้างสถานะแอนิเมชันเดิม
+            document.querySelectorAll(".simulation-node").forEach(n => n.classList.remove("active-state"));
+            document.querySelectorAll(".sim-arrow").forEach(a => a.classList.remove("active-arrow"));
+            queueBox.innerHTML = '<span class="pcb-token buffer-slot">Data Block A (คิวบัฟเฟอร์)</span> <span class="pcb-token buffer-slot">Data Block B (คิวบัฟเฟอร์)</span> <span class="pcb-token disk-slot">Printer Spool 1 (บนดิสก์)</span>';
+
+            // เฟสที่ 1: อุปกรณ์ส่งผ่านข้อมูลเข้าสู่ Controller Buffer
+            nodeDevice.classList.add("active-state");
+            
+            setTimeout(() => {
+                nodeDevice.classList.remove("active-state");
+                arr1.classList.add("active-arrow");
+                nodeController.classList.add("active-state");
+            }, 1200);
+
+            // เฟสที่ 2: Controller ร้องขอฮาร์ดแวร์ขัดจังหวะ (Interrupt) ไปยัง CPU / ใช้ DMA ย้ายข้อมูล
+            setTimeout(() => {
+                arr1.classList.remove("active-arrow");
+                arr2.classList.add("active-arrow");
+                nodeController.classList.remove("active-state");
+                nodeCpu.classList.add("active-state");
+                
+                // อัปเดตคิวแสดงว่าข้อมูลบล็อกใหม่วิ่งเข้าสู่หน่วยความจำด้วย DMA สำเร็จ
+                queueBox.innerHTML = '<span class="pcb-token io-active">Data Block A (โหลดเข้า RAM แล้ว)</span> <span class="pcb-token buffer-slot">Data Block B (คิวบัฟเฟอร์)</span> <span class="pcb-token disk-slot">Printer Spool 1 (บนดิสก์)</span>';
+            }, 2600);
+
+            // เฟสที่ 3: สิ้นสุดกระบวนการ I/O Handling
+            setTimeout(() => {
+                nodeCpu.classList.remove("active-state");
+                arr2.classList.remove("active-arrow");
+                
+                Swal.fire({
+                    toast: true,
+                    position: 'bottom-end',
+                    title: 'สัญญาณ Interrupt ถูกตอบสนอง! สลับถ่ายโอนบล็อกข้อมูลผ่าน DMA สมบูรณ์',
+                    icon: 'success',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            }, 3800);
+        }
+
+        // ฟังก์ชันจำลองลำดับหัวอ่านฮาร์ดดิสก์แบบง่าย
+        function simulateDiskAlgorithm(algo) {
+            const nodes = {
+                10: document.getElementById("tn-10"),
+                45: document.getElementById("tn-45"),
+                50: document.getElementById("tn-50"),
+                55: document.getElementById("tn-55"),
+                85: document.getElementById("tn-85"),
+                120: document.getElementById("tn-120")
+            };
+
+            // รีเซ็ตล้างสถานะ Active เดิมก่อนหน้า
+            Object.values(nodes).forEach(n => n.classList.remove("head-active"));
+            nodes[50].classList.add("head-active");
+
+            if (algo === 'FCFS') {
+                Swal.fire({
+                    title: 'ผลจำลองหัวอ่านแบบ FCFS',
+                    text: 'ลำดับก้าวเดินของหัวอ่านดิสก์: 50 -> 55 -> 10 -> 85 -> 45 -> 120 (เกิดอาการเหวี่ยงข้ามแทร็กสูง)',
+                    icon: 'info',
+                    confirmButtonText: 'รับทราบ'
+                });
+            } else if (algo === 'SSTF') {
+                // เลือกค่าใกล้สุดสั้นสุดถัดจากตำแหน่ง 50 (55 -> 45 -> 10 -> 85 -> 120)
+                setTimeout(() => { nodes[50].classList.remove("head-active"); nodes[55].classList.add("head-active"); }, 500);
+                setTimeout(() => { nodes[55].classList.remove("head-active"); nodes[45].classList.add("head-active"); }, 1200);
+                setTimeout(() => { nodes[45].classList.remove("head-active"); nodes[10].classList.add("head-active"); }, 1900);
+                
+                Swal.fire({
+                    title: 'ผลจำลองหัวอ่านแบบ SSTF',
+                    text: 'เลือกแทร็กสั้นสุดถัดไป: 50 -> 55 -> 45 -> 10 -> 85 -> 120 (ลดระยะการ Seek ทรมานหัวอ่านลง)',
+                    icon: 'success',
+                    confirmButtonText: 'รับทราบ'
+                });
+            }
+        }
+    </script>
+</body>
+</html>

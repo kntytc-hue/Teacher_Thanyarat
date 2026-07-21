@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หน่วยที่ 9 ระบบแฟ้ม | วิชา 31909-1001 ระบบปฏิบัติการ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="D:\OS\css\style.css">
+    <link rel="stylesheet" href="D:\OS\css\responsive.css">
+    <link rel="stylesheet" href="D:\OS\css\dark-mode.css">
+    <style>
+        /* สไตล์แบบสากลสำหรับการจำลอง Animation ของ File System Management */
+        .simulation-space {
+            background-color: #1e293b;
+            border-radius: 16px;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        body.light-mode .simulation-space {
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+        }
+        .state-container-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        .simulation-node {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Kanit', sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            color: #ffffff;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 4px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        #sim-node-virtual { background: linear-gradient(135deg, #0284c7, #0369a1); }
+        #sim-node-mmu { background: linear-gradient(135deg, #0d9488, #0f766e); }
+        #sim-node-ram { background: linear-gradient(135deg, #16a34a, #15803d); }
+
+        /* อนิเมชันกระพริบเมื่อสถานะกำลัง Active */
+        .simulation-node.active-state {
+            transform: scale(1.15);
+            box-shadow: 0 0 25px currentColor;
+            border-color: #ffffff;
+            animation: pulse-glow 1.5s infinite alternate;
+        }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 15px rgba(255,255,255,0.2); }
+            100% { box-shadow: 0 0 30px rgba(255,255,255,0.8); }
+        }
+        
+        .sim-arrow {
+            height: 4px;
+            background-color: #cbd5e1;
+            flex-grow: 1;
+            position: relative;
+            margin: 0 10px;
+            transition: all 0.3s;
+        }
+        body.dark-mode .sim-arrow { background-color: #475569; }
+        .sim-arrow::after {
+            content: '';
+            position: absolute;
+            right: -2px;
+            top: -6px;
+            width: 0; height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 12px solid #cbd5e1;
+        }
+        body.dark-mode .sim-arrow::after { border-left-color: #475569; }
+        .sim-arrow.active-arrow {
+            background-color: #10b981 !important;
+        }
+        .sim-arrow.active-arrow::after {
+            border-left-color: #10b981 !important;
+        }
+        
+        /* สไตล์ตารางบล็อกจำลองแฟ้มข้อมูล / Directory / Metadata */
+        .queue-box-list {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 60px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            border: 1px dashed rgba(0,0,0,0.1);
+            flex-wrap: wrap;
+        }
+        body.dark-mode .queue-box-list { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); }
+        .pcb-token {
+            background: #4b5563;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            animation: bounceIn 0.5s;
+        }
+        .pcb-token.ram-slot { background: #0284c7; }
+        .pcb-token.swap-slot { background: #0d9488; }
+        .pcb-token.active-file { background: #16a34a; }
+
+        .table-custom {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+        .table-custom th, .table-custom td {
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem 1rem;
+            text-align: left;
+        }
+        .table-custom th {
+            background-color: #f8fafc;
+            font-weight: 600;
+        }
+        body.dark-mode .table-custom th {
+            background-color: #334155;
+            color: #f8fafc;
+            border-color: #475569;
+        }
+        body.dark-mode .table-custom td {
+            border-color: #475569;
+        }
+        .code-block {
+            background-color: #1e293b;
+            color: #f8fafc;
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body class="light-mode">
+    
+    <div id="loading-screen">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    
+    <nav class="navbar navbar-expand-lg sticky-top main-navbar">
+        <div class="container-fluid">
+            <button class="btn text-white me-2" id="sidebar-toggle-btn" aria-label="เปิดเมนูด้านข้าง">
+                <i class="fas fa-bars fa-lg"></i>
+            </button>
+            <a class="navbar-brand d-flex align-items-center" href="../index.html">
+                <i class="fas fa-laptop-code me-2"></i>
+                <span>31909-1001 ระบบปฏิบัติการ</span>
+            </a>
+            <div class="ms-auto">
+                <button class="btn text-white" id="theme-toggle-btn" aria-label="เปลี่ยนโหมดหน้าจอ">
+                    <i class="fas fa-moon fa-lg"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="app-layout">
+        <aside class="sidebar-navigation" id="main-sidebar">
+            <div class="sidebar-profile text-center py-4">
+                <div class="avatar-container mb-2">
+                    <i class="fas fa-book-reader fa-3x text-white bg-primary p-3 rounded-circle"></i>
+                </div>
+                <h6 class="text-white mb-0">อาจารย์ธัญญรัตน์ ตาเล๊ะ</h6>
+                <small class="text-white-50">เทคโนโลยีคอมพิวเตอร์</small>
+            </div>
+            <ul class="sidebar-menu-list px-2" id="sidebar-menu-injector"></ul>
+        </aside>
+    
+        <main class="main-content-flow px-3 px-md-5 py-4">
+            
+            <nav aria-label="breadcrumb" class="mb-4" data-aos="fade-down">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="../index.html" class="text-decoration-none"><i class="fas fa-home me-1"></i>หน้าแรก</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">หน่วยที่ 9 ระบบแฟ้ม</li>
+                </ol>
+            </nav>
+            
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light text-dark border-start border-5 border-primary" data-aos="fade-up">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <span class="text-primary fw-bold text-uppercase d-block mb-1">Unit 09: File Systems & Storage Management</span>
+                        <h1 class="font-kanit font-weight-bold text-dark-primary mb-0">หน่วยที่ 9 ระบบแฟ้ม</h1>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary btn-sm rounded-3 px-3" onclick="window.print()"><i class="fas fa-print me-1"></i>พิมพ์บทเรียน</button>
+                        <button class="btn btn-primary btn-sm rounded-3 px-3" id="bookmark-btn"><i class="far fa-bookmark me-1"></i>คั่นหน้าไว้</button>
+                    </div>
+                </div>
+            </div>
+            
+            <article class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 leading-relaxed text-secondary text-justify content-article-body" data-aos="fade-up" data-aos-delay="100">
+                
+                <h3 class="font-kanit text-dark-primary font-weight-bold mb-3 border-bottom pb-2">1. ระบบแฟ้ม (File System)</h3>
+                <p style="text-indent: 30px;">
+                    ระบบแฟ้ม (File System) คือ โครงสร้างและกลไกซอฟต์แวร์ที่ระบบปฏิบัติการใช้ในการจัดเก็บ จัดระเบียบ ค้นหา และเข้าถึงข้อมูลบนอุปกรณ์จัดเก็บข้อมูลสำรอง (Secondary Storage) เช่น ฮาร์ดดิสก์ (HDD), โซลิดสเตตไดรฟ์ (SSD), แฟลชไดรฟ์ หรือออปติคัลดิสก์ หากปราศจากระบบแฟ้ม ข้อมูลที่จัดเก็บไว้จะกลายเป็นเพียงลำดับของไบต์ (Stream of bytes) ที่ต่อเนื่องกันโดยไม่มีจุดเริ่มต้นหรือจุดสิ้นสุดที่ชัดเจน ทำให้ไม่สามารถระบุได้ว่าข้อมูลชุดใดเป็นของโปรแกรมใด
+                </p>
+                <p style="text-indent: 30px;">
+                    ระบบแฟ้มทำหน้าที่เป็นชั้นของการนามธรรม (Abstraction Layer) ระหว่างผู้ใช้หรือแอปพลิเคชันกับอุปกรณ์จัดเก็บข้อมูลทางกายภาพ ช่วยแปลงคำสั่งระดับสูง เช่น การสร้าง อ่าน แก้ไข หรือลบไฟล์ ให้กลายเป็นการทำงานระดับบล็อก (Block-level I/O Operations) บนอุปกรณ์จัดเก็บข้อมูลจริง นอกจากนี้ ระบบแฟ้มยังรับผิดชอบการบริหารจัดการพื้นที่ว่าง (Free Space Management) การบันทึกตำแหน่งบล็อกของไฟล์ และการรักษาความปลอดภัยของข้อมูล
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">2. แฟ้มข้อมูล (File)</h3>
+                <p style="text-indent: 30px;">
+                    แฟ้มข้อมูล หรือ ไฟล์ (File) คือ หน่วยของการจัดเก็บข้อมูลเชิงตรรกะ (Logical Storage Unit) ที่ถูกกำหนดขึ้นโดยระบบปฏิบัติการ เพื่อรวบรวมกลุ่มของข้อมูลที่มีความสัมพันธ์กันไว้ด้วยกัน ภายใต้ชื่อที่กำหนดขึ้น จากมุมมองของผู้ใช้ ไฟล์เป็นหน่วยข้อมูลขนาดเล็กที่สุดที่สามารถบันทึกลงในระบบจัดเก็บข้อมูลแบบถาวรได้
+                </p>
+                <p style="text-indent: 30px;">
+                    ไฟล์สามารถแบ่งออกได้เป็นหลายประเภทตามลักษณะของข้อมูล เช่น
+                </p>
+                <ul>
+                    <li class="mb-2"><strong>Executable Files (.exe, .bin, .sh):</strong> ไฟล์รหัสคำสั่งที่ภาษาเครื่องสามารถนำไปประมวลผลได้โดยตรง</li>
+                    <li class="mb-2"><strong>Data Files (.txt, .csv, .json):</strong> ไฟล์ข้อมูลข้อความเปล่าหรือข้อมูลโครงสร้าง</li>
+                    <li class="mb-2"><strong>Document Files (.docx, .pdf, .xlsx):</strong> ไฟล์เอกสารที่มีรูปแบบเฉพาะ</li>
+                    <li class="mb-2"><strong>Multimedia Files (.jpg, .mp3, .mp4):</strong> ไฟล์สื่อภาพ เสียง และวิดีโอ</li>
+                </ul>
+                <p style="text-indent: 30px;">
+                    โครงสร้างภายในไฟล์ถูกตีความโดยแอปพลิเคชันหรือระบบปฏิบัติการ โดยมีการเข้าถึงข้อมูลในไฟล์ 2 วิธีหลัก คือ การเข้าถึงแบบลำดับ (Sequential Access) ซึ่งเป็นการอ่านหรือเขียนข้อมูลเรียงตามลำดับไบต์ตั้งแต่นับเริ่มต้นจนถึงจุดสิ้นสุด และการเข้าถึงแบบสุ่มหรือโดยตรง (Direct/Random Access) ซึ่งช่วยให้โปรแกรมสามารถข้ามไปยังตำแหน่งใดๆ ของไฟล์ได้ทันทีโดยไม่ต้องอ่านข้อมูลก่อนหน้า
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">3. สารบบ (Directory)</h3>
+                <p style="text-indent: 30px;">
+                    สารบบ หรือ ไดเรกทอรี (Directory / Folder) คือ โครงสร้างข้อมูลทางตรรกะที่ทำหน้าที่จัดกลุ่มและบันทึกรายชื่อของแฟ้มข้อมูล เพื่อให้ผู้ใช้และระบบปฏิบัติการสามารถค้นหาและจัดหมวดหมู่ไฟล์ได้อย่างเป็นระบบ ในระดับล่าง ไดเรกทอรีก็คือไฟล์ชนิดพิเศษประเภทหนึ่งที่ภายในบรรจุตารางรายการ (Directory Entries) ซึ่งเชื่อมโยงระหว่างชื่อไฟล์กับตำแหน่งทางกายภาพหรือดัชนีระบุตัวตนของไฟล์นั้นๆ บนดิสก์ (เช่น Inode Number หรือ FAT Cluster)
+                </p>
+                <p style="text-indent: 30px;">
+                    การใช้งานไดเรกทอรีช่วยแก้ปัญหาความสับสนเมื่อมีจำนวนไฟล์เพิ่มมากขึ้น รองรับการตั้งชื่อไฟล์ที่ซ้ำกันหากอยู่นอกไดเรกทอรีเดียวกัน และช่วยอำนวยความสะดวกในการกำหนดสิทธิ์การเข้าถึงไฟล์แบบยกกลุ่ม
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">4. โครงสร้างสารบบแบบลำดับชั้น (Directory Hierarchy)</h3>
+                <p style="text-indent: 30px;">
+                    โครงสร้างสารบบแบบลำดับชั้น (Directory Hierarchy หรือ Tree-Structured Directory) เป็นรูปแบบการจัดหมวดหมู่สารบบที่นิยมใช้งานมากที่สุดในระบบปฏิบัติการสมัยใหม่ โดยมีลักษณะเป็นโครงสร้างต้นไม้ที่มี Root Directory เป็นจุดเริ่มต้นหรือโคนต้น แล้วแตกกิ่งก้านสาขาออกเป็น Subdirectories และ Files ในชั้นถัดๆ ไป
+                </p>
+                <p style="text-indent: 30px;">
+                    การอ้างอิงตำแหน่งของไฟล์หรือไดเรกทอรีภายในโครงสร้างแบบลำดับชั้น แบ่งออกเป็น 2 ประเภทหลัก:
+                </p>
+                <ul>
+                    <li class="mb-2"><strong>Path แบบสัมบูรณ์ (Absolute Path):</strong> การระบุเส้นทางเริ่มต้นตั้งแต่ Root Directory ไปจนถึงไฟล์ปลายทาง เช่น <code>C:\Users\Student\Documents\unit-09.html</code> บน Windows หรือ <code>/var/log/syslog</code> บน Linux</li>
+                    <li class="mb-2"><strong>Path แบบสัมพัทธ์ (Relative Path):</strong> การระบุเส้นทางโดยอ้างอิงจากตำแหน่ง Working Directory ในปัจจุบัน เช่น <code>./images/photo.png</code> หรือ <code>../unit-08.html</code></li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">5. ระบบแฟ้ม FAT16</h3>
+                <p style="text-indent: 30px;">
+                    FAT16 (File Allocation Table 16-bit) เป็นระบบแฟ้มที่ถูกพัฒนาโดย Microsoft ในยุค MS-DOS และ Windows 3.x/95 โดยใช้ตาราง FAT ขนาด 16 บิต ในการดักจับและอ้างอิงตำแหน่งของ Cluster บนดิสก์ ส่งผลให้สามารถอ้างอิง Cluster ได้สูงสุด 2<sup>16</sup> = 65,536 Clusters
+                </p>
+                <p style="text-indent: 30px;">
+                    ข้อจำกัดของ FAT16 คือ รองรับขนาดพาร์ทิชันสูงสุดเพียง 2 GB (หรือ 4 GB ในบางกรณีพิเศษที่ใช้ขนาด Cluster 64 KB) และมีประสิทธิภาพต่ำเมื่อใช้กับพาร์ทิชันขนาดใหญ่ เนื่องจากก่อให้เกิดความสูญเสียพื้นที่ภายในบล็อก (Internal Fragmentation) สูง นอกจากนี้ FAT16 ยังไม่มีระบบรักษาความปลอดภัยระดับไฟล์และการทำ Journaling
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">6. ระบบแฟ้ม FAT32</h3>
+                <p style="text-indent: 30px;">
+                    FAT32 เป็นระบบแฟ้มที่ถูกพัฒนาต่อยอดจาก FAT16 โดยเปิดตัวพร้อมกับ Windows 95 OSR2 ใช้การอ้างอิงตำแหน่งด้วยความยาว 28 บิต (จากขนาดฟิลด์ 32 บิต) ทำให้รองรับจำนวน Cluster ได้สูงสุดถึง 268,435,456 Clusters ส่งผลให้รองรับขนาดพาร์ทิชันได้สูงสุดถึง 2 TB (หรือ 16 TB ในทางทฤษฎี)
+                </p>
+                <p style="text-indent: 30px;">
+                    แม้ FAT32 จะเพิ่มประสิทธิภาพในการใช้พื้นที่ดิสก์และขยายขนาดพาร์ทิชันได้อย่างมาก แต่มีข้อจำกัดวิกฤตคือ **ไม่สามารถเก็บไฟล์เดี่ยวที่มีขนาดใหญ่เกิน 4 GB (4,294,967,295 ไบต์)** ได้ อย่างไรก็ตาม FAT32 มีจุดเด่นสำคัญด้านความสามารถในการทำงานข้ามระบบปฏิบัติการ (Cross-platform Compatibility) ทำให้ยังนิยมใช้ในอุปกรณ์บันทึกข้อมูลพกพาขนาดเล็ก
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">7. ระบบแฟ้ม NTFS</h3>
+                <p style="text-indent: 30px;">
+                    NTFS (New Technology File System) เป็นระบบแฟ้มหลักของระบบปฏิบัติการ Windows ตระกูล NT (Windows NT, 2000, XP, Vista, 7, 8, 10, 11, และ Windows Server) ที่ถูกออกแบบมาเพื่อทดแทน FAT32 โดยมุ่งเน้นประสิทธิภาพ ความน่าเชื่อถือ และความปลอดภัยสูง
+                </p>
+                <p style="text-indent: 30px;">
+                    ฟีเจอร์สำคัญของ NTFS ได้แก่:
+                </p>
+                <ul>
+                    <li class="mb-2"><strong>Journaling:</strong> บันทึกประวัติการเปลี่ยนแปลงลงใน Log ($LogFile) ก่อนเขียนข้อมูลจริง ช่วยให้ระบบสามารถกู้คืนสภาวะปกติได้อย่างรวดเร็วเมื่อเกิดเหตุไฟดับหรือระบบล่ม</li>
+                    <li class="mb-2"><strong>Access Control List (ACL):</strong> กำหนดสิทธิ์การเข้าถึงไฟล์และโฟลเดอร์ในระดับผู้ใช้และกลุ่มผู้ใช้ได้อย่างละเอียด</li>
+                    <li class="mb-2"><strong>File Encryption & Compression:</strong> รองรับการบีบอัดข้อมูล (NTFS Compression) และการเข้ารหัสไฟล์ (EFS - Encrypting File System)</li>
+                    <li class="mb-2"><strong>MFT (Master File Table):</strong> ตารางโครงสร้างหลักที่ใช้เก็บบันทึกข้อมูล Metadata ของไฟล์และไดเรกทอรีทั้งหมดในพาร์ทิชัน</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">8. ระบบแฟ้ม exFAT</h3>
+                <p style="text-indent: 30px;">
+                    exFAT (Extended File Allocation Table) เป็นระบบแฟ้มที่ Microsoft ออกแบบมาโดยเฉพาะสำหรับอุปกรณ์จัดเก็บข้อมูลแบบแฟลช (Flash Storage) เช่น แฟลชไดรฟ์, การ์ด SDXC และ SSD พกพา เพื่อข้ามขีดจำกัดของ FAT32 โดยไม่สร้างภาระการทำงาน (Overhead) สูงเหมือน NTFS
+                </p>
+                <p style="text-indent: 30px;">
+                    exFAT ก้าวข้ามข้อจำกัดขนาดไฟล์ 4 GB ของ FAT32 โดยรองรับขนาดไฟล์เดี่ยวได้สูงสุดถึง 16 EB (Exabytes) และรองรับขนาดพาร์ทิชันสูงสุด 128 PB (Petabytes) นอกจากนี้ exFAT ยังได้รับการออกแบบให้รองรับการอ่านและเขียนข้อมูลข้ามระบบปฏิบัติการ ทั้ง Windows, macOS, Linux, Android และ iOS ได้อย่างสมบูรณ์โดยไม่ต้องติดตั้งไดรเวอร์เพิ่มเติม
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">9. ระบบแฟ้ม EXT3</h3>
+                <p style="text-indent: 30px;">
+                    EXT3 (Third Extended Filesystem) เป็นระบบแฟ้มบันทึกการเปลี่ยนแปลง (Journaling File System) ที่พัฒนาต่อยอดมาจาก EXT2 สำหรับระบบปฏิบัติการ Linux นำเสนอความสามารถในการบันทึก Log การทำงาน ช่วยลดเวลาในการตรวจสอบและแก้ไขความผิดพลาดของดิสก์ (fsck) หลังจากระบบหยุดทำงานอย่างผิดปกติ
+                </p>
+                <p style="text-indent: 30px;">
+                    EXT3 รองรับขนาดพาร์ทิชันสูงสุด 2 TB ถึง 16 TB (ขึ้นอยู่กับขนาดบล็อก) และขนาดไฟล์เดี่ยวสูงสุด 16 GB ถึง 2 TB โหมดการทำ Journaling ของ EXT3 แบ่งออกเป็น 3 ระดับ คือ Journal (เข้า Log ทั้งข้อมูลและ Metadata), Ordered (เข้า Log เฉพาะ Metadata แต่เขียนข้อมูลจริงก่อน) และ Writeback (เข้า Log เฉพาะ Metadata โดยไม่การันตีลำดับเขียนข้อมูล)
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">10. ระบบแฟ้ม EXT4</h3>
+                <p style="text-indent: 30px;">
+                    EXT4 (Fourth Extended Filesystem) เป็นระบบแฟ้มมาตรฐานที่ถูกใช้งานอย่างแพร่หลายใน Linux ดิสโทรสมัยใหม่ พัฒนาขึ้นเพื่อทดแทน EXT3 โดยมีการปรับปรุงโครงสร้างเพื่อเพิ่มประสิทธิภาพ ขยายความจุ และลดปัญหาความกระจัดกระจายของข้อมูล (Fragmentation)
+                </p>
+                <p style="text-indent: 30px;">
+                    คุณสมบัติเด่นของ EXT4 ประกอบด้วย:
+                </p>
+                <ul>
+                    <li class="mb-2"><strong>Large File System Support:</strong> รองรับพาร์ทิชันขนาดใหญ่สูงสุด 1 EB และไฟล์เดี่ยวขนาดสูงสุด 16 TB</li>
+                    <li class="mb-2"><strong>Extents:</strong> เปลี่ยนรูปแบบการจัดเก็บตำแหน่งบล็อกจากการอ้างอิงทีละบล็อกเป็นการอ้างอิงช่วงบล็อกที่ต่อเนื่องกัน (Contiguous Blocks) ช่วยเพิ่มประสิทธิภาพการอ่านเขียนไฟล์ขนาดใหญ่</li>
+                    <li class="mb-2"><strong>Delayed Allocation:</strong> ชะลอการจัดสรรบล็อกไว้จนกว่าจะมีการเขียนข้อมูลจริงลงดิสก์ ช่วยลด Fragmentation และเพิ่มประสิทธิภาพ I/O</li>
+                    <li class="mb-2"><strong>Fast fsck:</strong> ข้ามการตรวจสอบบล็อกที่ไม่ถูกใช้งาน ทำให้ทำการตรวจสอบดิสก์ได้เร็วขึ้นอย่างมาก</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">11. ระบบแฟ้ม Btrfs</h3>
+                <p style="text-indent: 30px;">
+                    Btrfs (B-tree File System) เป็นระบบแฟ้มรุ่นใหม่สำหรับ Linux ที่ออกแบบตามหลักการ Copy-on-Write (CoW) มุ่งเน้นการรองรับระบบจัดเก็บข้อมูลขนาดใหญ่ ความแม่นยำของข้อมูล และความคล่องตัวในการบริหารจัดการ จัดเป็นระบบแฟ้มระดับสูงที่รวมเอาความสามารถของ Volume Manager เข้ามาไว้ในตัว
+                </p>
+                <p style="text-indent: 30px;">
+                    จุดเด่นของ Btrfs ได้แก่ การทำ Snapshot ชั่วขณะได้ทันทีโดยไม่เปลืองพื้นที่ (Writable/Read-only Snapshots), การตรวจสอบและแก้ไขความสูญเสียของข้อมูลอัตโนมัติด้วย Checksum (Data Integrity & Self-healing), การทำ RAID ระดับซอฟต์แวร์ในตัว (RAID 0, 1, 10), การบีบอัดข้อมูลแบบเรียลไทม์ (zlib, lzo, zstd) และการขยายหรือลดขนาดพาร์ทิชันขณะระบบทำงาน (Online Resizing)
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">12. ระบบแฟ้ม XFS</h3>
+                <p style="text-indent: 30px;">
+                    XFS เป็นระบบแฟ้มแบบ Journaling 64 บิต ประสิทธิภาพสูง ที่พัฒนาขึ้นโดยบริษัท Silicon Graphics International (SGI) และถูกนำมาใช้เป็นระบบแฟ้มมาตรฐานหลักใน Enterprise Linux หลายตระกูล เช่น Red Hat Enterprise Linux (RHEL) และ CentOS
+                </p>
+                <p style="text-indent: 30px;">
+                    XFS ถูกออกแบบมาเป็นพิเศษสำหรับการประมวลผลข้อมูลขนาดมหาศาล (Parallel I/O) รองรับระบบไฟล์และไฟล์เดี่ยวขนาดใหญ่สูงสุดถึง 8 EB การจัดการโครงสร้างภายในอาศัย B+ trees เพื่อควบคุมการจัดสรรบล็อกและ Inode ส่งผลให้คงประสิทธิภาพการทำงานที่รวดเร็วสูงแม้ต้องรับมือกับไฟล์ขนาดใหญ่หลายล้านไฟล์พร้อมกัน
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">13. สิทธิ์การเข้าถึงแฟ้มข้อมูล (Permission)</h3>
+                <p style="text-indent: 30px;">
+                    สิทธิ์การเข้าถึง (Permission) คือ กลไกความปลอดภัยขั้นพื้นฐานที่ใช้ควบคุมว่าผู้ใช้ (User) หรือกระบวนการ (Process) ใด สามารถกระทำกิจกรรมประเภทใดกับไฟล์หรือไดเรกทอรีได้บ้าง เพื่อป้องกันการแก้ไข หรือเข้าถึงข้อมูลโดยไม่ได้รับอนุญาต
+                </p>
+                <p style="text-indent: 30px;">
+                    ในระบบปฏิบัติการ Linux/Unix สิทธิ์การเข้าถึงแบ่งออกเป็น 3 สิทธิ์พื้นฐาน:
+                </p>
+                <ul>
+                    <li class="mb-2"><strong>Read (r - สิทธิ์ในการอ่าน):</strong> สำหรับไฟล์ คือการอ่านเนื้อหาภายใน; สำหรับไดเรกทอรี คือการดูรายชื่อไฟล์ภายในสารบบ</li>
+                    <li class="mb-2"><strong>Write (w - สิทธิ์ในการเขียน):</strong> สำหรับไฟล์ คือการแก้ไข บันทึก ทับเนื้อหา; สำหรับไดเรกทอรี คือการสร้าง ลบ หรือเปลี่ยนชื่อไฟล์ในสารบบ</li>
+                    <li class="mb-2"><strong>Execute (x - สิทธิ์ในการประมวลผล):</strong> สำหรับไฟล์ คือการรันโปรแกรมหรือสคริปต์; สำหรับไดเรกทอรี คือการเข้าไปข้างในสารบบ (cd)</li>
+                </ul>
+                <p style="text-indent: 30px;">
+                    สิทธิ์ถูกจัดกลุ่มตามผู้ใช้งาน 3 ระดับ คือ เจ้าของแฟ้ม (Owner/User - u), กลุ่มผู้ใช้ (Group - g), และผู้ใช้อื่นๆ (Others - o) การกำหนดสิทธิ์สามารถแสดงได้ทั้งรูปแบบสัญลักษณ์ (เช่น <code>rwxr-xr--</code>) และรูปแบบตัวเลขฐานแปด (Octal Notation เช่น <code>754</code>)
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">14. รายการควบคุมการเข้าถึง (ACL)</h3>
+                <p style="text-indent: 30px;">
+                    รายการควบคุมการเข้าถึง หรือ ACL (Access Control List) คือ กลไกการกำหนดสิทธิ์ความปลอดภัยส่วนขยาย ที่ถูกออกแบบมาเพื่อทลายข้อจำกัดของการกำหนดสิทธิ์แบบพื้นฐาน (Owner/Group/Others) ช่วยให้ผู้ดูแลระบบสามารถกำหนดสิทธิ์ในการเข้าถึงไฟล์หรือไดเรกทอรีให้กับผู้ใช้เฉพาะราย (Specific User) หรือกลุ่มผู้ใช้เฉพาะกลุ่ม (Specific Group) ได้อย่างอิสระและยืดหยุ่นสูง
+                </p>
+                <p style="text-indent: 30px;">
+                    ตัวอย่างเช่น กรณีต้องการให้ผู้ใช้ A อ่านและแก้ไขไฟล์ได้ ให้ผู้ใช้ B อ่านได้อย่างเดียว แต่ผู้ใช้อื่นๆ ในกลุ่มเดียวกันไม่มีสิทธิ์เข้าถึงเลย กลไก Permission พื้นฐานจะไม่สามารถรองรับได้ แต่สามารถจัดการได้ง่ายผ่านคำสั่ง ACL บน NTFS (Windows) หรือ POSIX ACLs บน Linux (เช่น คำสั่ง <code>setfacl</code> และ <code>getfacl</code>)
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">15. ข้อมูลอธิบายแฟ้มข้อมูล (File Metadata)</h3>
+                <p style="text-indent: 30px;">
+                    ข้อมูลอธิบายแฟ้มข้อมูล หรือ ไฟล์เมทาเดตา (File Metadata) คือ "ข้อมูลที่ใช้อธิบายข้อมูล" หมายถึงรายละเอียดคุณลักษณะและคุณสมบัติต่างๆ ของแฟ้มข้อมูล ซึ่งถูกบันทึกและจัดเก็บไว้แยกต่างหากจากเนื้อหาจริงของไฟล์ (Data Blocks) โดยในระบบ Linux ข้อมูลเมทาเดตาจะถูกจัดเก็บไว้ในโครงสร้างที่เรียกว่า **Inode (Index Node)** ส่วนใน NTFS จะถูกเก็บบันทึกไว้ในตาราง **MFT (Master File Table)**
+                </p>
+                <p style="text-indent: 30px;">
+                    องค์ประกอบสำคัญของ File Metadata ประกอบด้วย:
+                </p>
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>รายการ Metadata</th>
+                            <th>คำอธิบาย</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>File Size</td>
+                            <td>ขนาดของไฟล์ (แสดงในหน่วย Bytes, KB, MB)</td>
+                        </tr>
+                        <tr>
+                            <td>File Ownership</td>
+                            <td>ข้อมูลระบุผู้เป็นเจ้าของไฟล์ (User ID / Group ID)</td>
+                        </tr>
+                        <tr>
+                            <td>Access Permissions</td>
+                            <td>การกำหนดสิทธิ์การเข้าถึง (rwx / ACLs)</td>
+                        </tr>
+                        <tr>
+                            <td>Timestamps</td>
+                            <td>เวลาในการเข้าถึงล่าสุด (atime), เวลาในการแก้ไขเนื้อหาล่าสุด (mtime), และเวลาในการเปลี่ยนสถานะ/Metadata ล่าสุด (ctime)</td>
+                        </tr>
+                        <tr>
+                            <td>Block Pointers</td>
+                            <td>ตำแหน่งตัวชี้พิกัดบล็อกข้อมูลจริงบนอุปกรณ์จัดเก็บข้อมูล</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">16. ตัวอย่างการจัดการไฟล์ใน Windows และ Linux</h3>
+                <p style="text-indent: 30px;">
+                    การจัดการไฟล์ผ่านบรรทัดคำสั่ง (Command Line Interface - CLI) เป็นทักษะสำคัญสำหรับผู้ดูแลระบบ ทั้งในสภาพแวดล้อม Windows (Command Prompt / PowerShell) และ Linux (Terminal / Bash) ตัวอย่างเปรียบเทียบคำสั่งการจัดการไฟล์พื้นฐานแสดงดังตารางต่อไปนี้:
+                </p>
+
+                <table class="table-custom">
+                    <thead>
+                        <tr>
+                            <th>การทำงาน</th>
+                            <th>Windows (CMD / PowerShell)</th>
+                            <th>Linux (Bash Shell)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>แสดงรายชื่อไฟล์/โฟลเดอร์</td>
+                            <td><code>dir</code> / <code>Get-ChildItem</code></td>
+                            <td><code>ls -l</code></td>
+                        </tr>
+                        <tr>
+                            <td>เปลี่ยนสารบบปัจจุบัน</td>
+                            <td><code>cd path\to\dir</code></td>
+                            <td><code>cd /path/to/dir</code></td>
+                        </tr>
+                        <tr>
+                            <td>สร้างสารบบใหม่</td>
+                            <td><code>mkdir new_folder</code></td>
+                            <td><code>mkdir new_folder</code></td>
+                        </tr>
+                        <tr>
+                            <td>สร้างไฟล์ข้อความใหม่</td>
+                            <td><code>type nul > file.txt</code></td>
+                            <td><code>touch file.txt</code></td>
+                        </tr>
+                        <tr>
+                            <td>คัดลอกไฟล์</td>
+                            <td><code>copy file1.txt file2.txt</code></td>
+                            <td><code>cp file1.txt file2.txt</code></td>
+                        </tr>
+                        <tr>
+                            <td>ย้ายหรือเปลี่ยนชื่อไฟล์</td>
+                            <td><code>move old.txt new.txt</code></td>
+                            <td><code>mv old.txt new.txt</code></td>
+                        </tr>
+                        <tr>
+                            <td>ลบไฟล์</td>
+                            <td><code>del file.txt</code></td>
+                            <td><code>rm file.txt</code></td>
+                        </tr>
+                        <tr>
+                            <td>ตรวจสอบสิทธิ์และการกำหนดสิทธิ์</td>
+                            <td><code>icacls file.txt</code></td>
+                            <td><code>chmod 755 file.txt</code> / <code>chown user:group file.txt</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="my-4 p-4 border rounded-4 bg-light text-center">
+                    <h5 class="font-kanit mb-4 fw-bold text-dark"><i class="fas fa-folder-tree me-2 text-primary"></i>โครงสร้างลำดับชั้นระบบแฟ้มข้อมูล (Directory Hierarchy Overview)</h5>
+                    <div class="row justify-content-center align-items-center g-2 text-dark font-kanit">
+                        <div class="col-md-5 p-3 border rounded bg-white shadow-sm border-primary fw-bold">
+                            <span class="text-primary">Windows Hierarchy (Drive Letters)</span>
+                            <hr class="my-2">
+                            <small class="text-muted d-block font-sans">C:\ (System Drive) -> Program Files, Users, Windows</small>
+                        </div>
+                        <div class="col-md-1"><i class="fas fa-arrows-alt-h fa-2x text-muted"></i></div>
+                        <div class="col-md-5 p-3 border rounded bg-success text-white shadow-sm fw-bold">
+                            <span>Linux Hierarchy (Single Tree Root)</span>
+                            <hr class="my-2 bg-white">
+                            <small class="text-white-50 d-block font-sans">/ (Root) -> /bin, /etc, /home, /var, /usr</small>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">17. Animation จำลองการทำงานของระบบแฟ้มและการเข้าถึงข้อมูล</h3>
+                <p style="text-indent: 30px;">
+                    แบบจำลองสถานการณ์จำลองขณะที่ระบบปฏิบัติการทำการค้นหาข้อมูลแฟ้มข้อมูลจาก Directory Entry เพื่อแปลงสิทธิ์ Access Control List (ACL) และนำตำแหน่งบล็อกข้อมูลจาก File Metadata มาประมวลผล
+                </p>
+                <p class="small text-muted">นักศึกษาสามารถคลิกปุ่มรันตัวจำลองเพื่อดูขั้นตอนการทำงานของ File Management System:</p>
+                
+                <div class="simulation-space my-4 shadow-sm" id="process-anim-space">
+                    <div class="state-container-wrapper py-4">
+                        <div class="simulation-node" id="sim-node-virtual">Directory Lookup</div>
+                        <div class="sim-arrow" id="arrow-1"></div>
+                        <div class="simulation-node" id="sim-node-mmu">Metadata & ACL</div>
+                        <div class="sim-arrow" id="arrow-2"></div>
+                        <div class="simulation-node" id="sim-node-ram">Data Block Read</div>
+                    </div>
+        
+                    <div class="row mt-4 pt-2 text-dark font-kanit">
+                        <div class="col-md-12 mb-2">
+                            <h6 class="text-white-50 small mb-2"><i class="fas fa-hdd me-2"></i>จำลองสถานะข้อมูลตาราง Directory และ Metadata Block</h6>
+                            <div class="queue-box-list" id="cpu-queue-injector">
+                                <span class="pcb-token ram-slot">File: document.pdf</span>
+                                <span class="pcb-token ram-slot">Inode: 1048576</span>
+                                <span class="pcb-token swap-slot" id="p3-sim">Permissions: -rw-r--r--</span>
+                                <span class="pcb-token swap-slot" id="p4-sim">Blocks: [512, 513, 514]</span>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <div class="text-center mt-4">
+                        <button class="btn btn-primary font-kanit px-4 py-2 rounded-3 shadow" onclick="triggerVirtualMemorySimulation()">
+                            <i class="fas fa-play-circle me-2"></i>เริ่มจำลองกระบวนการเปิดอ่านไฟล์ (Directory -> Check ACL -> Fetch Data Blocks)
+                        </button>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">18. ตัวอย่างสคริปต์การจัดการสิทธิ์และโครงสร้างแฟ้มข้อมูล</h3>
+                <p style="text-indent: 30px;">
+                    ตัวอย่างการใช้คำสั่งบน Linux Terminal เพื่อสร้างไดเรกทอรี สร้างไฟล์ ตรวจสอบ Metadata และกำหนดสิทธิ์การเข้าถึง:
+                </p>
+                <div class="code-block">
+# 1. สร้างโครงสร้างไดเรกทอรีแบบลำดับชั้น
+mkdir -p /home/student/os_project/unit09
+
+# 2. สร้างไฟล์และบันทึกข้อความ
+echo "File System & Storage Management" > /home/student/os_project/unit09/notes.txt
+
+# 3. แสดงข้อมูล File Metadata และ Inode Number
+ls -li /home/student/os_project/unit09/notes.txt
+
+# 4. กำหนดสิทธิ์แบบ Octal (Owner=Read/Write/Exec, Group=Read/Exec, Others=Read)
+chmod 755 /home/student/os_project/unit09/notes.txt
+
+# 5. กำหนดสิทธิ์เพิ่มเติมด้วย ACL ให้ผู้ใช้ 'teacher' มีสิทธิ์อ่านเขียน
+setfacl -m u:teacher:rw /home/student/os_project/unit09/notes.txt
+
+# 6. ตรวจสอบค่า ACL ของไฟล์
+getfacl /home/student/os_project/unit09/notes.txt
+                </div>
+
+                <div class="row my-4 justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="ratio ratio-16x9 shadow-sm rounded-3 overflow-hidden border">
+                            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="วิดีโอประกอบบทเรียนระบบแฟ้ม" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+        
+            </article>
+        
+            <section class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 border-top border-4 border-success" data-aos="fade-up">
+                <div class="d-flex align-items-center justify-content-between border-bottom pb-3 mb-4">
+                    <h3 class="font-kanit text-dark-primary font-weight-bold mb-0">
+                        <i class="fas fa-user-check me-2 text-success"></i>แบบทดสอบหลังเรียนประจำหน่วยการเรียนที่ 9
+                    </h3>
+                    <span class="badge bg-success px-3 py-2 fs-6" id="quiz-progress-badge">ข้อที่ 1 / 20</span>
+                </div>
+                
+                <div id="quiz-question-container" class="my-3"></div>
+        
+                <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-3">
+                    <button class="btn btn-outline-secondary px-4 py-2 rounded-3" id="prev-question-btn" disabled><i class="fas fa-arrow-left me-2"></i>ข้อก่อนหน้า</button>
+                    <button class="btn btn-primary px-4 py-2 rounded-3" id="next-question-btn">ส่งคำตอบและไปต่อ <i class="fas fa-arrow-right ms-2"></i></button>
+                </div>
+            </section>
+        
+            <div class="d-flex justify-content-between align-items-center mb-5" data-aos="fade-up">
+                <a href="unit-08.html" class="btn btn-outline-dark px-4 py-2 rounded-3"><i class="fas fa-arrow-left me-2"></i>หน่วยก่อนหน้า</a>
+                <button class="btn btn-success btn-lg px-5 py-3 rounded-3 shadow font-kanit" id="mark-complete-btn">
+                    <i class="fas fa-check-double me-2"></i>ทำเครื่องหมายว่าเรียนจบหน่วยเรียนนี้แล้ว
+                </button>
+                <a href="unit-10.html" class="btn btn-outline-dark px-4 py-2 rounded-3">หน่วยถัดไป<i class="fas fa-arrow-right ms-2"></i></a>
+            </div>
+        
+        </main>
+    </div>
+    
+    <footer class="main-footer-section py-4 text-center mt-auto border-top">
+        <div class="container">
+            <p class="mb-0 text-secondary">© 2026 รายวิชา 31909-1001 ระบบปฏิบัติการ — แผงควบคุมเนื้อหาสถาปัตยกรรมระดับ ปวส.</p>
+        </div>
+    </footer>
+    
+    <button id="back-to-top-btn" class="btn btn-primary rounded-circle shadow-lg"><i class="fas fa-chevron-up"></i></button>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="D:\OS\js\data.js"></script>
+    <script src="D:\OS\js\storage.js"></script>
+    <script src="D:\OS\js\progress.js"></script>
+    <script src="D:\OS\js\main.js"></script>
+    <script src="D:\OS\js\quiz.js"></script>
+    
+    <script>
+        function triggerVirtualMemorySimulation() {
+            const nodeVirtual = document.getElementById("sim-node-virtual");
+            const nodeMmu = document.getElementById("sim-node-mmu");
+            const nodeRam = document.getElementById("sim-node-ram");
+            
+            const arr1 = document.getElementById("arrow-1");
+            const arr2 = document.getElementById("arrow-2");
+            
+            const queueBox = document.getElementById("cpu-queue-injector");
+
+            // รีเซ็ตคลาสแอนิเมชันเก่ากลับคืนค่าเริ่มต้น
+            document.querySelectorAll(".simulation-node").forEach(n => n.classList.remove("active-state"));
+            document.querySelectorAll(".sim-arrow").forEach(a => a.classList.remove("active-arrow"));
+            queueBox.innerHTML = '<span class="pcb-token ram-slot">File: document.pdf</span> <span class="pcb-token ram-slot">Inode: 1048576</span> <span class="pcb-token swap-slot" id="p3-sim">Permissions: -rw-r--r--</span> <span class="pcb-token swap-slot" id="p4-sim">Blocks: [512, 513, 514]</span>';
+
+            // เฟส 1: ค้นหาไฟล์ใน Directory
+            nodeVirtual.classList.add("active-state");
+            
+            setTimeout(() => {
+                nodeVirtual.classList.remove("active-state");
+                arr1.classList.add("active-arrow");
+                nodeMmu.classList.add("active-state");
+            }, 1200);
+
+            // เฟส 2: ตรวจสอบ Metadata และ ACL สิทธิ์การเข้าถึง
+            setTimeout(() => {
+                arr1.classList.remove("active-arrow");
+                arr2.classList.add("active-arrow");
+                nodeMmu.classList.remove("active-state");
+                nodeRam.classList.add("active-state");
+                
+                // อัปเดตตารางสถานะการอ่านบล็อกข้อมูล
+                queueBox.innerHTML = '<span class="pcb-token active-file">Access Granted (ACL Passed)</span> <span class="pcb-token ram-slot">Reading Block 512</span> <span class="pcb-token ram-slot">Reading Block 513</span> <span class="pcb-token ram-slot">Reading Block 514</span>';
+            }, 2600);
+
+            // เฟส 3: ดึงข้อมูลสำเร็จ
+            setTimeout(() => {
+                nodeRam.classList.remove("active-state");
+                arr2.classList.remove("active-arrow");
+                
+                Swal.fire({
+                    toast: true,
+                    position: 'bottom-end',
+                    title: 'อ่านข้อมูลไฟล์ document.pdf สำเร็จผ่านสิทธิ์ ACL!',
+                    icon: 'success',
+                    showConfirmButton: false,
+                    timer: 2500
+                });
+            }, 3800);
+        }
+    </script>
+</body>
+</html>

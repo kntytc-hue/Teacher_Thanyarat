@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หน่วยที่ 8 การประเมินผลกลางภาค | วิชา 31909-1001 ระบบปฏิบัติการ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #475569;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+        }
+
+        body.dark-mode {
+            --primary-color: #3b82f6;
+            --secondary-color: #94a3b8;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f1f5f9;
+            --border-color: #334155;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .font-kanit {
+            font-family: 'Kanit', sans-serif;
+        }
+
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar-navigation {
+            width: 280px;
+            background-color: #1e293b;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        body.dark-mode .sidebar-navigation {
+            background-color: #020617;
+        }
+
+        .main-content-flow {
+            flex-grow: 1;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .main-navbar {
+            background-color: #1e293b;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .quiz-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .option-container {
+            display: block;
+            position: relative;
+            padding: 12px 12px 12px 45px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--card-bg);
+            transition: all 0.2s;
+        }
+
+        .option-container:hover {
+            background-color: rgba(37, 99, 235, 0.05);
+            border-color: var(--primary-color);
+        }
+
+        .option-container input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .checkmark {
+            position: absolute;
+            top: 50%;
+            left: 15px;
+            transform: translateY(-50%);
+            height: 20px;
+            width: 20px;
+            background-color: #eee;
+            border-radius: 50%;
+        }
+
+        .option-container:hover input ~ .checkmark {
+            background-color: #ccc;
+        }
+
+        .option-container input:checked ~ .checkmark {
+            background-color: var(--primary-color);
+        }
+
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+        }
+
+        .option-container input:checked ~ .checkmark:after {
+            display: block;
+        }
+
+        .option-container .checkmark:after {
+            left: 7px;
+            top: 4px;
+            width: 6px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .sticky-summary {
+            position: sticky;
+            top: 90px;
+        }
+
+        .timer-box {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ef4444;
+            font-family: monospace;
+        }
+
+        .q-badge {
+            width: 35px;
+            height: 35px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin: 2px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        .q-badge.answered {
+            background-color: #dcfce7;
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+
+        body.dark-mode .q-badge.answered {
+            background-color: #064e3b;
+            color: #6ee7b7;
+            border-color: #047857;
+        }
+
+        .q-badge.current {
+            border: 2px solid var(--primary-color);
+            font-weight: bold;
+        }
+
+        .rationale-box {
+            display: none;
+            margin-top: 10px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .rationale-correct {
+            background-color: #dcfce7;
+            color: #166534;
+            border-left: 4px solid #22c55e;
+        }
+
+        .rationale-incorrect {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        body.dark-mode .rationale-correct {
+            background-color: #064e3b;
+            color: #a7f3d0;
+        }
+
+        body.dark-mode .rationale-incorrect {
+            background-color: #4c1d15;
+            color: #fca5a5;
+        }
+    </style>
+</head>
+<body class="light-mode">
+
+    <div id="loading-screen" class="position-fixed top-0 start-0 w-100 h-100 bg-white d-flex align-items-center justify-content-center" style="z-index: 9999; transition: opacity 0.3s;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">กำลังโหลด...</span>
+        </div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg sticky-top main-navbar navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <i class="fas fa-laptop-code me-2"></i>
+                <span>31909-1001 ระบบปฏิบัติการ</span>
+            </a>
+            <div class="ms-auto d-flex align-items-center gap-3">
+                <span class="text-white font-kanit d-none d-md-inline"><i class="fas fa-user-shield me-1"></i> ระบบสอบออนไลน์</span>
+                <button class="btn text-white" id="theme-toggle-btn" aria-label="เปลี่ยนโหมดหน้าจอ">
+                    <i class="fas fa-moon fa-lg"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- เมนูด้านข้าง -->
+            <div class="col-lg-3 p-4 bg-dark text-white min-vh-100 d-none d-lg-block sidebar-navigation">
+                <div class="text-center py-4 border-bottom border-secondary mb-4">
+                    <i class="fas fa-file-signature fa-3x text-primary mb-3"></i>
+                    <h5 class="font-kanit">หน่วยที่ 8 การประเมินผล</h5>
+                    <p class="small text-muted mb-0">ระบบข้อสอบกลางภาค (หน่วยที่ 1-7)</p>
+                </div>
+                <div class="mb-3">
+                    <small class="text-uppercase text-muted fw-bold d-block mb-2">ข้อมูลผู้สอบ</small>
+                    <div class="p-3 rounded bg-secondary bg-opacity-25 border border-secondary">
+                        <p class="mb-1 small"><strong>อาจารย์ผู้สอน:</strong> อาจารย์ธัญญรัตน์ ตาเล๊ะ</p>
+                        <p class="mb-0 small"><strong>สถานะการสอบ:</strong> <span id="exam-status-text" class="text-warning">กำลังดำเนินการ</span></p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <small class="text-uppercase text-muted fw-bold d-block mb-2">ประวัติคะแนนล่าสุด</small>
+                    <div id="score-history" class="small text-muted">ไม่มีข้อมูลการสอบก่อนหน้า</div>
+                </div>
+            </div>
+
+            <!-- เนื้อหาหลัก -->
+            <div class="col-lg-9 col-md-12 main-content-flow px-3 px-md-5 py-4">
+                <nav aria-label="breadcrumb" class="mb-4">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="index.html" class="text-decoration-none"><i class="fas fa-home me-1"></i>หน้าแรก</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">หน่วยที่ 8 การประเมินผลกลางภาค</li>
+                    </ol>
+                </nav>
+
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light text-dark border-start border-5 border-primary">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                        <div>
+                            <span class="text-primary fw-bold text-uppercase d-block mb-1">Unit 08: Midterm Examination</span>
+                            <h1 class="font-kanit font-weight-bold text-dark-primary mb-0">หน่วยที่ 8 การประเมินผลกลางภาค</h1>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ระบบควบคุมและข้อมูลข้อสอบ -->
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="quiz-card">
+                            <h5 class="font-kanit fw-bold border-bottom pb-2 mb-3"><i class="fas fa-info-circle me-2 text-primary"></i>รายละเอียดระบบข้อสอบกลางภาค</h5>
+                            <div class="row g-3 text-secondary">
+                                <div class="col-6 col-md-4"><strong><i class="fas fa-list-ol me-1"></i> จำนวนข้อสอบ:</strong> 40 ข้อ</div>
+                                <div class="col-6 col-md-4"><strong><i class="fas fa-check-square me-1"></i> รูปแบบ:</strong> ปรนัย 4 ตัวเลือก</div>
+                                <div class="col-6 col-md-4"><strong><i class="fas fa-random me-1"></i> การแสดงผล:</strong> สุ่มข้อสอบแบบสากล</div>
+                                <div class="col-6 col-md-4"><strong><i class="fas fa-clock me-1"></i> เวลาทำข้อสอบ:</strong> 60 นาที</div>
+                                <div class="col-6 col-md-4"><strong><i class="fas fa-calculator me-1"></i> การตรวจคะแนน:</strong> อัตโนมัติทันที</div>
+                                <div class="col-6 col-md-4"><strong><i class="fas fa-database me-1"></i> การบันทึก:</strong> LocalStorage</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="quiz-card text-center sticky-summary">
+                            <span class="text-muted small d-block mb-1">เวลาคงเหลือ</span>
+                            <div class="timer-box mb-3" id="exam-timer">60:00</div>
+                            <button id="start-exam-btn" class="btn btn-success w-100 font-kanit py-2 fw-bold mb-2"><i class="fas fa-play me-2"></i>เริ่มทำข้อสอบ</button>
+                            <button id="submit-exam-btn" class="btn btn-primary w-100 font-kanit py-2 fw-bold" disabled><i class="fas fa-paper-plane me-2"></i>ส่งคำตอบทั้งหมด</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- พื้นที่แสดงข้อสอบ -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <div id="quiz-navigation-panel" class="quiz-card d-none">
+                            <h6 class="font-kanit fw-bold mb-3">แผงควบคุมข้อสอบและข้ามข้อ</h6>
+                            <div id="question-badges-container" class="d-flex flex-wrap gap-1"></div>
+                        </div>
+
+                        <div id="questions-area" class="d-none">
+                            <!-- ข้อสอบจะถูกแทรกที่นี่โดย JavaScript -->
+                        </div>
+
+                        <div id="result-summary-card" class="quiz-card d-none text-center p-5">
+                            <i class="fas fa-trophy fa-4x text-warning mb-3"></i>
+                            <h2 class="font-kanit fw-bold">ผลการประเมินคะแนนสอบกลางภาค</h2>
+                            <h1 class="display-3 font-kanit fw-bold text-primary my-3" id="final-score-display">0 / 40</h1>
+                            <p class="text-muted" id="score-percentage-text">คิดเป็นเปอร์เซ็นต์: 0%</p>
+                            <div class="alert alert-info font-kanit mb-0" role="alert">
+                                <i class="fas fa-eye me-2"></i>ระบบได้เปิดแสดงเฉลยและคำอธิบายวิเคราะห์ผล (Rationale) ในแต่ละข้อแล้วด้านล่าง
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-5 mt-4">
+                    <a href="unit-07.html" class="btn btn-outline-dark px-4 py-2 rounded-3"><i class="fas fa-arrow-left me-2"></i>หน่วยก่อนหน้า</a>
+                    <button class="btn btn-outline-secondary px-4 py-2 rounded-3" onclick="window.scrollTo({top: 0, behavior: 'smooth'});"><i class="fas fa-chevron-up"></i> กลับไปด้านบน</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="main-footer-section py-4 text-center mt-auto border-top bg-light text-dark">
+        <div class="container">
+            <p class="mb-0 text-secondary">© 2026 รายวิชา 31909-1001 ระบบปฏิบัติการ — แผงควบคุมเนื้อหาสถาปัตยกรรมระดับ ปวส.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        // คลังข้อสอบ 40 ข้อ ครอบคลุมหน่วยเรียนที่ 1-7 (วิชาคอมพิวเตอร์และระบบปฏิบัติการ ปวส.)
+        const rawQuestions = [
+            // หน่วยที่ 1: บทนำและสถาปัตยกรรมระบบปฏิบัติการ
+            {
+                id: 1,
+                question: "ข้อใดคือหน้าที่หลักที่เป็นรูปธรรมที่สุดของระบบปฏิบัติการ (Operating System)?",
+                options: [
+                    "เป็นตัวกลางในการจัดสรรทรัพยากรฮาร์ดแวร์และอำนวยความสะดวกให้โปรแกรมประยุกต์ทำงาน",
+                    "เพิ่มความเร็วในนาฬิกาสัญญาณ (Clock Speed) ของซีพียูโดยตรง",
+                    "ทำหน้าที่คอมไพล์โค้ดภาษาซีและภาษาจาวาให้กลายเป็นภาษาเครื่อง",
+                    "เชื่อมโยงเครือข่ายอินเทอร์เน็ตความเร็วสูงผ่านระบบคลาวด์อัตโนมัติ"
+                ],
+                correct: 0,
+                rationale: "ระบบปฏิบัติการทำหน้าที่เป็นตัวกลางการจัดการ (Resource Allocator) ระหว่างผู้ใช้ โปรแกรมประยุกต์ และฮาร์ดแวร์คอมพิวเตอร์"
+            },
+            {
+                id: 2,
+                question: "โครงสร้างเคอร์เนลแบบใดที่แยกฟังก์ชันการทำงานส่วนใหญ่ (เช่น File System, Device Driver) ออกไปไว้ในโปรเซสระดับผู้ใช้ (User Space)?",
+                options: [
+                    "Monolithic Kernel",
+                    "Microkernel",
+                    "Hybrid Kernel",
+                    "Exokernel"
+                ],
+                correct: 1,
+                rationale: "Microkernel จะคงฟังก์ชันที่จำเป็นที่สุดไว้ใน Kernel Space (เช่น IPC, Memory Management พื้นฐาน) และย้ายส่วนอื่นไปเป็น Server ใน User Space"
+            },
+            {
+                id: 3,
+                question: "สัญญาณขัดจังหวะที่เกิดจากความผิดพลาดของซอฟต์แวร์ เช่น การหารด้วยศูนย์ (Division by Zero) เรียกว่าอะไร?",
+                options: [
+                    "Hardware Interrupt",
+                    "Trap หรือ Exception",
+                    "Polling Request",
+                    "DMA Signal"
+                ],
+                correct: 1,
+                rationale: "Trap หรือ Exception คือสัญญาณขัดจังหวะภายในระบบที่เกิดจากความผิดพลาดภายในตัวโปรแกรมซอฟต์แวร์เองหรือระบบภายในตัวประมวลผล"
+            },
+            {
+                id: 4,
+                question: "โหมดการทำงานแบบ Dual-mode (User Mode และ Kernel Mode) มีวัตถุประสงค์เพื่ออะไร?",
+                options: [
+                    "เพื่อเพิ่มความเร็วในการดาวน์โหลดข้อมูลและซิงค์แอปพลิเคชัน",
+                    "เพื่อป้องกันไม่ให้ผู้ใช้หรือแอปพลิเคชันเข้าถึงคำสั่งที่อันตรายระดับฮาร์ดแวร์โดยตรง",
+                    "เพื่อรองรับสถาปัตยกรรมการแสดงผลกราฟิกแบบสองหน้าจอพร้อมกัน",
+                    "เพื่อแบ่งการทำงานของ RAM ออกเป็นสองส่วนเท่าๆ กัน"
+                ],
+                correct: 1,
+                rationale: "การมี Dual-mode ช่วยให้ระบบมีความปลอดภัย หากโปรแกรมทั่วไปเกิดข้อผิดพลาด จะไม่ส่งผลให้ระบบปฏิบัติการหลักพังเสียหายทั้งหมด"
+            },
+            {
+                id: 5,
+                question: "คำสั่งพิเศษที่สามารถรันได้เฉพาะใน Kernel Mode เท่านั้นเรียกว่าคำสั่งประเภทใด?",
+                options: [
+                    "User Commands",
+                    "Privileged Instructions",
+                    "API Calls",
+                    "Utility Functions"
+                ],
+                correct: 1,
+                rationale: "Privileged Instructions คือกลุ่มคำสั่งที่มีสิทธิ์สูงในการควบคุมฮาร์ดแวร์และโครงสร้างหน่วยความจำหลัก"
+            },
+            // หน่วยที่ 2: การจัดการโปรเซส (Process Management)
+            {
+                id: 6,
+                question: "โครงสร้างข้อมูลใดในเคอร์เนลที่ทำหน้าที่บันทึกข้อมูลทุกอย่างของโปรเซส เช่น วงรอบซีพียู, สถานะปัจจุบัน และรีจิสเตอร์?",
+                options: [
+                    "Process Control Block (PCB)",
+                    "Page Table List",
+                    "File Allocation Table (FAT)",
+                    "Inverted Index Segment"
+                ],
+                correct: 0,
+                rationale: "PCB ทำหน้าที่เปรียบเสมือนบัตรประจำตัวประชาชนของโปรเซสที่เก็บสถานะ ข้อมูลรีจิสเตอร์ และพอยน์เตอร์ควบคุมทั้งหมด"
+            },
+            {
+                id: 7,
+                question: "เมื่อโปรเซสในสถานะ Running ถูกหมดเวลาควอนตัม (Time Quantum Elapsed) โปรเซสนั้นจะถูกเปลี่ยนกลับไปยังสถานะใด?",
+                options: [
+                    "Waiting State",
+                    "Ready State",
+                    "Terminated State",
+                    "Blocked State"
+                ],
+                correct: 1,
+                rationale: "เมื่อหมดเวลาควอนตัม โปรเซสจะถูกดึงออกจากซีพียูย้อนกลับไปรอใน Ready Queue เพื่อรอรับรอบบริการรอบถัดไป"
+            },
+            {
+                id: 8,
+                question: "กระบวนการสลับการทำงานของซีพียูจากโปรเซสหนึ่งไปยังอีกโปรเซสหนึ่ง ซึ่งระบบต้องบันทึกสถานะโปรเซสเดิมและโหลดสถานะโปรเซสใหม่เรียกว่าอะไร?",
+                options: [
+                    "Context Switch",
+                    "Process Forking",
+                    "Thread Spawning",
+                    "Deadlock Handling"
+                ],
+                correct: 0,
+                rationale: "Context Switch คือการสลับบริบทการทำงานซึ่งสร้าง Overhead ให้กับระบบ แต่จำเป็นสำหรับการทำงานแบบระบบมัลติทาสกิ้ง"
+            },
+            {
+                id: 9,
+                question: "หากโปรเซสผู้บุตร (Child Process) สิ้นสุดการทำงานแล้ว แต่โปรเซสผู้สร้าง (Parent) ไม่ได้เรียกใช้งานระบบ wait() ส่งผลให้เกิดโปรเซสค้างประเภทใด?",
+                options: [
+                    "Orphan Process",
+                    "Zombie Process",
+                    "Daemon Process",
+                    "Background Job"
+                ],
+                correct: 1,
+                rationale: "Zombie Process คือโปรเซสที่จบงานแล้วแต่ยังมีชื่อและรหัสค้างอยู่ในตารางโปรเซสของเคอร์เนลเพราะรอ Parent มารับรายงานสถานะ"
+            },
+            {
+                id: 10,
+                question: "ข้อใดคือความแตกต่างสำคัญระหว่าง Thread และ Process?",
+                options: [
+                    "Thread เป็นส่วนประกอบย่อยภายในโปรเซสและแชร์พื้นที่หน่วยความจำร่วมกัน ทำให้ประหยัด Overhead ในการสร้างมากกว่า",
+                    "Process สามารถแชร์ตัวแปรระดับ Global ร่วมกันได้ง่ายกว่าเทรดโดยไม่ต้องพึ่งกลไก IPC",
+                    "Thread ทำงานแยกเป็นอิสระต่อกันโดยสมบูรณ์และไม่มีการใช้ทรัพยากรร่วมกันเลย",
+                    "ระบบปฏิบัติการไม่สามารถจัดตารางกำหนดเวลาให้กับเทรดได้ ต้องจัดให้โปรเซสเท่านั้น"
+                ],
+                correct: 0,
+                rationale: "เทรดเป็นหน่วยการใช้ซีพียูย่อยภายในโปรเซสที่แชร์โค้ด ข้อมูล และทรัพยากรร่วมกัน ทำให้ทำงานและสลับบริบทได้รวดเร็วมาก"
+            },
+            // หน่วยที่ 3: การจัดกำหนดเวลาซีพียู (CPU Scheduling)
+            {
+                id: 11,
+                question: "การจัดกำหนดเวลาซีพียูแบบ Shortest-Job-First (SJF) มีข้อดีโดดเด่นที่สุดในมิติใด?",
+                options: [
+                    "ให้ค่าเฉลี่ยเวลาในการรอคอย (Average Waiting Time) ต่ำที่สุด",
+                    "มีความยุติธรรมให้กับโปรเซสทุกตัวเท่ากันโดยไม่มีข้อยกเว้น",
+                    "ไม่มีโอกาสเกิดปัญหาโปรเซสอดตาย (Starvation) เลยอย่างเด็ดขาด",
+                    "เป็นอัลกอริทึมที่ทำนายความยาวรอบการทำงานล่วงหน้าได้อย่างแม่นยำร้อยเปอร์เซ็นต์"
+                ],
+                correct: 0,
+                rationale: "SJF ได้รับการพิสูจน์เชิงคณิตศาสตร์ว่าให้ค่าเฉลี่ยเวลาการรอคอยสั้นที่สุดในบรรดาอัลกอริทึมทั้งหมด"
+            },
+            {
+                id: 12,
+                question: "อัลกอริทึมแบบ Round Robin (RR) เหมาะสมที่สุดสำหรับระบบประเภทใด?",
+                options: [
+                    "ระบบประมวลผลแบบกลุ่ม (Batch Processing System)",
+                    "ระบบแบ่งปันเวลา (Time-Sharing / Interactive System)",
+                    "ระบบฝังตัวที่ทำงานเฉพาะทางแบบ Real-time",
+                    "ระบบเครือข่ายฐานข้อมูลขนาดใหญ่ที่ไม่มีปฏิสัมพันธ์กับผู้ใช้"
+                ],
+                correct: 1,
+                rationale: "Round Robin ช่วยกระจายเวลาซีพียูให้โปรเซสเท่าๆ กันผ่านกลไก Time Quantum ทำให้ตอบสนองผู้ใช้งานหลายคนพร้อมกันได้ดี"
+            },
+            {
+                id: 13,
+                question: "ปัญหา Starvation (การอดตายของโปรเซสที่มีสิทธิ์ต่ำ) สามารถแก้ไขได้ด้วยกลไกใด?",
+                options: [
+                    "Aging (การเพิ่มระดับความสำคัญของโปรเซสขึ้นเรื่อยๆ ตามระยะเวลาที่รอคอย)",
+                    "Context Switching",
+                    "Shortest Remaining Time First",
+                    "Page Replacement Algorithm"
+                ],
+                correct: 0,
+                rationale: "Aging คือเทคนิคการเพิ่มระดับความสำคัญ (Priority Number) ทีละน้อยตามอายุการรอคอยใน Ready Queue เพื่อเปิดโอกาสให้โปรเซสเก่าแก่ได้รัน"
+            },
+            {
+                id: 14,
+                question: "ข้อใดคือความหมายของระบบจัดกำหนดเวลาแบบแทรกกลางคัน (Preemptive Scheduling)?",
+                options: [
+                    "ระบบสามารถดึงซีพียูคืนมาจากโปรเซสที่กำลังรันอยู่ได้หากมีโปรเซสอื่นที่มีสิทธิ์สูงกว่าเข้ามา",
+                    "โปรเซสที่ได้ครองซีพียูจะทำงานจนกว่าจะจบงานหรือร้องขอไอโอเองโดยไม่มีสิ่งใดขัดขวางได้",
+                    "ระบบที่สั่งหยุดทำงานของคอมพิวเตอร์ทันทีเมื่อเกิดไฟฟ้าดับ",
+                    "การจัดคิวข้อสอบให้อาจารย์ตรวจคะแนนก่อนหลัง"
+                ],
+                correct: 0,
+                rationale: "Preemptive ยอมให้เกิดการแทรกกลางคันได้ ซึ่งตรงกันข้ามกับ Non-preemptive ที่ต้องรอจนโปรเซสคืนสิทธิ์ซีพียูเอง"
+            },
+            // หน่วยที่ 4: การซิงโครไนซ์และสภาวะอับจน (Process Synchronization & Deadlocks)
+            {
+                id: 15,
+                question: "ส่วนของโค้ดโปรแกรมที่มีการเข้าถึงและแก้ไขข้อมูลที่มีการใช้งานร่วมกัน (Shared Data) เสี่ยงต่อการเกิดปัญหาข้อมูลขัดแย้งเรียกว่าพื้นที่ใด?",
+                options: [
+                    "Critical Section",
+                    "Deadlock Zone",
+                    "Buffer Allocation Unit",
+                    "Privileged Space"
+                ],
+                correct: 0,
+                rationale: "Critical Section คือส่วนของโปรแกรมที่ต้องควบคุมให้เข้าใช้งานได้ทีละโปรเซส (Mutual Exclusion) เพื่อไม่ให้ข้อมูลเสียหาย"
+            },
+            {
+                id: 16,
+                question: "เครื่องมือหรือตัวแปรประเภทใดที่เป็นกลไกทางซอฟต์แวร์ระดับสากลที่ใช้แก้ไขปัญหาพื่นที่วิกฤต โดยมีฟังก์ชันคำสั่ง wait() และ signal()?",
+                options: [
+                    "Semaphore",
+                    "Mutex Lock",
+                    "Monitor Block",
+                    "Shared Cache"
+                ],
+                correct: 0,
+                rationale: "Semaphore ถูกคิดค้นเพื่อควบคุมการซิงโครไนซ์ด้วยตัวแปรจำนวนเต็มผ่านการทำงานแบบอะตอมมิกของคำสั่ง wait และ signal"
+            },
+            {
+                id: 17,
+                question: "ข้อใดไม่ใช่ 1 ใน 4 เงื่อนไขจำเป็นของการเกิดสภาวะอับจน (Deadlock)?",
+                options: [
+                    "Mutual Exclusion",
+                    "Hold and Wait",
+                    "Preemption Allowed",
+                    "Circular Wait"
+                ],
+                correct: 2,
+                rationale: "เงื่อนไขที่จะทำให้เกิดเดดล็อกคือ No Preemption (ห้ามแย่งชิงทรัพยากรกลางคัน) ดังนั้น Preemption Allowed จึงไม่ใช่เงื่อนไขการเกิดเดดล็อก"
+            },
+            {
+                id: 18,
+                question: "อัลกอริทึมของนายธนาคาร (Banker's Algorithm) นำมาใช้จัดการสภาวะอับจนในลักษณะใด?",
+                options: [
+                    "Deadlock Detection (ตรวจจับหลังจากเกิดแล้ว)",
+                    "Deadlock Prevention (การป้องกันล่วงหน้าแบบเข้มงวด)",
+                    "Deadlock Avoidance (การหลีกเลี่ยงโดยพิจารณาสถานะปลอดภัย)",
+                    "Deadlock Recovery (การกู้คืนระบบด้วยการปิดเครื่อง)"
+                ],
+                correct: 2,
+                rationale: "Banker's Algorithm จะตรวจสอบข้อมูลความต้องการทรัพยากรสูงสุดก่อนจัดสรรจริง เพื่อให้มั่นใจว่าระบบจะอยู่ใน Safe State เสมอ"
+            },
+            // หน่วยที่ 5: การจัดการหน่วยความจำ (Memory Management)
+            {
+                id: 19,
+                question: "กลไกการจับคู่แปลงที่อยู่เชิงตรรกะ (Logical Address) ให้กลายเป็นที่อยู่จริงทางกายภาพ (Physical Address) เป็นหน้าที่ของฮาร์ดแวร์ใด?",
+                options: [
+                    "Memory Management Unit (MMU)",
+                    "Direct Memory Access (DMA)",
+                    "Central Processing Unit (CPU)",
+                    "Interrupt Controller"
+                ],
+                correct: 0,
+                rationale: "MMU เป็นโมดูลฮาร์ดแวร์พิเศษที่แปลงรหัสแอดเดรสที่โปรแกรมอ้างอิงให้ตรงกับตำแหน่งในแรมจริงขณะรันไทม์"
+            },
+            {
+                id: 20,
+                question: "ปัญหาเศษเสี้ยวภายใน (Internal Fragmentation) มักเกิดขึ้นอย่างเด่นชัดในสถาปัตยกรรมการจัดสรรหน่วยความจำรูปแบบใด?",
+                options: [
+                    "Fixed Partition (การแบ่งพาร์ทิชันขนาดคงที่ตั้งแต่แรก)",
+                    "Dynamic Partition (การแบ่งขนาดตามความต้องการจริง)",
+                    "Segmentation แบบแปรผันตามกลุ่มฟังก์ชัน",
+                    "กลไกการสลับโปรเซสเข้าออกดิสก์แบบบิดา-บุตร"
+                ],
+                correct: 0,
+                rationale: "Fixed Partition กำหนดขนาดช่องบล็อกตายตัว หากโปรเซสมีขนาดเล็กกว่าช่อง พื้นที่ที่เหลือภายในช่องนั้นจะสูญเปล่าและโปรเซสอื่นเอาไปใช้ไม่ได้"
+            },
+            {
+                id: 21,
+                question: "อัลกอริทึมการจัดสรรพื้นที่ว่างข้อใดที่จะเลือกบล็อกที่ว่างที่ **มีขนาดใหญ่ที่สุด** เพื่อสร้างเศษเสี้ยวพื้นที่ว่างขนาดใหญ่เหลือไว้หลังจัดสรร?",
+                options: [
+                    "First-fit",
+                    "Best-fit",
+                    "Worst-fit",
+                    "Next-fit"
+                ],
+                correct: 2,
+                rationale: "Worst-fit จะสแกนหาบล็อกที่ใหญ่ที่สุดเพื่อลงข้อมูล โดยหวังว่าพื้นที่ส่วนที่เหลือจะมีขนาดใหญ่พอที่จะให้โปรเซสอื่นใช้งานต่อได้"
+            },
+            {
+                id: 22,
+                question: "แนวคิดการจัดการหน่วยความจำแบบ Paging แก้ไขปัญหาร้ายแรงในเรื่องใด?",
+                options: [
+                    "ช่วยขจัดปัญหาเศษเสี้ยวภายนอกหน่วยความจำ (External Fragmentation)",
+                    "ช่วยลดเวลาการแปลที่อยู่ของ MMU ให้เหลือศูนย์นาโนวินาที",
+                    "ช่วยป้องกันการบุกรุกไวรัสเข้าสู่เคอร์เนลพื้นที่รันระดับสากล",
+                    "ช่วยให้คอมพิวเตอร์ไม่ต้องพึ่งพาระบบไฟสำรองสำรองข้อมูล"
+                ],
+                correct: 0,
+                rationale: "Paging แบ่งหน่วยความจำออกเป็นบล็อกขนาดเล็กเท่ากัน (Frames และ Pages) ทำให้โปรเซสไม่จำเป็นต้องอยู่ติดกันในหน่วยความจำกายภาพ"
+            },
+            // หน่วยที่ 6: หน่วยความจำเสมือน (Virtual Memory)
+            {
+                id: 23,
+                question: "สภาวะสลับหน้ากระดาษหนาแน่น (Thrashing) มีสาเหตุหลักมาจากปัจจัยใด?",
+                options: [
+                    "โปรเซสไม่มีกรอบหน่วยความจำ (Frames) เพียงพอ ส่งผลให้ระบบเสียเวลาส่วนใหญ่ไปกับการสลับหน้าเข้าออกดิสก์ตลอดเวลา",
+                    "หน่วยประมวลผลซีพียูมีความเร็วในการประมวลผลสูงเกินไปจนแรมตามไม่ทัน",
+                    "ผู้ใช้ปิดการทำงานของระบบหน่วยความจำเสมือนในระบบปฏิบัติการทิ้ง",
+                    "การเลือกใช้อัลกอริทึมทดแทนหน้าแบบ Optimal Replacement"
+                ],
+                correct: 0,
+                rationale: "Thrashing เกิดขึ้นเมื่อค่ารวมของหน่วยความจำหน้าใช้งานของทุกโปรเซสสูงเกินขนาดจริงของ RAM ทำให้ระบบมัวแต่ทำ Page-in และ Page-out จนซีพียูว่างงาน"
+            },
+            {
+                id: 24,
+                question: "เหตุการณ์ Page Fault เกิดขึ้นเมื่อใดในระบบหน่วยความจำเสมือน?",
+                options: [
+                    "เมื่อโปรเซสพยายามอ้างอิงหน้าหน่วยความจำ (Page) ที่ไม่ได้ถูกโหลดเข้ามาเก็บไว้ในหน่วยความจำหลัก (RAM) ณ ขณะนั้น",
+                    "เมื่อแรมมีอุณหภูมิความร้อนสูงเกินขีดจำกัดสากลของเมนบอร์ด",
+                    "เมื่อแอปพลิเคชันพยายามเขียนข้อมูลลงแผ่นซีดีรอมที่ถูกล็อกสิทธิ์ไว้",
+                    "เมื่อเปิดโปรแกรมพร้อมกันมากกว่า 100 โปรแกรมในหนึ่งวินาที"
+                ],
+                correct: 0,
+                rationale: "เมื่อเกิด Page Fault ระบบปฏิบัติการจะต้องสร้างสัญญาณขัดจังหวะเพื่อไปดึงหน้านั้นมาจากฮาร์ดดิสก์/SSD เข้าสู่ RAM"
+            },
+            {
+                id: 25,
+                question: "อัลกอริทึมทดแทนหน้าแบบใดที่เลือกเปลี่ยนหน้าหน่วยความจำที่ **ไม่ได้ถูกใช้งานเป็นระยะเวลานานที่สุดในอดีตที่ผ่านมา**?",
+                options: [
+                    "First-In, First-Out (FIFO)",
+                    "Least Recently Used (LRU)",
+                    "Optimal Page Replacement (OPT)",
+                    "Least Frequently Used (LFU)"
+                ],
+                correct: 1,
+                rationale: "LRU ใช้ประวัติศาสตร์ในอดีตเพื่อพยากรณ์อนาคต โดยมองว่าหน้าไหนที่ไม่ถูกเรียกใช้มานานที่สุดน่าจะยังไม่จำเป็นในตอนนี้"
+            },
+            {
+                id: 26,
+                question: "ความผิดปกติแบบเบลาดีย์ (Belady’s Anomaly) มีลักษณะเฉพาะตัวอย่างไร?",
+                options: [
+                    "การเพิ่มจำนวนเฟรมหน่วยความจำหลักให้ระบบ แต่อัตราการเกิด Page Fault กลับเพิ่มสูงขึ้นอย่างน่าประหลาดในอัลกอริทึม FIFO",
+                    "การเพิ่มความเร็วบัสแรมแต่ประสิทธิภาพโดยรวมของคอมพิวเตอร์ลดต่ำลง",
+                    "การเกิดอาการเดดล็อกบนกลไกแคชความเร็วสูงเมื่อปิดการทำงานระบบไอโอ",
+                    "ความบกพร่องของไดรเวอร์ฮาร์ดแวร์เมื่อส่งสัญญาณอินเทอร์รัปต์พร้อมกัน"
+                ],
+                correct: 0,
+                rationale: "Belady’s Anomaly มักถูกนำมาเป็นข้ออ้างชี้จุดอ่อนของอัลกอริทึมแบบ FIFO ที่ทำงานไม่สอดคล้องกับพฤติกรรมการใช้งานจริง"
+            },
+            // หน่วยที่ 7: ระบบไฟล์และการจัดการไอโอ (File Systems & I/O Management)
+            {
+                id: 27,
+                question: "โครงสร้างการจัดสรรไฟล์แบบใดที่ดึงประสิทธิภาพการอ่านไฟล์แบบสุ่ม (Random Access) ได้รวดเร็วที่สุด?",
+                options: [
+                    "Contiguous Allocation (การจัดสรรแบบพื้นที่ต่อเนื่อง)",
+                    "Linked Allocation (การจัดสรรแบบเชื่อมโยงรายการพอยน์เตอร์)",
+                    "Indexed Allocation (การจัดสรรแบบใช้บล็อกดัชนีชี้ตำแหน่ง)",
+                    "Dynamic Chain Allocation"
+                ],
+                correct: 0,
+                rationale: "Contiguous Allocation เก็บบล็อกไฟล์ต่อกันเป็นทอดๆ ทำให้สามารถคำนวณตำแหน่งและเข้าหาแอดเดรสที่ต้องการได้ทันที"
+            },
+            {
+                id: 28,
+                question: "โครงสร้างข้อมูลแบบใดบนระบบไฟล์ตระกูล UNIX/Linux ที่ใช้จัดเก็บ metadata ของไฟล์ (เช่น ขนาด, สิทธิ์เข้าถึง, เจ้าของ และพอยน์เตอร์ดิสก์บล็อก)?",
+                options: [
+                    "inode",
+                    "FAT32 Header",
+                    "Master Boot Record (MBR)",
+                    "Superblock Extent"
+                ],
+                correct: 0,
+                rationale: "inode (Index Node) เป็นโครงสร้างข้อมูลหลักในยูนิกซ์เพื่อเก็บคุณสมบัติทุกประการของไฟล์ ยกเว้นชื่อไฟล์อย่างเดียว"
+            },
+            {
+                id: 29,
+                question: "หน้าที่พื้นฐานและสำคัญที่สุดของซอฟต์แวร์ Device Driver ในระบบไอโอคืออะไร?",
+                options: [
+                    "แปลงคำสั่งเชิงตรรกะระดับสูงของระบบปฏิบัติการให้เป็นคำสั่งระดับต่ำที่ Device Controller เฉพาะรุ่นเข้าใจได้",
+                    "ควบคุมและตรวจสอบการทำงานของโปรเซสซอร์ให้ตรงรอบเวลาสากล",
+                    "ตรวจสอบความปลอดภัยของการส่งข้อมูลผ่านระบบไวไฟของสำนักงาน",
+                    "ทำหน้าที่ฟอร์แมตโครงสร้างไฟล์ระบบฮาร์ดดิสก์ให้กลายเป็น NTFS"
+                ],
+                correct: 0,
+                rationale: "Device Driver ซ่อนความหลากหลายของฮาร์ดแวร์ไว้เบื้องหลัง เพื่อให้ระบบปฏิบัติการหลักสั่งการด้วยมาตรฐานเดียวกันได้"
+            },
+            {
+                id: 30,
+                question: "กลไก DMA (Direct Memory Access) เข้ามาช่วยยกระดับความเร็วของคอมพิวเตอร์ได้อย่างไร?",
+                options: [
+                    "ยอมให้ฮาร์ดแวร์ไอโอความเร็วสูงถ่ายโอนข้อมูลหลักเข้าแรมได้โดยตรงโดยไม่ต้องกวนวงรอบซีพียูทีละไบต์",
+                    "เร่งความเร็วในการหมุนรอบของจานแม่เหล็กภายในฮาร์ดดิสก์แบบกลไก",
+                    "ช่วยให้สามารถรันคำสั่ง Privileged Instructions ในระดับ User Mode ได้ปลอดภัย",
+                    "เปลี่ยนสถาปัตยกรรมหน่วยความจำเสมือนให้กลายเป็นแบบถาวร"
+                ],
+                correct: 0,
+                rationale: "DMA Controller ทำงานคัดลอกข้อมูลบล็อกขนาดใหญ่แทนซีพียู ทำให้ซีพียูไม่ต้องเจอภาระหนักจากระบบขัดจังหวะทีละไบต์"
+            },
+            {
+                id: 31,
+                question: "ความแตกต่างพื้นฐานระหว่างกลไก Buffering และ Caching คือข้อใด?",
+                options: [
+                    "Buffering เน้นสำรองพื้นที่เพื่อพักข้อมูลระหว่างส่งผ่านลดความต่างความเร็ว ส่วน Caching เก็บสำเนาข้อมูลใช้งานบ่อยเพื่อเร่งความเร็วในการเรียกซ้ำ",
+                    "Buffering ถูกสร้างบนฮาร์ดดิสก์เท่านั้น ส่วน Caching ถูกสร้างบนรีจิสเตอร์ของซีพียูอย่างเดียว",
+                    "Buffering ป้องกันการเกิดเดดล็อก ส่วน Caching จัดการเรื่องเศษเสี้ยวหน่วยความจำ",
+                    "ระบบปฏิบัติการไม่สามารถควบคุมระบบ Buffering ได้แต่ควบคุม Caching ได้"
+                ],
+                correct: 0,
+                rationale: "ทั้งสองระบบแชร์แรมเหมือนกันแต่มีเป้าประสงค์คนละมิติ บัฟเฟอร์ช่วยเรื่องประสานความเร็ว แคชช่วยเรื่องลดเวลาการดึงข้อมูลเดิม"
+            },
+            {
+                id: 32,
+                question: "ระบบสพูลลิ่ง (Spooling) มีความจำเป็นสูงสุดสำหรับอุปกรณ์ประเภทใด?",
+                options: [
+                    "อุปกรณ์ที่ไม่สามารถแชร์ใช้งานพร้อมกันจากหลายโปรเซสได้ เช่น เครื่องพิมพ์ (Printer)",
+                    "อุปกรณ์ความเร็วสูงที่แชร์เข้าถึงไฟล์พร้อมกันได้ เช่น แรมหรือเอสเอสดี",
+                    "ระบบจอยสติ๊กสำหรับควบคุมตัวละครเกมระดับสากล",
+                    "คีย์บอร์ดและเมาส์ที่รับส่งข้อมูลแบบสตรีมทีละตัวอักษร"
+                ],
+                correct: 0,
+                rationale: "Spooling สร้างพื้นที่คิวงานค้างบนดิสก์เพื่อทยอยป้อนให้อุปกรณ์แบบ Non-shareable ทำงานอย่างเป็นระบบ ไม่ให้ข้อมูลพิมพ์ตีกันมั่ว"
+            },
+            {
+                id: 33,
+                question: "เวลาที่หัวอ่านของฮาร์ดดิสก์ใช้ในการเคลื่อนย้ายตัวไปยังตำแหน่งแทร็ก (Track) ที่ต้องการเรียกว่าอะไร ซึ่งเป็นเวลาที่สูญเสียมากที่สุด?",
+                options: [
+                    "Seek Time",
+                    "Rotational Latency",
+                    "Transfer Time",
+                    "Access Matrix Delay"
+                ],
+                correct: 0,
+                rationale: "Seek Time เป็นมิติเวลาเชิงกลไกที่ช้าที่สุดในการทำงานของดิสก์ การจัดกำหนดการดิสก์จึงมุ่งเน้นการลดค่า Seek Time นี้เป็นหลัก"
+            },
+            {
+                id: 34,
+                question: "จุดอ่อนที่ร้ายแรงที่สุดของอัลกอริทึมจัดกำหนดการดิสก์แบบ Shortest Seek Time First (SSTF) คืออะไร?",
+                options: [
+                    "อาจมีบางคำร้องขอที่อยู่แทร็กปลายทางไกลๆ ต้องติดสถานะอดตาย (Starvation) หากมีงานป้อนมาใกล้ๆ หัวอ่านต่อเนื่อง",
+                    "หัวอ่านเคลื่อนที่เหวี่ยงไปกลับข้ามขอบปลายสุดของดิสก์ทุกครั้งโดยไม่มีความยืดหยุ่น",
+                    "ทำให้ค่าเฉลี่ยเวลาการเดินทาง Seek Time สูงกว่าระบบ FCFS เป็นสิบเท่า",
+                    "ไม่สามารถรันงานบนระบบปฏิบัติการสมัยใหม่อย่าง Windows 11 ได้"
+                ],
+                correct: 0,
+                rationale: "SSTF มุ่งเน้นการเอาใจคิวที่อยู่ใกล้ตำแหน่งหัวอ่านในปัจจุบัน ทำให้คิวที่ห่างไกลอาจไม่มีโอกาสได้รับบริการเลยหากคิวใกล้ป้อนเข้ามาไม่หยุด"
+            },
+            {
+                id: 35,
+                question: "อัลกอริทึมจัดกำหนดการดิสก์แบบใดที่ทำงานเลียนแบบพฤติกรรมการเคลื่อนที่ของลิฟต์ (Elevator Algorithm)?",
+                options: [
+                    "SCAN",
+                    "FCFS",
+                    "C-SCAN",
+                    "Look-Ahead Scheduling"
+                ],
+                correct: 0,
+                rationale: "SCAN จะกวาดหัวอ่านเดินหน้าไปจนสุดขอบดิสก์ด้านหนึ่งก่อน แล้วค่อยกวาดหัวอ่านถอยหลังกลับไปอีกฝั่ง คล้ายการรับส่งคนของลิฟต์ในอาคาร"
+            },
+            {
+                id: 36,
+                question: "ความแตกต่างระหว่างอัลกอริทึม SCAN และ C-SCAN ในการจัดตารางกำหนดเวลาฮาร์ดดิสก์คือข้อใด?",
+                options: [
+                    "C-SCAN จะกวาดให้บริการข้อมูลเพียงทิศทางเดียว พอถึงปลายสุดจะดีดตัวกลับมาเริ่มต้นใหม่อีกฝั่งโดยไม่ให้สิทธิ์บริการระหว่างทางขากลับ เพื่อสร้างความสม่ำเสมอในการรอ",
+                    "SCAN ทำงานได้เร็วกว่า C-SCAN เสมอในทุกสถานการณ์แบบจำลองร้อยเปอร์เซ็นต์",
+                    "C-SCAN ยินยอมให้เกิดปัญหาสภาวะอับจนของหัวอ่านแต่ SCAN ไม่ยินยอม",
+                    "SCAN เป็นโมเดลสำหรับคลาวด์คอมพิวติ้งส่วน C-SCAN ใช้สำหรับคอมพิวเตอร์ส่วนบุคคล"
+                ],
+                correct: 0,
+                rationale: "C-SCAN (Circular SCAN) กวาดข้อมูลขาเดียวอย่างสม่ำเสมอ ช่วยแก้จุดบกพร่องของ SCAN ที่คิวรอบขอบนอกจะถูกทิ้งช่วงการรอคอยนานกว่าจุดอื่น"
+            },
+            {
+                id: 37,
+                question: "ข้อใดจัดอยู่ประเภทบล็อกอุปกรณ์ (Block Device) ที่อ่านเขียนข้อมูลเป็นกลุ่มก้อนขนาดใหญ่?",
+                options: [
+                    "Hard Disk / Solid State Drive",
+                    "Keyboard",
+                    "Serial Port Mouse",
+                    "Printer Cable Connection"
+                ],
+                correct: 0,
+                rationale: "Block Device ส่งผ่านข้อมูลเป็นบล็อกอิสระและเข้าถึงแบบสุ่มได้ แตกต่างจาก Character Device (เช่น คีย์บอร์ด) ที่ส่งข้อมูลทีละตัวอักษรตามลำดับสายสตรีม"
+            },
+            {
+                id: 38,
+                question: "เมื่อเกิดการเรียกใช้งานฟังก์ชันระดับระบบ Interrupt Service Routine (ISR) ตัวซีพียูจะประพฤติตนอย่างไร?",
+                options: [
+                    "หยุดงานโปรเซสปัจจุบัน บันทึก Context ลงสแต็ก แล้วข้ามไปรันโค้ดจัดการเหตุการณ์ของอุปกรณ์นั้นๆ ทันที",
+                    "ทำการรีบูตระบบปฏิบัติการใหม่ทั้งหมดเพื่อความปลอดภัยของข้อมูลหลัก",
+                    "สั่งปิดการทำงานอุปกรณ์ไอโอชิ้นนั้นถาวรจนกว่าโปรแกรมประยุกต์จะยอมแพ้",
+                    "เร่งส่งข้อมูลในแคชทั้งหมดกระจายไปเก็บลงหน่วยความจำเสมือนชั่วคราว"
+                ],
+                correct: 0,
+                rationale: "ISR เป็นฟังก์ชันระดับต่ำในระบบปฏิบัติการเพื่อตอบสนองต่อฮาร์ดแวร์ขัดจังหวะอย่างเร่งด่วน ก่อนจะคืนค่าเดิมให้แอปพลิเคชันทำงานต่อ"
+            },
+            {
+                id: 39,
+                question: "ข้อใดระบุสิทธิ์ความปลอดภัยเข้าถึงไฟล์ (File Permissions) ในระบบลินุกซ์ด้วยรหัสตัวเลข '755' ได้ถูกต้องเชิงความหมาย?",
+                options: [
+                    "เจ้าของไฟล์อ่านเขียนรันได้ (7), กลุ่มผู้ใช้และผู้อื่นอ่านและรันได้เท่านั้น (5)",
+                    "ทุกคนบนระบบคอมพิวเตอร์มีสิทธิ์เท่ากันในการแก้ไขและลบไฟล์ระบบหลัก",
+                    "ไฟล์นี้ถูกล็อกสิทธิ์ห้ามไม่ให้ใครเข้าถึงทั้งสิ้นยกเว้นผู้ดูแลระบบเคอร์เนล",
+                    "เจ้าของไฟล์เขียนได้อย่างเดียว ส่วนผู้อื่นอ่านได้อย่างเดียว"
+                ],
+                correct: 0,
+                rationale: "รหัส 7 มาจาก 4(read)+2(write)+1(execute) ส่วน 5 มาจาก 4(read)+1(execute) ซึ่งเป็นมาตรฐานความปลอดภัยของสถาปัตยกรรม POSIX"
+            },
+            {
+                id: 40,
+                question: "ข้อใดไม่ใช่สาเหตุของการแยกแยะโครงสร้าง directory ออกเป็นลำดับชั้น (Hierarchical Directory)?",
+                options: [
+                    "เพื่อเพิ่มความเร็วในการอ่านข้อมูลเชิงกลไกของแผ่นจานดิสก์แม่เหล็ก",
+                    "เพื่อความเป็นระเบียบและลดปัญหาตั้งชื่อไฟล์ซ้ำซ้อนกันของผู้ใช้งานหลายคน",
+                    "เพื่อความสะดวกในการจัดหมวดหมู่และแยกแิทธิ์การเข้าถึงไฟล์ระบบ",
+                    "เพื่อความยืดหยุ่นในการขยายระบบจัดเก็บข้อมูลในระยะยาว"
+                ],
+                correct: 0,
+                rationale: "การจัดพาร์ทและไดเรกทอรีเป็นเรื่องเชิงตรรกะของซอฟต์แวร์ระบบไฟล์ (Logical Organization) ไม่ได้ส่งผลต่อความเร็วทางกายภาพ/กลไกการหมุนของจานดิสก์โดยตรง"
+            }
+        ];
+
+        // ฟังก์ชันในการสุ่มอาร์เรย์ (Fisher-Yates Shuffle)
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        let questions = [];
+        let userAnswers = {};
+        let examTimerInterval = null;
+        let timeLeft = 3600; // 60 นาทีเป็นวินาที
+        let examActive = false;
+
+        // ฟังก์ชันเปลี่ยนธีม (Dark/Light mode)
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        themeToggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            document.body.classList.toggle('light-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            themeToggleBtn.innerHTML = isDark ? '<i class="fas fa-sun fa-lg"></i>' : '<i class="fas fa-moon fa-lg"></i>';
+            localStorage.setItem('os-theme', isDark ? 'dark' : 'light');
+        });
+
+        // โหลดธีมจาก LocalStorage
+        if (localStorage.getItem('os-theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+            document.body.classList.remove('light-mode');
+            themeToggleBtn.innerHTML = '<i class="fas fa-sun fa-lg"></i>';
+        }
+
+        // หน้าจอโหลดหน้าเว็บ
+        window.addEventListener('load', () => {
+            const loader = document.getElementById('loading-screen');
+            loader.style.opacity = '0';
+            setTimeout(() => loader.remove(), 300);
+            loadScoreHistory();
+        });
+
+        // ดึงประวัติคะแนน
+        function loadScoreHistory() {
+            const history = localStorage.getItem('os-midterm-score');
+            const container = document.getElementById('score-history');
+            if (history) {
+                const data = JSON.parse(history);
+                container.innerHTML = `<div class="alert alert-primary p-2 mb-0 mt-2">สอบเมื่อ: ${data.date}<br><strong>คะแนน: ${data.score} / 40</strong> (${data.percent}%)</div>`;
+            }
+        }
+
+        // เริ่มต้นการสอบ
+        document.getElementById('start-exam-btn').addEventListener('click', function() {
+            Swal.fire({
+                title: 'ยืนยันการเริ่มทำข้อสอบกลางภาค?',
+                text: "ข้อสอบมีจำนวน 40 ข้อ เวลาจับเวลา 60 นาที ระบบจะสุ่มลำดับข้อสอบทั้งหมด!",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#2563eb',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'เริ่มสอบทันที',
+                cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    startExam();
+                }
+            });
+        });
+
+        function startExam() {
+            examActive = true;
+            userAnswers = {};
+            // สุ่มสลับข้อสอบสากล
+            questions = shuffleArray([...rawQuestions]);
+            
+            // ปิดปุ่มเริ่มเปิดปุ่มส่ง
+            document.getElementById('start-exam-btn').disabled = true;
+            document.getElementById('submit-exam-btn').disabled = false;
+            document.getElementById('quiz-navigation-panel').classList.remove('d-none');
+            document.getElementById('questions-area').classList.remove('d-none');
+            document.getElementById('result-summary-card').classList.add('d-none');
+            document.getElementById('exam-status-text').innerText = "กำลังทำข้อสอบ";
+            document.getElementById('exam-status-text').className = "text-danger fw-bold";
+
+            renderBadges();
+            renderQuestions();
+            startTimer();
+        }
+
+        // จัดการแผง Badge ลัดข้ามข้อ
+        function renderBadges() {
+            const container = document.getElementById('question-badges-container');
+            container.innerHTML = '';
+            questions.forEach((q, index) => {
+                const badge = document.createElement('div');
+                badge.className = `q-badge` + (userAnswers[index] !== undefined ? ' answered' : '');
+                badge.id = `badge-${index}`;
+                badge.innerText = index + 1;
+                badge.onclick = () => {
+                    document.getElementById(`q-card-${index}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    document.querySelectorAll('.q-badge').forEach(b => b.classList.remove('current'));
+                    badge.classList.add('current');
+                };
+                container.appendChild(badge);
+            });
+        }
+
+        // แสดงผลตัวข้อสอบทั้งหมดลงในพื้นที่
+        function renderQuestions() {
+            const area = document.getElementById('questions-area');
+            area.innerHTML = '';
+
+            questions.forEach((q, idx) => {
+                const card = document.createElement('div');
+                card.className = 'quiz-card';
+                card.id = `q-card-${idx}`;
+                
+                let optionsHtml = '';
+                q.options.forEach((opt, optIdx) => {
+                    optionsHtml += `
+                        <label class="option-container" onclick="selectAnswer(${idx}, ${optIdx})">
+                            ${opt}
+                            <input type="radio" name="question-${idx}" id="q-${idx}-opt-${optIdx}" ${userAnswers[idx] === optIdx ? 'checked' : ''}>
+                            <span class="checkmark"></span>
+                        </label>
+                        <div class="rationale-box" id="rationale-${idx}-opt-${optIdx}"></div>
+                    `;
+                });
+
+                card.innerHTML = `
+                    <h5 class="font-kanit fw-bold text-dark-primary mb-3">ข้อที่ ${idx + 1}. ${q.question}</h5>
+                    <div class="options-group">${optionsHtml}</div>
+                `;
+                area.appendChild(card);
+            });
+        }
+
+        // เลือกคำตอบในแต่ละข้อ
+        window.selectAnswer = function(questionIdx, optionIdx) {
+            if (!examActive) return;
+            userAnswers[questionIdx] = optionIdx;
+            
+            // อัปเดตสถานะ Badge ด้านบน
+            const badge = document.getElementById(`badge-${questionIdx}`);
+            if (badge) badge.classList.add('answered');
+        }
+
+        // ระบบจับเวลาถอยหลัง
+        function startTimer() {
+            timeLeft = 3600;
+            clearInterval(examTimerInterval);
+            examTimerInterval = setInterval(() => {
+                timeLeft--;
+                if (timeLeft <= 0) {
+                    clearInterval(examTimerInterval);
+                    document.getElementById('exam-timer').innerText = "00:00";
+                    Swal.fire({
+                        title: 'หมดเวลาทำข้อสอบ!',
+                        text: 'ระบบจะทำการรวบรวมและส่งคะแนนสอบของคุณอัตโนมัติ',
+                        icon: 'warning',
+                        confirmButtonText: 'ดูผลคะแนน'
+                    }).then(() => {
+                        submitExam();
+                    });
+                } else {
+                    let mins = Math.floor(timeLeft / 60);
+                    let secs = timeLeft % 60;
+                    document.getElementById('exam-timer').innerText = 
+                        `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+
+        // จัดการส่งข้อสอบและตรวจคำตอบอัตโนมัติ
+        document.getElementById('submit-exam-btn').addEventListener('click', function() {
+            const answeredCount = Object.keys(userAnswers).length;
+            if (answeredCount < 40) {
+                Swal.fire({
+                    title: 'ยังทำข้อสอบไม่ครบ?',
+                    text: `คุณเพิ่งตอบไปเพียง ${answeredCount} จากทั้งหมด 40 ข้อ มั่นใจที่จะส่งคำตอบหรือไม่?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'ยืนยันการส่งคำตอบ',
+                    cancelButtonText: 'กลับไปตรวจสอบ'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        submitExam();
+                    }
+                });
+            } else {
+                Swal.fire({
+                    title: 'ยืนยันส่งกระดาษคำตอบ?',
+                    text: 'เมื่อส่งแล้วจะไม่สามารถแก้ไขคำตอบได้อีก และระบบจะเฉลยผลสอบทันที!',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#2563eb',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'ยืนยัน',
+                    cancelButtonText: 'ยกเลิก'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        submitExam();
+                    }
+                });
+            }
+        });
+
+        function submitExam() {
+            examActive = false;
+            clearInterval(examTimerInterval);
+            document.getElementById('submit-exam-btn').disabled = true;
+            document.getElementById('start-exam-btn').disabled = false;
+            document.getElementById('exam-status-text').innerText = "เสร็จสิ้นการประเมิน";
+            document.getElementById('exam-status-text').className = "text-success fw-bold";
+
+            let score = 0;
+            questions.forEach((q, idx) => {
+                const userAns = userAnswers[idx];
+                const correctAns = q.correct;
+                
+                if (userAns === correctAns) {
+                    score++;
+                }
+
+                // แสดงเฉลย Rationale บล็อกคำอธิบายทุกตัวเลือก
+                q.options.forEach((opt, optIdx) => {
+                    const ratBox = document.getElementById(`rationale-${idx}-opt-${optIdx}`);
+                    if (ratBox) {
+                        ratBox.style.display = 'block';
+                        if (optIdx === correctAns) {
+                            ratBox.innerHTML = `<i class="fas fa-check-circle me-1"></i> <strong>คำตอบที่ถูกต้อง:</strong> ${q.rationale}`;
+                            ratBox.className = 'rationale-box rationale-correct';
+                        } else if (userAns === optIdx) {
+                            ratBox.innerHTML = `<i class="fas fa-times-circle me-1"></i> <strong>คำตอบของคุณ (ไม่ถูกต้อง):</strong> ข้อผิดพลาดเชิงทัศนคติหรือแนวคิดคลาดเคลื่อน`;
+                            ratBox.className = 'rationale-box rationale-incorrect';
+                        }
+                    }
+                });
+
+                // ตรึงความพิการของวิทยุตัวเลือกเพื่อไม่ให้กดหลังส่งสอบ
+                q.options.forEach((opt, optIdx) => {
+                    const el = document.getElementById(`q-${idx}-opt-${optIdx}`);
+                    if (el) el.disabled = true;
+                });
+            });
+
+            // แสดงสรุปผลคะแนนด้านบน
+            const percent = ((score / 40) * 100).toFixed(1);
+            document.getElementById('final-score-display').innerText = `${score} / 40`;
+            document.getElementById('score-percentage-text').innerText = `คิดเป็นเปอร์เซ็นต์สะสม: ${percent}%`;
+            document.getElementById('result-summary-card').classList.remove('d-none');
+            document.getElementById('result-summary-card').scrollIntoView({ behavior: 'smooth' });
+
+            // บันทึกลง LocalStorage
+            const today = new Date().toLocaleString('th-TH');
+            localStorage.setItem('os-midterm-score', JSON.stringify({
+                score: score,
+                percent: percent,
+                date: today
+            }));
+
+            loadScoreHistory();
+
+            Swal.fire({
+                title: 'ประเมินผลสำเร็จ!',
+                text: `คุณได้คะแนน ${score} เต็ม 40 คะแนน (${percent}%)`,
+                icon: score >= 20 ? 'success' : 'error',
+                confirmButtonText: 'ปิดหน้าต่างตรวจทาน'
+            });
+        }
+    </script>
+</body>
+</html>

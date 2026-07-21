@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หน่วยที่ 14 OS Optimization | วิชา 31909-1001 ระบบปฏิบัติการ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="D:\OS\css\style.css">
+    <link rel="stylesheet" href="D:\OS\css\responsive.css">
+    <link rel="stylesheet" href="D:\OS\css\dark-mode.css">
+    <style>
+        /* สไตล์แบบสากลสำหรับการจำลอง Animation ของ Virtual Memory Management / OS Optimization */
+        .simulation-space {
+            background-color: #1e293b;
+            border-radius: 16px;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        body.light-mode .simulation-space {
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+        }
+        .state-container-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        .simulation-node {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Kanit', sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            color: #ffffff;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 4px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        #sim-node-virtual { background: linear-gradient(135deg, #a855f7, #9333ea); }
+        #sim-node-mmu { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+        #sim-node-ram { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        
+        /* อนิเมชันกระพริบเมื่อสถานะกำลัง Active */
+        .simulation-node.active-state {
+            transform: scale(1.15);
+            box-shadow: 0 0 25px currentColor;
+            border-color: #ffffff;
+            animation: pulse-glow 1.5s infinite alternate;
+        }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 15px rgba(255,255,255,0.2); }
+            100% { box-shadow: 0 0 30px rgba(255,255,255,0.8); }
+        }
+        
+        .sim-arrow {
+            height: 4px;
+            background-color: #cbd5e1;
+            flex-grow: 1;
+            position: relative;
+            margin: 0 10px;
+            transition: all 0.3s;
+        }
+        body.dark-mode .sim-arrow { background-color: #475569; }
+        .sim-arrow::after {
+            content: '';
+            position: absolute;
+            right: -2px;
+            top: -6px;
+            width: 0; height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 12px solid #cbd5e1;
+        }
+        body.dark-mode .sim-arrow::after { border-left-color: #475569; }
+        .sim-arrow.active-arrow {
+            background-color: #10b981 !important;
+        }
+        .sim-arrow.active-arrow::after {
+            border-left-color: #10b981 !important;
+        }
+        
+        /* สไตล์ตารางบล็อกจำลองหน่วยความจำแฝง / Swap Space / Process List */
+        .queue-box-list {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 60px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            border: 1px dashed rgba(0,0,0,0.1);
+            flex-wrap: wrap;
+        }
+        body.dark-mode .queue-box-list { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); }
+        .pcb-token {
+            background: #4b5563;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            animation: bounceIn 0.5s;
+        }
+        .pcb-token.ram-slot { background: #ef4444; }
+        .pcb-token.swap-slot { background: #f59e0b; }
+        .pcb-token.opt-slot { background: #10b981; }
+    </style>
+</head>
+<body class="light-mode">
+    
+    <div id="loading-screen">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    
+    <nav class="navbar navbar-expand-lg sticky-top main-navbar">
+        <div class="container-fluid">
+            <button class="btn text-white me-2" id="sidebar-toggle-btn" aria-label="เปิดเมนูด้านข้าง">
+                <i class="fas fa-bars fa-lg"></i>
+            </button>
+            <a class="navbar-brand d-flex align-items-center" href="../index.html">
+                <i class="fas fa-laptop-code me-2"></i>
+                <span>31909-1001 ระบบปฏิบัติการ</span>
+            </a>
+            <div class="ms-auto">
+                <button class="btn text-white" id="theme-toggle-btn" aria-label="เปลี่ยนโหมดหน้าจอ">
+                    <i class="fas fa-moon fa-lg"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="app-layout">
+        <aside class="sidebar-navigation" id="main-sidebar">
+            <div class="sidebar-profile text-center py-4">
+                <div class="avatar-container mb-2">
+                    <i class="fas fa-book-reader fa-3x text-white bg-primary p-3 rounded-circle"></i>
+                </div>
+                <h6 class="text-white mb-0">อาจารย์ธัญญรัตน์ ตาเล๊ะ</h6>
+                <small class="text-white-50">เทคโนโลยีคอมพิวเตอร์</small>
+            </div>
+            <ul class="sidebar-menu-list px-2" id="sidebar-menu-injector"></ul>
+        </aside>
+
+        <main class="main-content-flow px-3 px-md-5 py-4">
+            
+            <nav aria-label="breadcrumb" class="mb-4" data-aos="fade-down">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="../index.html" class="text-decoration-none"><i class="fas fa-home me-1"></i>หน้าแรก</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">หน่วยที่ 14 OS Optimization</li>
+                </ol>
+            </nav>
+
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light text-dark border-start border-5 border-primary" data-aos="fade-up">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <span class="text-primary fw-bold text-uppercase d-block mb-1">Unit 14: Operating System Optimization</span>
+                        <h1 class="font-kanit font-weight-bold text-dark-primary mb-0">หน่วยที่ 14 OS Optimization</h1>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary btn-sm rounded-3 px-3" onclick="window.print()"><i class="fas fa-print me-1"></i>พิมพ์บทเรียน</button>
+                        <button class="btn btn-primary btn-sm rounded-3 px-3" id="bookmark-btn"><i class="far fa-bookmark me-1"></i>คั่นหน้าไว้</button>
+                    </div>
+                </div>
+            </div>
+
+            <article class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 leading-relaxed text-secondary text-justify content-article-body" data-aos="fade-up" data-aos-delay="100">
+                
+                <!-- 1. OS Optimization -->
+                <h3 class="font-kanit text-dark-primary font-weight-bold mb-3 border-bottom pb-2">1. การเพิ่มประสิทธิภาพระบบปฏิบัติการ (OS Optimization)</h3>
+                <p style="text-indent: 30px;">
+                    การเพิ่มประสิทธิภาพระบบปฏิบัติการ (OS Optimization) หมายถึงกระบวนการปรับแต่ง ปรับปรุง และจัดสรรทรัพยากรของระบบปฏิบัติการ ทั้งฮาร์ดแวร์และซอฟต์แวร์ เพื่อให้เครื่องคอมพิวเตอร์สามารถประมวลผลได้อย่างมีประสิทธิภาพสูงสุด มีความเร็วในการตอบสนอง (Response Time) ที่ดีขึ้น ลดเวลาการบูตระบบ (Boot Time) และใช้ทรัพยากรระบบอย่างคุ้มค่า เช่น CPU, หน่วยความจำ (RAM), พื้นที่จัดเก็บข้อมูล (Storage) และพลังงาน
+                </p>
+                <p style="text-indent: 30px;">
+                    การปรับแต่งระบบปฏิบัติการครอบคลุมทั้งการเคลียร์ไฟล์ขยะที่ไม่จำเป็น การจัดระเบียบข้อมูลบนดิสก์ การปิดโปรแกรมเบื้องหลังที่ไม่จำเป็น การปรับแต่งการตั้งค่าระบบผ่าน Registry และ Services ตลอดจนการเฝ้าระวังติดตามประสิทธิภาพของระบบอย่างต่อเนื่อง
+                </p>
+
+                <!-- 2. Disk Cleanup -->
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">2. การล้างข้อมูลดิสก์ (Disk Cleanup)</h3>
+                <p style="text-indent: 30px;">
+                    Disk Cleanup เป็นเครื่องมือมาตรฐานในระบบปฏิบัติการ Windows ที่ใช้สำหรับค้นหาและลบไฟล์ขยะ (Junk Files) ไฟล์ชั่วคราว (Temporary Files) ไฟล์แคชจากการท่องเว็บ แคชของการอัปเดตระบบ (Windows Update Cleanup) รวมถึงไฟล์ใน Recycle Bin เพื่อคืนพื้นที่จัดเก็บข้อมูลให้แก่ไดรฟ์
+                </p>
+                <p style="text-indent: 30px;">
+                    การปล่อยให้ดิสก์มีไฟล์ขยะสะสมมากเกินไป นอกจากจะทำให้เสียพื้นที่จัดเก็บข้อมูลแล้ว ยังส่งผลกระทบต่อความเร็วในการค้นหาและอ่านข้อมูลของระบบปฏิบัติการ โดยใน Windows 10 และ Windows 11 มีระบบ Storage Sense ที่สามารถช่วยลบไฟล์ขยะโดยอัตโนมัติตามระยะเวลาที่กำหนดได้
+                </p>
+
+                <!-- 3. Defragment -->
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">3. การจัดเรียงข้อมูลบนดิสก์ (Defragmentation)</h3>
+                <p style="text-indent: 30px;">
+                    Defragmentation คือกระบวนการจัดระเบียบและรวบรวมไฟล์ข้อมูลที่กระจัดกระจาย (Fragmented Files) บนฮาร์ดดิสก์แบบจานหมุน (HDD) ให้กลับมาจัดเก็บต่อเนื่องกันในพื้นที่บล็อกติดกัน ทำให้หัวอ่านของฮาร์ดดิสก์ไม่ต้องเคลื่อนที่ข้ามไปข้ามมา ส่งผลให้อ่านและเขียนข้อมูลได้รวดเร็วยิ่งขึ้น
+                </p>
+                <p style="text-indent: 30px;">
+                    ข้อควรระวัง: กระบวนการ Defragment เหมาะสำหรับ Hard Disk Drive (HDD) เท่านั้น ห้ามทำ Defragment กับ Solid State Drive (SSD) เนื่องจาก SSD ใช้ชิปแฟลชเมโมรีในการบันทึกข้อมูล การจัดเรียงไฟล์แบบ Defragment จะทำให้เกิดการอ่าน-เขียนข้อมูลซ้ำๆ ส่งผลให้อายุการใช้งานของ SSD สั้นลงอย่างมาก โดย SSD จะใช้คำสั่ง TRIM / Optimize ในการดูแลแทน
+                </p>
+
+                <!-- 4. Startup Apps -->
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">4. การจัดการแอปพลิเคชันเริ่มต้นระบบ (Startup Apps)</h3>
+                <p style="text-indent: 30px;">
+                    Startup Apps คือโปรแกรมหรือแอปพลิเคชันที่ถูกตั้งค่าให้เริ่มต้นทำงานโดยอัตโนมัติทันทีเมื่อเปิดเครื่องและเข้าสู่ระบบปฏิบัติการ โปรแกรมเหล่านี้มักจะรันอยู่เบื้องหลังและคอยแย่งใช้ทรัพยากร CPU และ RAM ตั้งแต่เริ่มต้น ส่งผลให้เครื่องเปิดช้าลงอย่างเห็นได้ชัด
+                </p>
+                <p style="text-indent: 30px;">
+                    ผู้ใช้สามารถตรวจสอบและปิดการทำงานของแอปพลิเคชันเริ่มต้นที่ไม่จำเป็น ได้ผ่าน Task Manager ในแท็บ "Startup Apps" (หรือ Startup) โดยเลือกโปรแกรมที่ต้องการแล้วปิดการใช้งาน (Disable) ซึ่งจะช่วยลดเวลาในการเปิดเครื่องและทำให้ระบบมี RAM เหลือใช้งานมากขึ้น
+                </p>
+
+                <!-- 5. Services -->
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">5. การจัดการบริการระบบ (Services)</h3>
+                <p style="text-indent: 30px;">
+                    Windows Services คือโปรแกรมพื้นหลังที่ทำงานโดยไม่มีหน้าต่างโต้ตอบกับผู้ใช้ คอยทำหน้าที่สนับสนุนฟังก์ชันพื้นฐานต่างๆ ของระบบปฏิบัติการ เช่น บริการพิมพ์งาน (Print Spooler), บริการเครือข่าย, บริการอัปเดตระบบ (Windows Update), หรือบริการสแกนไวรัส
+                </p>
+                <p style="text-indent: 30px;">
+                    การปรับแต่ง Services สามารถทำได้ผ่านเครื่องมือ Services (services.msc) โดยปรับเปลี่ยน Startup Type ของบริการที่ไม่จำเป็นจาก Automatic เป็น Manual หรือ Disabled อย่างไรก็ตาม ควรทำด้วยความระมัดระวัง เนื่องจากหากปิดบริการสำคัญของระบบ อาจทำให้ระบบปฏิบัติการหรืออุปกรณ์บางอย่างทำงานผิดพลาดได้
+                </p>
+
+                <!-- 6. Registry -->
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">6. ฐานข้อมูลการตั้งค่าระบบ (Registry)</h3>
+                <p style="text-indent: 30px;">
+                    Windows Registry คือฐานข้อมูลศูนย์กลางแบบ階層 (Hierarchical Database) ที่ใช้เก็บรวบรวมข้อมูลการตั้งค่าทั้งหมดของระบบปฏิบัติการ ตัวเลือกฮาร์ดแวร์ ไดรเวอร์ แอปพลิเคชัน และโปรไฟล์ของผู้ใช้ โดยสามารถเข้าถึงได้ผ่านโปรแกรม Registry Editor (regedit.exe)
+                </p>
+                <p style="text-indent: 30px;">
+                    การปรับแต่ง Registry สามารถช่วยเพิ่มความเร็วของระบบ เช่น ปรับเวลาตอบสนองของเมนู หรือปิดเอฟเฟกต์ภาพที่ไม่จำเป็น แต่มีความเสี่ยงสูงมาก หากแก้ไขผิดพลาดอาจทำให้ระบบปฏิบัติการเสียหายจนไม่สามารถเปิดขึ้นมาได้ ดังนั้นจึงจำเป็นต้องสำรองข้อมูล Registry (Export) ไว้ก่อนทำการแก้ไขเสมอ
+                </p>
+
+                <!-- 7. Restore Point -->
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">7. จุดคืนค่าระบบ (Restore Point)</h3>
+                <p style="text-indent: 30px;">
+                    Restore Point คือภาพถ่ายสแนปช็อต (Snapshot) ของไฟล์ระบบสำคัญ Windows Registry, ไดรเวอร์ และไฟล์โปรแกรม ณ ช่วงเวลาใดเวลาหนึ่งที่ถูกบันทึกไว้ เพื่อใช้เป็นจุดย้อนกลับหากเกิดปัญหาขึ้นกับระบบ
+                </p>
+                <p style="text-indent: 30px;">
+                    การสร้าง Restore Point มักทำก่อนที่จะมีการติดตั้งไดรเวอร์ใหม่ อัปเดตระบบปฏิบัติการ หรือปรับแก้ไข Registry เพื่อป้องกันไม่ให้เกิดความเสียหายถาวรแก่ระบบปฏิบัติการ
+                </p>
+
+                <!-- 8. System Restore -->
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">8. การย้อนคืนระบบ (System Restore)</h3>
+                <p style="text-indent: 30px;">
+                    System Restore เป็นเครื่องมือของ Windows ที่ใช้ในการย้อนกลับไฟล์ระบบและค่าคอนฟิกูเรชันต่างๆ กลับไปย้อนหลัง ณ จุด Restore Point ที่ได้บันทึกไว้ โดยไม่ส่งผลกระทบต่อไฟล์ข้อมูลส่วนบุคคลของผู้ใช้ เช่น เอกสาร รูปภาพ หรืออีเมล
+                </p>
+                <p style="text-indent: 30px;">
+                    เครื่องมือนี้มีประโยชน์อย่างมากเมื่อระบบเกิดอาการไร้เสถียรภาพ ติดตั้งโปรแกรมแล้วเปิดเครื่องไม่ติด หรือเกิดข้อผิดพลาดหลังจากอัปเดตไดรเวอร์ ทำให้สามารถกู้คืนระบบให้กลับมาทำงานปกติได้อย่างรวดเร็ว
+                </p>
+
+                <!-- 9. Performance Monitoring -->
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">9. การเฝ้าระวังประสิทธิภาพระบบ (Performance Monitoring)</h3>
+                <p style="text-indent: 30px;">
+                    Performance Monitoring คือกระบวนการติดตาม ตรวจสอบ และวิเคราะห์การใช้ทรัพยากรของระบบคอมพิวเตอร์ในขณะทำงาน เช่น อัตราการใช้ CPU, ความจุ RAM ที่ใช้ไป, อัตราการอ่าน-เขียนดิสก์ และปริมาณการรับส่งข้อมูลทางเครือข่าย
+                </p>
+                <p style="text-indent: 30px;">
+                    ใน Windows มีเครื่องมือ Performance Monitor (perfmon.msc) สำหรับสร้างรายงานกราฟและบันทึกประวัติการทำงาน (Log) ช่วยให้ผู้ดูแลระบบสามารถวิเคราะห์หาสาเหตุของปัญหาคอขวด (Bottleneck) ได้อย่างแม่นยำ
+                </p>
+
+                <!-- 10. Task Manager -->
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">10. ตัวจัดการงาน (Task Manager)</h3>
+                <p style="text-indent: 30px;">
+                    Task Manager เป็นเครื่องมือพื้นฐานและสำคัญที่สุดของ Windows ในการติดตามการทำงานของระบบแบบ Real-time ช่วยให้ผู้ใช้สามารถดูโปรเซส (Processes) ที่กำลังทำงานอยู่ ปริมาณการใช้ทรัพยากรของแต่ละแอปพลิเคชัน และสามารถสั่งยุติการทำงาน (End Task) โปรแกรมที่ค้างหรือค้างชะงักได้ทันที
+                </p>
+                <p style="text-indent: 30px;">
+                    นอกจากนี้ Task Manager ยังแสดงรายละเอียดประสิทธิภาพของ CPU, RAM, Disk, GPU และ Network รวมทั้งจัดการ Startup Apps และดูรายละเอียดของ Services ได้อีกด้วย
+                </p>
+
+                <!-- 11. Resource Monitor -->
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">11. ตัวเฝ้าระวังทรัพยากร (Resource Monitor)</h3>
+                <p style="text-indent: 30px;">
+                    Resource Monitor (resmon.exe) เป็นเครื่องมือวิเคราะห์เชิงลึกที่ขยายขีดความสามารถของ Task Manager ช่วยให้ผู้ใช้และผู้ดูแลระบบสามารถเจาะลึกรายละเอียดการใช้ทรัพยากรระบบในระดับโปรเซสย่อย
+                </p>
+                <p style="text-indent: 30px;">
+                    สามารถดูรายละเอียดการเชื่อมต่อเครือข่าย (TCP Connections, IP Address, Port), การจองจำแนกพื้นที่ RAM (Commit, Working Set, Shareable), การอ่าน-เขียนไฟล์บนดิสก์แยกรายโปรเซส และการระงับหรือวิเคราะห์หาสาเหตุของโปรเซสที่ติดล็อค (Associated Handles / Modules)
+                </p>
+
+                <!-- 12. Windows Optimization -->
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">12. การเพิ่มประสิทธิภาพ Windows (Windows Optimization)</h3>
+                <p style="text-indent: 30px;">
+                    การเพิ่มประสิทธิภาพสำหรับระบบปฏิบัติการ Windows สามารถดำเนินการผ่านหลายขั้นตอนหลัก ได้แก่:
+                </p>
+                <ul>
+                    <li class="mb-2"><strong>ปรับแต่ง Visual Effects:</strong> เลือกรูปแบบ "Adjust for best performance" ใน System Properties เพื่อปิดเอฟเฟกต์ภาพเงาและความโปร่งแสงที่ไม่จำเป็น</li>
+                    <li class="mb-2"><strong>ปิดใช้งาน Startup Apps และ Services ที่ไม่จำเป็น:</strong> ปิดการรันแอปพลิเคชันเบื้องหลังใน Task Manager</li>
+                    <li class="mb-2"><strong>เปิดใช้งาน Storage Sense:</strong> ให้ระบบล้างไฟล์ขยะและไฟล์ชั่วคราวโดยอัตโนมัติ</li>
+                    <li class="mb-2"><strong>ปรับแต่ง Power Plan:</strong> เลือกโหมดพลังงานเป็น "High Performance" หรือ "Ultimate Performance" เพื่อให้ CPU ทำงานได้เต็มกำลัง</li>
+                    <li class="mb-2"><strong>อัปเดตระบบและไดรเวอร์อย่างสม่ำเสมอ:</strong> เพื่อให้ได้ประสิทธิภาพการทำงานที่ดีขึ้นและแก้ไขข้อผิดพลาดของระบบ</li>
+                </ul>
+
+                <!-- 13. Linux Optimization -->
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">13. การเพิ่มประสิทธิภาพ Linux เบื้องต้น (Linux Optimization)</h3>
+                <p style="text-indent: 30px;">
+                    การเพิ่มประสิทธิภาพสำหรับระบบปฏิบัติการ Linux มีแนวคิดที่ยืดหยุ่นและเน้นการจัดการผ่านบรรทัดคำสั่ง (CLI) โดยมีแนวทางการปรับแต่งเบื้องต้นดังนี้:
+                </p>
+                <ul>
+                    <li class="mb-2"><strong>การล้างแคชและแพ็กเกจขยะ:</strong> ใช้คำสั่ง <code>sudo apt autoremove</code> และ <code>sudo apt clean</code> (สำหรับ Ubuntu/Debian) เพื่อลบแพ็กเกจที่ไม่ถูกใช้งาน</li>
+                    <li class="mb-2"><strong>การจัดการ Swappiness:</strong> ปรับค่า <code>sysctl vm.swappiness</code> (เช่น ปรับลดจาก 60 เหลือ 10) เพื่อให้ระบบเลือกใช้ RAM จริงเป็นหลักก่อนเริ่มเขียนลง Swap Space บนดิสก์</li>
+                    <li class="mb-2"><strong>การปิดบริการที่ไม่จำเป็น (Services):</strong> ใช้คำสั่ง <code>systemctl disable &lt;service_name&gt;</code> เพื่อปิดบริการพื้นหลังที่ไม่ต้องการใช้งาน</li>
+                    <li class="mb-2"><strong>การเฝ้าระวังประสิทธิภาพด้วย CLI:</strong> ใช้เครื่องมือติดตามทรัพยากร เช่น <code>top</code>, <code>htop</code>, <code>vmstat</code>, <code>iostat</code> และ <code>free -m</code> ในการตรวจสอบการใช้ CPU และ RAM</li>
+                </ul>
+
+                <!-- ผังและแบบจำลอง -->
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">14. ผังการเปรียบเทียบเครื่องมือการเพิ่มประสิทธิภาพระบบ</h3>
+                <p style="text-indent: 30px;">
+                    ตารางเปรียบเทียบฟังก์ชันเครื่องมือตรวจสอบและปรับแต่งประสิทธิภาพบนระบบปฏิบัติการ Windows และ Linux:
+                </p>
+                
+                <div class="my-4 p-4 border rounded-4 bg-light text-center">
+                    <h5 class="font-kanit mb-4 fw-bold text-dark"><i class="fas fa-sliders-h me-2 text-primary"></i>ตารางเปรียบเทียบเครื่องมือ OS Optimization</h5>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle bg-white font-kanit">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th>ฟังก์ชันการทำงาน</th>
+                                    <th>เครื่องมือบน Windows</th>
+                                    <th>เครื่องมือบน Linux</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>ติดตามโปรเซส & ทรัพยากรReal-time</td>
+                                    <td>Task Manager / Resource Monitor</td>
+                                    <td>top / htop</td>
+                                </tr>
+                                <tr>
+                                    <td>ล้างไฟล์ขยะและพื้นที่ดิสก์</td>
+                                    <td>Disk Cleanup / Storage Sense</td>
+                                    <td>apt clean / bleachbit</td>
+                                </tr>
+                                <tr>
+                                    <td>จัดการบริการระบบ (Services)</td>
+                                    <td>Services (services.msc)</td>
+                                    <td>systemctl / service</td>
+                                </tr>
+                                <tr>
+                                    <td>จัดเรียง/เพิ่มประสิทธิภาพดิสก์</td>
+                                    <td>Defragment and Optimize Drives</td>
+                                    <td>e4defrag / fstrim</td>
+                                </tr>
+                                <tr>
+                                    <td>ย้อนคืนและกู้คืนระบบ</td>
+                                    <td>System Restore / Restore Point</td>
+                                    <td>Timeshift / Snapper</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Simulation Component -->
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">15. Animation จำลองการจัดสรรทรัพยากรและการเคลียร์ RAM เบื้องหลัง</h3>
+                <p style="text-indent: 30px;">
+                    แบบจำลองสถานการณ์จำลองขั้นตอนการเพิ่มประสิทธิภาพ OS Optimization โดยการตรวจจับและปิดโปรเซสที่ใช้ทรัพยากรสูง และการจัดการคืนพื้นที่ RAM คืนสู่ระบบ
+                </p>
+                <p class="small text-muted">นักศึกษาสามารถคลิกปุ่มรันตัวจำลองเพื่อดูขั้นตอนการเพิ่มประสิทธิภาพระบบ:</p>
+
+                <div class="simulation-space my-4 shadow-sm" id="process-anim-space">
+                    <div class="state-container-wrapper py-4">
+                        <div class="simulation-node" id="sim-node-virtual">System Scan</div>
+                        <div class="sim-arrow" id="arrow-1"></div>
+                        <div class="simulation-node" id="sim-node-mmu">Optimize</div>
+                        <div class="sim-arrow" id="arrow-2"></div>
+                        <div class="simulation-node" id="sim-node-ram">Performance</div>
+                    </div>
+
+                    <div class="row mt-4 pt-2 text-dark font-kanit">
+                        <div class="col-md-12 mb-2">
+                            <h6 class="text-white-50 small mb-2"><i class="fas fa-microchip me-2"></i>จำลองสถานะการทำงานของโปรเซสในระบบ (Active Processes)</h6>
+                            <div class="queue-box-list" id="cpu-queue-injector">
+                                <span class="pcb-token ram-slot">App A (High CPU)</span>
+                                <span class="pcb-token ram-slot">App B (High RAM)</span>
+                                <span class="pcb-token swap-slot" id="p3-sim">Background Service</span>
+                                <span class="pcb-token opt-slot" id="p4-sim">System Core</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button class="btn btn-primary font-kanit px-4 py-2 rounded-3 shadow" onclick="triggerVirtualMemorySimulation()">
+                            <i class="fas fa-play-circle me-2"></i>เริ่มจำลองสถานการณ์การล้างโปรเซสและเพิ่มประสิทธิภาพระบบ
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Video Reference -->
+                <div class="row my-4 justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="ratio ratio-16x9 shadow-sm rounded-3 overflow-hidden border">
+                            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="วิดีโอประกอบบทเรียน OS Optimization" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+
+            </article>
+
+            <section class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 border-top border-4 border-success" data-aos="fade-up">
+                <div class="d-flex align-items-center justify-content-between border-bottom pb-3 mb-4">
+                    <h3 class="font-kanit text-dark-primary font-weight-bold mb-0">
+                        <i class="fas fa-user-check me-2 text-success"></i>แบบทดสอบหลังเรียนประจำหน่วยการเรียนที่ 14
+                    </h3>
+                    <span class="badge bg-success px-3 py-2 fs-6" id="quiz-progress-badge">ข้อที่ 1 / 20</span>
+                </div>
+                
+                <div id="quiz-question-container" class="my-3"></div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-3">
+                    <button class="btn btn-outline-secondary px-4 py-2 rounded-3" id="prev-question-btn" disabled><i class="fas fa-arrow-left me-2"></i>ข้อก่อนหน้า</button>
+                    <button class="btn btn-primary px-4 py-2 rounded-3" id="next-question-btn">ส่งคำตอบและไปต่อ <i class="fas fa-arrow-right ms-2"></i></button>
+                </div>
+            </section>
+
+            <div class="d-flex justify-content-between align-items-center mb-5" data-aos="fade-up">
+                <a href="unit-13.html" class="btn btn-outline-dark px-4 py-2 rounded-3"><i class="fas fa-arrow-left me-2"></i>หน่วยก่อนหน้า</a>
+                <button class="btn btn-success btn-lg px-5 py-3 rounded-3 shadow font-kanit" id="mark-complete-btn">
+                    <i class="fas fa-check-double me-2"></i>ทำเครื่องหมายว่าเรียนจบหน่วยเรียนนี้แล้ว
+                </button>
+                <a href="unit-15.html" class="btn btn-outline-dark px-4 py-2 rounded-3">หน่วยถัดไป<i class="fas fa-arrow-right ms-2"></i></a>
+            </div>
+
+        </main>
+    </div>
+
+    <footer class="main-footer-section py-4 text-center mt-auto border-top">
+        <div class="container">
+            <p class="mb-0 text-secondary">© 2026 รายวิชา 31909-1001 ระบบปฏิบัติการ — แผงควบคุมเนื้อหาสถาปัตยกรรมระดับ ปวส.</p>
+        </div>
+    </footer>
+
+    <button id="back-to-top-btn" class="btn btn-primary rounded-circle shadow-lg"><i class="fas fa-chevron-up"></i></button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="D:\OS\js\data.js"></script>
+    <script src="D:\OS\js\storage.js"></script>
+    <script src="D:\OS\js\progress.js"></script>
+    <script src="D:\OS\js\main.js"></script>
+    <script src="D:\OS\js\quiz.js"></script>
+
+    <script>
+        function triggerVirtualMemorySimulation() {
+            const nodeVirtual = document.getElementById("sim-node-virtual");
+            const nodeMmu = document.getElementById("sim-node-mmu");
+            const nodeRam = document.getElementById("sim-node-ram");
+            
+            const arr1 = document.getElementById("arrow-1");
+            const arr2 = document.getElementById("arrow-2");
+            
+            const queueBox = document.getElementById("cpu-queue-injector");
+
+            // รีเซ็ตคลาสแอนิเมชันเก่ากลับคืนค่าเริ่มต้น
+            document.querySelectorAll(".simulation-node").forEach(n => n.classList.remove("active-state"));
+            document.querySelectorAll(".sim-arrow").forEach(a => a.classList.remove("active-arrow"));
+            queueBox.innerHTML = '<span class="pcb-token ram-slot">App A (High CPU)</span> <span class="pcb-token ram-slot">App B (High RAM)</span> <span class="pcb-token swap-slot" id="p3-sim">Background Service</span> <span class="pcb-token opt-slot" id="p4-sim">System Core</span>';
+
+            // เฟส 1: สแกนระบบ
+            nodeVirtual.classList.add("active-state");
+            
+            setTimeout(() => {
+                nodeVirtual.classList.remove("active-state");
+                arr1.classList.add("active-arrow");
+                nodeMmu.classList.add("active-state");
+            }, 1200);
+
+            // เฟส 2: ยุติโปรเซสที่ใช้ทรัพยากรสูง และเคลียร์พื้นที่ RAM
+            setTimeout(() => {
+                arr1.classList.remove("active-arrow");
+                arr2.classList.add("active-arrow");
+                nodeMmu.classList.remove("active-state");
+                nodeRam.classList.add("active-state");
+                
+                // อัปเดตรายการโปรเซสหลังเคลียร์
+                queueBox.innerHTML = '<span class="pcb-token opt-slot">App A (Optimized)</span> <span class="pcb-token opt-slot">App B (Optimized)</span> <span class="pcb-token opt-slot">System Core</span>';
+            }, 2600);
+
+            // เฟส 3: เสร็จสิ้นการเพิ่มประสิทธิภาพ
+            setTimeout(() => {
+                nodeRam.classList.remove("active-state");
+                arr2.classList.remove("active-arrow");
+                
+                Swal.fire({
+                    toast: true,
+                    position: 'bottom-end',
+                    title: 'OS Optimization สำเร็จ! คืนพื้นที่ RAM และลดภาระ CPU เรียบร้อยแล้ว',
+                    icon: 'success',
+                    showConfirmButton: false,
+                    timer: 2500
+                });
+            }, 3800);
+        }
+    </script>
+</body>
+</html>

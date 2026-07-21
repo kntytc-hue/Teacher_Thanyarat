@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หน่วยที่ 5 การจัดการหน่วยความจำหลัก | วิชา 31909-1001 ระบบปฏิบัติการ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="D:\OS\css\style.css">
+    <link rel="stylesheet" href="D:\OS\css\responsive.css">
+    <link rel="stylesheet" href="D:\OS\css\dark-mode.css">
+    <style>
+        /* สไตล์แบบสากลสำหรับการจำลอง Animation ของ Memory Management */
+        .simulation-space {
+            background-color: #1e293b;
+            border-radius: 16px;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        body.light-mode .simulation-space {
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+        }
+        .state-container-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        .simulation-node {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Kanit', sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            color: #ffffff;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 4px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        #sim-node-logical { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+        #sim-node-mmu { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+        #sim-node-physical { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+        /* อนิเมชันกระพริบเมื่อสถานะกำลัง Active */
+        .simulation-node.active-state {
+            transform: scale(1.15);
+            box-shadow: 0 0 25px currentColor;
+            border-color: #ffffff;
+            animation: pulse-glow 1.5s infinite alternate;
+        }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 15px rgba(255,255,255,0.2); }
+            100% { box-shadow: 0 0 30px rgba(255,255,255,0.8); }
+        }
+        
+        .sim-arrow {
+            height: 4px;
+            background-color: #cbd5e1;
+            flex-grow: 1;
+            position: relative;
+            margin: 0 10px;
+            transition: all 0.3s;
+        }
+        body.dark-mode .sim-arrow { background-color: #475569; }
+        .sim-arrow::after {
+            content: '';
+            position: absolute;
+            right: -2px;
+            top: -6px;
+            width: 0; height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 12px solid #cbd5e1;
+        }
+        body.dark-mode .sim-arrow::after { border-left-color: #475569; }
+        .sim-arrow.active-arrow {
+            background-color: #10b981 !important;
+        }
+        .sim-arrow.active-arrow::after {
+            border-left-color: #10b981 !important;
+        }
+        
+        /* สไตล์ตารางบล็อกจำลองหน่วยความจำ */
+        .queue-box-list {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 60px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            border: 1px dashed rgba(0,0,0,0.1);
+        }
+        body.dark-mode .queue-box-list { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); }
+        .pcb-token {
+            background: #4b5563;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            animation: bounceIn 0.5s;
+        }
+        .pcb-token.free-slot { background: #10b981; }
+        .pcb-token.allocated-slot { background: #2563eb; }
+    </style>
+</head>
+<body class="light-mode">
+
+    <div id="loading-screen">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg sticky-top main-navbar">
+        <div class="container-fluid">
+            <button class="btn text-white me-2" id="sidebar-toggle-btn" aria-label="เปิดเมนูด้านข้าง">
+                <i class="fas fa-bars fa-lg"></i>
+            </button>
+            <a class="navbar-brand d-flex align-items-center" href="../index.html">
+                <i class="fas fa-laptop-code me-2"></i>
+                <span>31909-1001 ระบบปฏิบัติการ</span>
+            </a>
+            <div class="ms-auto">
+                <button class="btn text-white" id="theme-toggle-btn" aria-label="เปลี่ยนโหมดหน้าจอ">
+                    <i class="fas fa-moon fa-lg"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="app-layout">
+        <aside class="sidebar-navigation" id="main-sidebar">
+            <div class="sidebar-profile text-center py-4">
+                <div class="avatar-container mb-2">
+                    <i class="fas fa-book-reader fa-3x text-white bg-primary p-3 rounded-circle"></i>
+                </div>
+                <h6 class="text-white mb-0">อาจารย์ธัญญรัตน์ ตาเล๊ะ</h6>
+                <small class="text-white-50">เทคโนโลยีคอมพิวเตอร์</small>
+            </div>
+            <ul class="sidebar-menu-list px-2" id="sidebar-menu-injector"></ul>
+        </aside>
+
+        <main class="main-content-flow px-3 px-md-5 py-4">
+            
+            <nav aria-label="breadcrumb" class="mb-4" data-aos="fade-down">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="../index.html" class="text-decoration-none"><i class="fas fa-home me-1"></i>หน้าแรก</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">หน่วยที่ 5 การจัดการหน่วยความจำหลัก</li>
+                </ol>
+            </nav>
+
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light text-dark border-start border-5 border-primary" data-aos="fade-up">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <span class="text-primary fw-bold text-uppercase d-block mb-1">Unit 05: Main Memory Management</span>
+                        <h1 class="font-kanit font-weight-bold text-dark-primary mb-0">หน่วยที่ 5 การจัดการหน่วยความจำหลัก</h1>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary btn-sm rounded-3 px-3" onclick="window.print()"><i class="fas fa-print me-1"></i>พิมพ์บทเรียน</button>
+                        <button class="btn btn-primary btn-sm rounded-3 px-3" id="bookmark-btn"><i class="far fa-bookmark me-1"></i>คั่นหน้าไว้</button>
+                    </div>
+                </div>
+            </div>
+
+            <article class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 leading-relaxed text-secondary text-justify content-article-body" data-aos="fade-up" data-aos-delay="100">
+                
+                <h3 class="font-kanit text-dark-primary font-weight-bold mb-3 border-bottom pb-2">1. การจัดการหน่วยความจำหลัก (Memory Management)</h3>
+                <p style="text-indent: 30px;">
+                    หน่วยความจำหลัก (Main Memory หรือ RAM) เป็นทรัพยากรที่สำคัญอย่างยิ่งในระบบคอมพิวเตอร์ เนื่องจากเป็นพื้นที่ที่หน่วยประมวลผลกลาง (CPU) สามารถเข้าถึงข้อมูลและคำสั่งได้อย่างรวดเร็วและโดยตรง โปรแกรมหรือโปรเซสใดๆ ก่อนที่จะสามารถทำงานได้ จะต้องถูกโหลดเข้ามาไว้ในหน่วยความจำหลักเสียก่อน
+                </p>
+                <p style="text-indent: 30px;">
+                    หน้าที่หลักของระบบจัดการหน่วยความจำในระบบปฏิบัติการ ประกอบด้วย: การติดตามและตรวจสอบสถานะของหน่วยความจำแต่ละส่วน ว่าพื้นที่ส่วนใดกำลังถูกใช้งานอยู่โดยโปรเซสใด และพื้นที่ส่วนใดที่ยังว่างอยู่ (Free) การตัดสินใจและจัดสรรพื้นที่หน่วยความจำให้กับโปรเซสเมื่อโปรเซสต้องการพื้นที่ในการทำงาน การเรียกคืนพื้นที่หน่วยความจำ (Deallocation) เมื่อโปรเซสเสร็จสิ้นการทำงานหรือไม่มีความจำเป็นต้องใช้พื้นที่นั้นแล้ว เพื่อนำกลับมาให้โปรเซสอื่นใช้งานต่อไป และการควบคุมการเข้าถึงเพื่อป้องกันไม่ให้โปรเซสหนึ่งเข้าไปรบกวนหรือแก้ไขข้อมูลในพื้นที่ของโปรเซสอื่นหรือของระบบปฏิบัติการเอง
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">2. การจัดสรรหน่วยความจำ (Memory Allocation)</h3>
+                <p style="text-indent: 30px;">
+                    การจัดสรรหน่วยความจำ คือกระบวนการที่ระบบปฏิบัติการมอบหมายพื้นที่ในหน่วยความจำหลักให้แก่โปรเซสที่ร้องขอ เพื่อจัดเก็บโค้ด คำสั่ง และข้อมูลในการทำงาน โดยทั่วไปหน่วยความจำจะถูกแบ่งออกเป็นสองส่วนหลักๆ คือ ส่วนที่เป็นของระบบปฏิบัติการ (Resident Operating System) ซึ่งมักจะอยู่ที่หน่วยความจำส่วนต่ำหรือส่วนบนสุด และส่วนที่เป็นของโปรเซสของผู้ใช้ (User Processes)
+                </p>
+                <p style="text-indent: 30px;">
+                    กลไกในการจัดสรรพื้นที่หน่วยความจำให้แก่โปรเซสผู้ใช้ สามารถจำแนกออกเป็น 2 รูปแบบใหญ่ๆ ตามลักษณะการจองพื้นที่ในหน่วยความจำทางกายภาพ ได้แก่ การจัดสรรแบบต่อเนื่อง (Contiguous Allocation) และการจัดสรรแบบไม่ต่อเนื่อง (Non-Contiguous Allocation)
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">3. การจัดสรรแบบต่อเนื่อง (Contiguous Allocation)</h3>
+                <p style="text-indent: 30px;">
+                    การจัดสรรแบบต่อเนื่อง คือ วิธีการจัดสรรพื้นที่หน่วยความจำที่กำหนดให้โปรเซสแต่ละโปรเซสต้องครอบครองพื้นที่หน่วยความจำที่เป็นผืนเดียวกันต่อเนื่องกันไปตั้งแต่ต้นจนจบโปรเซส โดยไม่มีการแยกชิ้นส่วนของโปรเซสออกจากกันไปไว้ในตำแหน่งอื่น
+                </p>
+                <ul>
+                    <li class="mb-2"><strong>การแบ่งพาร์ทิชันแบบคงที่ (Fixed Partitioning):</strong> หน่วยความจำจะถูกแบ่งออกเป็นช่องหรือพาร์ทิชันที่มีขนาดคงที่ไว้ล่วงหน้าตั้งแต่ตอนเริ่มต้นระบบ แต่ละพาร์ทิชันสามารถรองรับได้เพียง 1 โปรเซสเท่านั้น หากโปรเซสมีขนาดเล็กกว่าพาร์ทิชัน พื้นที่ที่เหลือจะสูญเปล่า</li>
+                    <li class="mb-2"><strong>การแบ่งพาร์ทิชันแบบแปรเปลี่ยนขนาดได้ (Dynamic Partitioning):</strong> ระบบปฏิบัติการจะจัดสรรพื้นที่หน่วยความจำตามขนาดที่โปรเซสร้องขอจริง ณ เวลาที่โปรเซสถูกโหลดเข้าสู่ระบบ ทำให้ไม่มีการล็อกขนาดพื้นที่ไว้ล่วงหน้า อย่างไรก็ตาม เมื่อมีการโหลดโปรเซสเข้าและออกจากระบบสลับกันไปเรื่อยๆ จะทำให้เกิดช่องว่างขนาดเล็กกระจายอยู่ทั่วไปในหน่วยความจำ</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">4. การจัดสรรแบบไม่ต่อเนื่อง (Non-Contiguous Allocation) และเงื่อนไขสำคัญ</h3>
+                <p style="text-indent: 30px;">
+                    การจัดสรรแบบไม่ต่อเนื่อง คือ วิธีการจัดสรรพื้นที่หน่วยความจำที่ยอมให้โครงสร้างข้อมูลหรือโค้ดของโปรเซสเดียวสามารถแยกย้ายกันไปจัดเก็บในตำแหน่งต่างๆ ของหน่วยความจำหลักทางกายภาพได้ โดยไม่จำเป็นต้องอยู่ติดกันเป็นผืนเดียว วิธีนี้ช่วยแก้ข้อจำกัดของการจัดสรรแบบต่อเนื่องที่ต้องรอให้มีเนื้อที่ว่างผืนใหญ่พอสำหรับโปรเซสทั้งหมด
+                </p>
+                <p style="text-indent: 30px;"><strong>เงื่อนไขสำคัญของการจัดสรรแบบไม่ต่อเนื่องที่ระบบต้องพิจารณามีดังนี้:</strong></p>
+                <ul>
+                    <li class="mb-2">ระบบจะต้องมีกลไกหรือโครงสร้างข้อมูลส่วนกลาง (เช่น ตารางแมปพิน) เพื่อทำหน้าที่เชื่อมโยงและแปลงที่อยู่เชิงตรรกะ (Logical Address) ที่โปรเซสเห็น ให้กลายเป็นที่อยู่ทางกายภาพ (Physical Address) ที่แท้จริงในหน่วยความจำ</li>
+                    <li class="mb-2">ระบบปฏิบัติการต้องบริหารจัดการและติดตามตำแหน่งชิ้นส่วนเล็กๆ ทั้งหมดของโปรเซส เพื่อให้ CPU สามารถดึงคำสั่งมาทำงานได้อย่างถูกต้องและต่อเนื่องเสมือนว่าโปรเซสนั้นอยู่ติดกัน</li>
+                    <li class="mb-2">เทคนิคหลักที่นำมาใช้สนับสนุนการจัดสรรแบบไม่ต่อเนื่องนี้ ได้แก่ <strong>การแบ่งหน้า (Paging)</strong> และ <strong>การแบ่งเซกเมนต์ (Segmentation)</strong></li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">5. การแบ่งหน้า (Paging)</h3>
+                <p style="text-indent: 30px;">
+                    Paging เป็นเทคนิคการจัดการหน่วยความจำแบบไม่ต่อเนื่อง โดยระบบจะทำการแบ่งหน่วยความจำเชิงตรรกะ (Logical Memory) ของโปรเซสออกเป็นบล็อกย่อยๆ ที่มีขนาดเท่ากัน Fixed-size เรียกว่า <strong>หน้า (Page)</strong> และแบ่งหน่วยความจำทางกายภาพ (Physical Memory) ออกเป็นบล็อกที่มีขนาดเท่ากับหน้า เรียกว่า <strong>เฟรม (Frame)</strong>
+                </p>
+                <p style="text-indent: 30px;">
+                    เมื่อโปรเซสต้องการเข้าสู่การทำงาน หน้าต่างๆ ของโปรเซสจะถูกโหลดลงในเฟรมใดๆ ก็ได้ในหน่วยความจำที่ยังว่างอยู่ โดยไม่จำเป็นต้องเรียงลำดับเฟรมต่อเนื่องกัน โดยระบบจะใช้ข้อมูลจาก <strong>Page Table (ตารางหน้า)</strong> ในการจับคู่ระหว่างหมายเลขหน้า (Page Number) กับหมายเลขเฟรม (Frame Number) ทางกายภาพ
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">6. การแบ่งเซกเมนต์ (Segmentation)</h3>
+                <p style="text-indent: 30px;">
+                    Segmentation เป็นเทคนิคการจัดการหน่วยความจำแบบไม่ต่อเนื่องที่แบ่งหน่วยความจำตามมุมมองของผู้เขียนโปรแกรมหรือตามโครงสร้างเชิงตรรกะของตัวโปรแกรม แทนที่จะแบ่งเป็นบล็อกขนาดเท่ากันตายตัวเหมือน Paging โดยโปรแกรมจะถูกแบ่งออกเป็นส่วนๆ ที่มีขนาดแปรเปลี่ยนได้ตามหน้าที่การทำงาน เรียกว่า <strong>เซกเมนต์ (Segment)</strong>
+                </p>
+                <p style="text-indent: 30px;">
+                    ตัวอย่างของเซกเมนต์ เช่น เซกเมนต์ของโค้ดหลัก (Main Program), เซกเมนต์ของฟังก์ชัน (Subroutines), เซกเมนต์ของโครงสร้างข้อมูล (Stack, Heap), หรือตารางสัญลักษณ์ (Symbol Table) แต่ละเซกเมนต์จะมีชื่อหรือหมายเลขระบุ และระบุความยาว (Limit) พร้อมทั้งที่อยู่เริ่มต้นในหน่วยความจำจริง (Base) โดยระบุผ่าน <strong>Segment Table (ตารางเซกเมนต์)</strong>
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">7. การเกิดเศษซากหน่วยความจำ (Fragmentation)</h3>
+                <p style="text-indent: 30px;">
+                    การจัดสรรและคืนพื้นที่หน่วยความจำสลับกันไปมาในระบบ มักนำไปสู่ปัญหาการเกิดพื้นที่ว่างขนาดเล็กที่กระจายอยู่ทั่วไป ซึ่งไม่สามารถนำมาใช้ประโยชน์ได้อย่างเต็มประสิทธิภาพ เรียกว่า สภาวะเศษซากหน่วยความจำ (Fragmentation) แบ่งออกเป็น 2 ประเภทหลัก:
+                </p>
+                <div class="row g-3 my-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3 border-top border-4 border-danger h-100">
+                            <h6 class="font-kanit fw-bold text-danger"><i class="fas fa-square-minus me-2"></i>Internal Fragmentation</h6>
+                            <p class="small text-muted mb-0">เกิดจากการจัดสรรพื้นที่หน่วยความจำที่มีขนาดตายตัว (เช่น Fixed Partition หรือหน่วยความจำแบบเฟรมใน Paging) ให้กับโปรเซส โดยที่โปรเซสมีความต้องการใช้พื้นที่น้อยกว่าขนาดของช่องที่จัดสรรให้ ส่งผลให้มีพื้นที่เหลือทิ้งเปล่าอยู่ภายในช่องนั้นๆ ซึ่งโปรเซสอื่นไม่สามารถเข้ามาดึงพื้นที่ส่วนที่เหลือนี้ไปใช้งานได้</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3 border-top border-4 border-warning h-100">
+                            <h6 class="font-kanit fw-bold text-warning"><i class="fas fa-scissors me-2"></i>External Fragmentation</h6>
+                            <p class="small text-muted mb-0">เกิดจากการจัดสรรพื้นที่แบบแปรเปลี่ยนขนาดได้ (Dynamic Partitioning) เมื่อโปรเซสต่างๆ ทำงานเสร็จและคืนพื้นที่ในเวลาที่ต่างกัน จะเกิดพื้นที่ว่างขนาดเล็กแทรกอยู่ระหว่างโปรเซสต่างๆ ที่ยังทำงานอยู่ แม้ว่าเมื่อนำพื้นที่ว่างเล็กๆ เหล่านี้มารวมกันแล้วจะมีขนาดใหญ่พอที่จะรองรับโปรเซสใหม่ได้ แต่เนื่องจากพื้นที่ว่างเหล่านั้นไม่ได้อยู่ต่อเนื่องเป็นผืนเดียวกัน จึงไม่สามารถจัดสรรให้กับโปรเซสใหม่ที่ต้องการพื้นที่แบบต่อเนื่องได้</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">8. การป้องกันหน่วยความจำ (Memory Protection)</h3>
+                <p style="text-indent: 30px;">
+                    การป้องกันหน่วยความจำคือกลไกที่รับประกันว่าแต่ละโปรเซสจะสามารถเข้าถึงและใช้งานได้เฉพาะในเขตพื้นที่หน่วยความจำที่ได้รับอนุญาตเท่านั้น เพื่อความเสถียรภาพและความปลอดภัยของระบบ ป้องกันไม่ให้โปรเซสของผู้ใช้ไปเขียนทับหรือแก้ไขส่วนของระบบปฏิบัติการ หรือไปอ่านและทำลายข้อมูลของโปรเซสอื่น
+                </p>
+                <p style="text-indent: 30px;">
+                    ระบบปฏิบัติการทำงานร่วมกับฮาร์ดแวร์โดยใช้รีจิสเตอร์พิเศษในการกำหนดขอบเขต ได้แก่ <strong>Base Register</strong> (เก็บที่อยู่เริ่มต้นที่ต่ำที่สุดที่โปรเซสได้รับอนุญาต) และ <strong>Limit Register</strong> (เก็บขนาดหรือช่วงความยาวของหน่วยความจำที่โปรเซสนั้นใช้ได้) ทุกครั้งที่มีการอ้างอิงที่อยู่หน่วยความจำ ฮาร์ดแวร์จะตรวจสอบว่าที่อยู่ดังกล่าวอยู่ระหว่าง Base และ Base + Limit หรือไม่ หากละเมิดขอบเขตจะเกิดสัญญาณขัดจังหวะเพื่อแจ้งข้อผิดพลาด (Trap/Segmentation Fault)
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">9. การย้ายตำแหน่งพิกัด (Relocation)</h3>
+                <p style="text-indent: 30px;">
+                    การย้ายตำแหน่งพิกัด คือ กระบวนการแปลงที่อยู่ของคำสั่งและข้อมูลในโปรแกรมจากที่อยู่เชิงตรรกะ (Logical/Virtual Address) ซึ่งถูกกำหนดขึ้นในขั้นตอนการคอมไพล์โปรแกรม ให้กลายเป็นที่อยู่ทางกายภาพจริง (Physical Address) บนหน่วยความจำหลักเมื่อโปรเซสถูกโหลดเข้าสู่พื้นที่ทำงาน
+                </p>
+                <p style="text-indent: 30px;">
+                    เนื่องจากในระบบที่ทำงานแบบหลายโปรเซส (Multiprogramming) เราไม่สามารถคาดการณ์ได้ล่วงหน้าว่าโปรเซสจะได้เข้าไปจัดเก็บอยู่ที่ตำแหน่งใดในหน่วยความจำจริง การย้ายตำแหน่งพิกัดจึงมีความจำเป็นอย่างยิ่ง กลไกนี้สามารถทำได้ทั้งในขั้นตอนการโหลดโปรแกรม (Load-time Relocation) หรือทำในขั้นตอนการทำงานของโปรแกรมโดยใช้ฮาร์ดแวร์สนับสนุน (Execution-time/Dynamic Relocation) ผ่านอุปกรณ์ที่เรียกว่า MMU (Memory Management Unit)
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">10. ผังการแปลงที่อยู่เชิงตรรกะสู่ที่อยู่ทางกายภาพ (Address Translation Map)</h3>
+                <p style="text-indent: 30px;">
+                    ความแตกต่างและโครงสร้างของการทำงานในการเชื่อมโยงพิกัดตำแหน่งพื้นที่ของหน่วยความจำเชิงตรรกะผ่านอุปกรณ์ฮาร์ดแวร์ MMU เพื่อจับคู่กับหน่วยความจำกายภาพ:
+                </p>
+
+                <div class="my-4 p-4 border rounded-4 bg-light text-center">
+                    <h5 class="font-kanit mb-4 fw-bold text-dark"><i class="fas fa-network-wired me-2 text-primary"></i>กระบวนการ Relocation ผ่านฮาร์ดแวร์</h5>
+                    
+                    <div class="row justify-content-center align-items-center g-2 text-dark font-kanit">
+                        <div class="col-md-5 p-3 border rounded bg-white shadow-sm border-primary fw-bold">
+                            <span class="text-primary">Logical Address (ที่อยู่เชิงตรรกะ)</span>
+                            <hr class="my-2">
+                            <small class="text-muted d-block font-sans">ที่อยู่ที่ถูกสร้างโดย CPU ในขณะประมวลผลโค้ดโปรแกรมโปรเซส</small>
+                        </div>
+                        <div class="col-md-1"><i class="fas fa-arrow-right fa-2x text-muted"></i></div>
+                        <div class="col-md-5 p-3 border rounded bg-success text-white shadow-sm fw-bold">
+                            <span>Physical Address (ที่อยู่ทางกายภาพ)</span>
+                            <hr class="my-2 bg-white">
+                            <small class="text-white-50 d-block font-sans">พิกัดเซลล์ข้อมูลที่แท้จริงที่ปรากฏบนแผงวงจรหน่วยความจำหลัก (RAM)</small>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">11. Animation แอนิเมชันจำลองขั้นตอนการแปลงที่อยู่ Relocation</h3>
+                <p style="text-indent: 30px;">
+                    ตัวแบบจำลองนี้แสดงสถานการณ์ขณะที่ CPU ส่งตำแหน่งที่อยู่เชิงตรรกะ (Logical Address) ส่งต่อเข้าอุปกรณ์ฮาร์ดแวร์ MMU เพื่อคำนวณและทำการแปลงย้ายพิกัด (Relocation) เข้าสู่ตารางพื้นที่ของหน่วยความจำจริงทางกายภาพ
+                </p>
+                <p class="small text-muted">นักศึกษาสามารถคลิกปุ่มรันตัวจำลองเพื่อดูการทำ Relocation พิกัดหน่วยความจำ:</p>
+
+                <div class="simulation-space my-4 shadow-sm" id="process-anim-space">
+                    <div class="state-container-wrapper py-4">
+                        <div class="simulation-node" id="sim-node-ready-queue">Logical Addr</div>
+                        <div class="sim-arrow" id="arrow-1"></div>
+                        <div class="simulation-node" id="sim-node-cpu">MMU Box</div>
+                        <div class="sim-arrow" id="arrow-2"></div>
+                        <div class="simulation-node" id="sim-node-done">Physical Mem</div>
+                    </div>
+
+                    <div class="row mt-4 pt-2 text-dark font-kanit">
+                        <div class="col-md-12 mb-2">
+                            <h6 class="text-white-50 small mb-2"><i class="fas fa-memory me-2"></i>จำลองสถานะบล็อกพาร์ทิชันบนหน่วยความจำหลัก (RAM)</h6>
+                            <div class="queue-box-list" id="cpu-queue-injector">
+                                <span class="pcb-token">OS ช่องต่ำ (100KB)</span>
+                                <span class="pcb-token free-slot" id="h1-sim">ช่องว่าง 1 (200KB)</span>
+                                <span class="pcb-token free-slot" id="h2-sim">ช่องว่าง 2 (500KB)</span>
+                                <span class="pcb-token free-slot" id="h3-sim">ช่องว่าง 3 (300KB)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button class="btn btn-primary font-kanit px-4 py-2 rounded-3 shadow" onclick="triggerMemoryManagementSimulation()">
+                            <i class="fas fa-play-circle me-2"></i>เริ่มจำลองการแปลงพิกัดและจัดสรรแบบ First-Fit (งานขนาด 250KB)
+                        </button>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">12. ตัวอย่างการจัดสรรหน่วยความจำ (Placement Algorithms)</h3>
+                <p style="text-indent: 30px;">
+                    พิจารณาสถานการณ์จำลองของการจัดสรรหน่วยความจำแบบต่อเนื่องเพื่อแสดงการเลือกพื้นที่ว่าง (Placement Algorithms) เมื่อมีช่องหน่วยความจำว่าง (Holes) ขนาดต่างๆ กันกระจายอยู่ และมีโปรเซสใหม่ร้องขอพื้นที่
+                </p>
+                <div class="p-3 bg-light rounded-3 border-start border-4 border-info my-3">
+                    <h6 class="font-kanit fw-bold text-dark mb-2">สถานการณ์จำลองสำหรับการคำนวณ:</h6>
+                    <p class="small text-muted mb-2">สมมติว่าหน่วยความจำหลักมีช่องว่างเรียงตามลำดับพื้นที่ในระบบดังนี้:</p>
+                    <ul class="small text-muted">
+                        <li>ช่องว่างที่ 1 ขนาด <strong>200 KB</strong></li>
+                        <li>ช่องว่างที่ 2 ขนาด <strong>500 KB</strong></li>
+                        <li>ช่องว่างที่ 3 ขนาด <strong>300 KB</strong></li>
+                    </ul>
+                    <p class="small text-muted mb-2">มีโปรเซสใหม่ (Process X) ร้องขอพื้นที่ในการทำงานขนาด <strong>250 KB</strong></p>
+                    <hr class="my-2">
+                    <p class="small mb-0"><strong>ผลลัพธ์ตามกลยุทธ์การจัดสรรแบบต่างๆ:</strong></p>
+                    <ul class="small mb-0">
+                        <li class="mb-2"><strong>First-Fit (เลือกช่องแรกที่ใหญ่พอ):</strong> ระบบจะสแกนตั้งแต่ต้นและเลือก <strong>ช่องว่างที่ 2 (ขนาด 500 KB)</strong> เนื่องจากเป็นช่องแรกสุดที่สามารถบรรจุโปรเซสขนาด 250 KB ได้ (เหลือพื้นที่ว่างต่ออีก 250 KB)</li>
+                        <li class="mb-2"><strong>Best-Fit (เลือกช่องที่ขนาดใกล้เคียงที่สุดที่ใหญ่พอ):</strong> ระบบจะพิจารณาช่องว่างทั้งหมด และเลือก <strong>ช่องว่างที่ 3 (ขนาด 300 KB)</strong> เนื่องจากเมื่อจัดสรรแล้วจะเหลือเศษซากน้อยที่สุดคือเหลือช่องว่างขนาด 50 KB ทิ้งไว้</li>
+                        <li><strong>Worst-Fit (เลือกช่องที่ใหญ่ที่สุดที่มีอยู่):</strong> ระบบจะเลือกช่องว่างที่ใหญ่ที่สุดเสมอ คือ <strong>ช่องว่างที่ 2 (ขนาด 500 KB)</strong> เพื่อให้เหลือพื้นที่ว่างหลังการจัดสรรเป็นขนาดใหญ่ที่สุด (เหลือ 250 KB) ซึ่งเชื่อว่าจะสามารถนำไปรองรับโปรเซสอื่นต่อไปได้ดีกว่าเศษขนาดเล็ก</li>
+                    </ul>
+                </div>
+
+                <div class="row my-4 justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="ratio ratio-16x9 shadow-sm rounded-3 overflow-hidden border">
+                            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="วิดีโอประกอบบทเรียนระบบปฏิบัติการ" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+
+            </article>
+
+            <section class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 border-top border-4 border-success" data-aos="fade-up">
+                <div class="d-flex align-items-center justify-content-between border-bottom pb-3 mb-4">
+                    <h3 class="font-kanit text-dark-primary font-weight-bold mb-0">
+                        <i class="fas fa-user-check me-2 text-success"></i>แบบทดสอบหลังเรียนประจำหน่วยการเรียนที่ 5
+                    </h3>
+                    <span class="badge bg-success px-3 py-2 fs-6" id="quiz-progress-badge">ข้อที่ 1 / 20</span>
+                </div>
+                
+                <div id="quiz-question-container" class="my-3"></div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-3">
+                    <button class="btn btn-outline-secondary px-4 py-2 rounded-3" id="prev-question-btn" disabled><i class="fas fa-arrow-left me-2"></i>ข้อก่อนหน้า</button>
+                    <button class="btn btn-primary px-4 py-2 rounded-3" id="next-question-btn">ส่งคำตอบและไปต่อ <i class="fas fa-arrow-right ms-2"></i></button>
+                </div>
+            </section>
+
+            <div class="d-flex justify-content-between align-items-center mb-5" data-aos="fade-up">
+                <a href="unit-04.html" class="btn btn-outline-dark px-4 py-2 rounded-3"><i class="fas fa-arrow-left me-2"></i>หน่วยก่อนหน้า</a>
+                <button class="btn btn-success btn-lg px-5 py-3 rounded-3 shadow font-kanit" id="mark-complete-btn">
+                    <i class="fas fa-check-double me-2"></i>ทำเครื่องหมายว่าเรียนจบหน่วยเรียนนี้แล้ว
+                </button>
+                <a href="unit-06.html" class="btn btn-outline-dark px-4 py-2 rounded-3">หน่วยถัดไป<i class="fas fa-arrow-right ms-2"></i></a>
+            </div>
+
+        </main>
+    </div>
+
+    <footer class="main-footer-section py-4 text-center mt-auto border-top">
+        <div class="container">
+            <p class="mb-0 text-secondary">© 2026 รายวิชา 31909-1001 ระบบปฏิบัติการ — แผงควบคุมเนื้อหาสถาปัตยกรรมระดับ ปวส.</p>
+        </div>
+    </footer>
+
+    <button id="back-to-top-btn" class="btn btn-primary rounded-circle shadow-lg"><i class="fas fa-chevron-up"></i></button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="D:\OS\js\data.js"></script>
+    <script src="D:\OS\js\storage.js"></script>
+    <script src="D:\OS\js\progress.js"></script>
+    <script src="D:\OS\js\main.js"></script>
+    <script src="D:\OS\js\quiz.js"></script>
+
+    <script>
+        function triggerMemoryManagementSimulation() {
+            const nodeLogical = document.getElementById("sim-node-ready-queue");
+            const nodeMmu = document.getElementById("sim-node-cpu");
+            const nodePhysical = document.getElementById("sim-node-done");
+            
+            const arr1 = document.getElementById("arrow-1");
+            const arr2 = document.getElementById("arrow-2");
+            
+            const queueBox = document.getElementById("cpu-queue-injector");
+
+            // รีเซ็ตคลาสแอนิเมชันเก่ากลับคืนค่าเริ่มต้น
+            document.querySelectorAll(".simulation-node").forEach(n => n.classList.remove("active-state"));
+            document.querySelectorAll(".sim-arrow").forEach(a => a.classList.remove("active-arrow"));
+            queueBox.innerHTML = '<span class="pcb-token">OS ช่องต่ำ (100KB)</span> <span class="pcb-token free-slot" id="h1-sim">ช่องว่าง 1 (200KB)</span> <span class="pcb-token free-slot" id="h2-sim">ช่องว่าง 2 (500KB)</span> <span class="pcb-token free-slot" id="h3-sim">ช่องว่าง 3 (300KB)</span>';
+
+            // เฟส 1: สร้างที่อยู่เชิงตรรกะจากฝั่ง CPU (Logical Address)
+            nodeLogical.classList.add("active-state");
+            
+            setTimeout(() => {
+                nodeLogical.classList.remove("active-state");
+                arr1.classList.add("active-arrow");
+                nodeMmu.classList.add("active-state");
+            }, 1200);
+
+            // เฟส 2: ฮาร์ดแวร์ MMU คำนวณขอบเขตและแปลงที่อยู่ คัดเลือกบล็อกหน่วยความจำจริงแบบ First-Fit
+            setTimeout(() => {
+                arr1.classList.remove("active-arrow");
+                arr2.classList.add("active-arrow");
+                nodeMmu.classList.remove("active-state");
+                nodePhysical.classList.add("active-state");
+                
+                // อัปเดตผังบล็อกจำลอง แยกรันพื้นที่ที่ช่องว่างหมายเลข 2 เป็นขนาดงาน 250KB
+                queueBox.innerHTML = '<span class="pcb-token">OS ช่องต่ำ (100KB)</span> <span class="pcb-token free-slot">ช่องว่าง 1 (200KB)</span> <span class="pcb-token allocated-slot">Process X (250KB)</span> <span class="pcb-token free-slot">เศษช่องว่าง 2 (250KB)</span> <span class="pcb-token free-slot">ช่องว่าง 3 (300KB)</span>';
+            }, 2600);
+
+            // เฟส 3: จัดสรรพิกัดลงแผงจริงเสร็จสิ้น
+            setTimeout(() => {
+                nodePhysical.classList.remove("active-state");
+                arr2.classList.remove("active-arrow");
+                
+                Swal.fire({
+                    toast: true,
+                    position: 'bottom-end',
+                    title: 'แปลงที่อยู่ (Relocation) และจัดสรรด้วย First-Fit สำเร็จ',
+                    icon: 'success',
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+            }, 3800);
+        }
+    </script>
+</body>
+</html>

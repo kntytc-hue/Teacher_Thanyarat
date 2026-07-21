@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หน่วยที่ 12 Multi OS ตอนที่ 1 | วิชา 31909-1001 ระบบปฏิบัติการ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="D:\OS\css\style.css">
+    <link rel="stylesheet" href="D:\OS\css\responsive.css">
+    <link rel="stylesheet" href="D:\OS\css\dark-mode.css">
+    <style>
+        .simulation-space {
+            background-color: #1e293b;
+            border-radius: 16px;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        body.light-mode .simulation-space {
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+        }
+        .state-container-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        .simulation-node {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Kanit', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            color: #ffffff;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 4px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        #sim-node-win { background: linear-gradient(135deg, #0078d4, #005a9e); }
+        #sim-node-rufus { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        #sim-node-ubuntu { background: linear-gradient(135deg, #e95420, #c43c08); }
+
+        .simulation-node.active-state {
+            transform: scale(1.15);
+            box-shadow: 0 0 25px currentColor;
+            border-color: #ffffff;
+            animation: pulse-glow 1.5s infinite alternate;
+        }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 15px rgba(255,255,255,0.2); }
+            100% { box-shadow: 0 0 30px rgba(255,255,255,0.8); }
+        }
+        .sim-arrow {
+            height: 4px;
+            background-color: #cbd5e1;
+            flex-grow: 1;
+            position: relative;
+            margin: 0 10px;
+            transition: all 0.3s;
+        }
+        body.dark-mode .sim-arrow { background-color: #475569; }
+        .sim-arrow::after {
+            content: '';
+            position: absolute;
+            right: -2px;
+            top: -6px;
+            width: 0; height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 12px solid #cbd5e1;
+        }
+        body.dark-mode .sim-arrow::after { border-left-color: #475569; }
+        .sim-arrow.active-arrow { background-color: #10b981 !important; }
+        .sim-arrow.active-arrow::after { border-left-color: #10b981 !important; }
+        .queue-box-list {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 60px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            border: 1px dashed rgba(0,0,0,0.1);
+        }
+        body.dark-mode .queue-box-list { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); }
+        .pcb-token {
+            background: #4b5563;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .pcb-token.win-slot { background: #0078d4; }
+        .pcb-token.ubuntu-slot { background: #e95420; }
+        .pcb-token.swap-slot { background: #10b981; }
+    </style>
+</head>
+<body class="light-mode">
+    <div id="loading-screen">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    <nav class="navbar navbar-expand-lg sticky-top main-navbar">
+        <div class="container-fluid">
+            <button class="btn text-white me-2" id="sidebar-toggle-btn" aria-label="เปิดเมนูด้านข้าง">
+                <i class="fas fa-bars fa-lg"></i>
+            </button>
+            <a class="navbar-brand d-flex align-items-center" href="../index.html">
+                <i class="fas fa-laptop-code me-2"></i>
+                <span>31909-1001 ระบบปฏิบัติการ</span>
+            </a>
+            <div class="ms-auto">
+                <button class="btn text-white" id="theme-toggle-btn" aria-label="เปลี่ยนโหมดหน้าจอ">
+                    <i class="fas fa-moon fa-lg"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+    <div class="app-layout">
+        <aside class="sidebar-navigation" id="main-sidebar">
+            <div class="sidebar-profile text-center py-4">
+                <div class="avatar-container mb-2">
+                    <i class="fas fa-book-reader fa-3x text-white bg-primary p-3 rounded-circle"></i>
+                </div>
+                <h6 class="text-white mb-0">อาจารย์ธัญญรัตน์ ตาเล๊ะ</h6>
+                <small class="text-white-50">เทคโนโลยีคอมพิวเตอร์</small>
+            </div>
+            <ul class="sidebar-menu-list px-2" id="sidebar-menu-injector"></ul>
+        </aside>
+        <main class="main-content-flow px-3 px-md-5 py-4">
+            <nav aria-label="breadcrumb" class="mb-4" data-aos="fade-down">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="../index.html" class="text-decoration-none"><i class="fas fa-home me-1"></i>หน้าแรก</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">หน่วยที่ 12 Multi OS ตอนที่ 1</li>
+                </ol>
+            </nav>
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light text-dark border-start border-5 border-primary" data-aos="fade-up">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <span class="text-primary fw-bold text-uppercase d-block mb-1">Unit 12: Multi OS Part 1</span>
+                        <h1 class="font-kanit font-weight-bold text-dark-primary mb-0">หน่วยที่ 12 Multi OS ตอนที่ 1</h1>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary btn-sm rounded-3 px-3" onclick="window.print()"><i class="fas fa-print me-1"></i>พิมพ์บทเรียน</button>
+                        <button class="btn btn-primary btn-sm rounded-3 px-3" id="bookmark-btn"><i class="far fa-bookmark me-1"></i>คั่นหน้าไว้</button>
+                    </div>
+                </div>
+            </div>
+            <article class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 leading-relaxed text-secondary text-justify content-article-body" data-aos="fade-up" data-aos-delay="100">
+                
+                <h3 class="font-kanit text-dark-primary font-weight-bold mb-3 border-bottom pb-2">1. แนวคิดระบบปฏิบัติการคู่ (Dual Boot Concept)</h3>
+                <p style="text-indent: 30px;">
+                    ระบบปฏิบัติการแบบ Dual Boot หรือระบบปฏิบัติการร่วม คือเทคนิคการติดตั้งระบบปฏิบัติการมากกว่าหนึ่งระบบลงบนเครื่องคอมพิวเตอร์เครื่องเดียวกัน (บนฮาร์ดดิสก์หรือ SSD ลูกเดียวกันหรือคนละลูกก็ได้) โดยผู้ใช้งานสามารถเลือกได้ว่าจะบูตเข้าสู่ระบบปฏิบัติการใดในขณะที่เปิดเครื่องคอมพิวเตอร์ขึ้นมาผ่านโปรแกรมจัดการการบูต (Boot Manager / Boot Loader) เช่น GRUB หรือ Windows Boot Manager
+                </p>
+                <p style="text-indent: 30px;">
+                    การติดตั้งแบบ Dual Boot ระหว่างระบบปฏิบัติการ Windows และ Ubuntu Linux เป็นที่นิยมอย่างมากในหมู่นักศึกษาและนักพัฒนาซอฟต์แวร์ เนื่องจากช่วยให้สามารถใช้งานโปรแกรมสำนักงานและความบันเทิงบน Windows ควบคู่ไปกับการเขียนโปรแกรม การจัดการระบบเครือข่าย และการใช้งานเครื่องมือโอเพนซอร์สบน Linux ได้อย่างเต็มประสิทธิภาพโดยไม่ต้องใช้เครื่องคอมพิวเตอร์สองเครื่อง
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">2. ความรู้พื้นฐานเกี่ยวกับ Windows และ Ubuntu</h3>
+                <p style="text-indent: 30px;">
+                    <strong>Windows:</strong> เป็นระบบปฏิบัติการกรรมสิทธิ์ (Proprietary OS) ที่พัฒนาโดยบริษัท Microsoft มีส่วนติดต่อผู้ใช้แบบกราฟิก (GUI) ที่ใช้งานง่าย ได้รับความนิยมสูงสุดในตลาดผู้ใช้ทั่วไป การเล่นเกม และงานเอกสารสำนักงาน
+                </p>
+                <p style="text-indent: 30px;">
+                    <strong>Ubuntu Linux:</strong> เป็นระบบปฏิบัติการเสรีและโอเพนซอร์ส (Open Source OS) ตระกูล Debian ที่มีความเสถียรสูง ปลอดภัยจากมัลแวร์ นิยมใช้เป็นเซิร์ฟเวอร์และแพลตฟอร์มสำหรับการพัฒนาซอฟต์แวร์สมัยใหม่ ปัญญาประดิษฐ์ (AI) และวิทยาการข้อมูล (Data Science)
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">3. การเตรียมพาร์ทิชัน (Partition Preparation)</h3>
+                <p style="text-indent: 30px;">
+                    ก่อนที่จะทำการติดตั้ง Ubuntu ควบคู่ไปกับ Windows ที่มีอยู่เดิม จำเป็นต้องมีการเตรียมพื้นที่ว่างบนฮาร์ดดิสก์ (Unallocated Space) โดยใช้เครื่องมือจัดการดิสก์ใน Windows (Disk Management) หรือเครื่องมือพาร์ทิชันภายนอก
+                </p>
+                <ul>
+                    <li class="mb-1"><strong>การย่อขนาดพาร์ทิชัน (Shrink Volume):</strong> ทำการลดขนาดพาร์ทิชันหลักของ Windows (เช่น Drive C:) เพื่อเผื่อพื้นที่ว่างไว้อย่างน้อย 30 - 50 GB สำหรับการติดตั้ง Ubuntu</li>
+                    <li class="mb-1"><strong>พื้นที่ว่าง (Unallocated Space):</strong> พื้นที่ที่ถูกกันไว้โดยยังไม่ฟอร์แมต เพื่อให้โปรแกรมติดตั้ง Ubuntu มองเห็นและนำไปสร้างพาร์ทิชันย่อยในขั้นตอนต่อไป</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">4. การสร้าง USB Bootable ด้วยโปรแกรม Rufus</h3>
+                <p style="text-indent: 30px;">
+                    การติดตั้ง Ubuntu จำเป็นต้องใช้แฟลชไดรฟ์ USB (ความจุอย่างน้อย 4GB - 8GB) เป็นสื่อในการติดตั้ง โดยมีขั้นตอนและเครื่องมือสำคัญคือ <strong>Rufus</strong> ซึ่งเป็นโปรแกรมโอเพนซอร์สขนาดเล็กบน Windows ที่ใช้สำหรับแปลงไฟล์ ISO ของระบบปฏิบัติการให้เป็น USB Bootable
+                </p>
+                <ol>
+                    <li class="mb-2">ดาวน์โหลดไฟล์อิมเมจระบบปฏิบัติการ Ubuntu ในรูปแบบไฟล์ <code>.iso</code> จากเว็บไซต์ทางการของ Ubuntu</li>
+                    <li class="mb-2">เชื่อมต่อ USB Flash Drive เข้ากับเครื่องคอมพิวเตอร์ (ข้อมูลใน USB จะถูกลบทั้งหมด)</li>
+                    <li class="mb-2">เปิดโปรแกรม Rufus เลือก Device ให้ตรงกับ USB ที่ต้องการ</li>
+                    <li class="mb-2">ในส่วน Boot selection ให้เลือกไฟล์ ISO ของ Ubuntu ที่ดาวน์โหลดมา</li>
+                    <li class="mb-2">กำหนด Partition scheme เป็น <strong>GPT</strong> (สำหรับเมนบอร์ดระบบ UEFI สมัยใหม่) และ File system เป็น <code>FAT32</code></li>
+                    <li class="mb-2">คลิกปุ่ม <strong>START</strong> และรอจนกระทั่งกระบวนการเขียนข้อมูลลง USB เสร็จสมบูรณ์</li>
+                </ol>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">5. การตั้งค่า BIOS / UEFI Boot Setting</h3>
+                <p style="text-indent: 30px;">
+                    เมื่อสร้าง USB Boot เรียบร้อยแล้ว ต้องทำการรีสตาร์ทเครื่องคอมพิวเตอร์และเข้าสู่หน้าจอตั้งค่าระบบพื้นฐานของเมนบอร์ด (BIOS หรือ UEFI) โดยการกดปุ่มลัด (เช่น F2, F12, Del, หรือ Esc ตามยี่ห้อเมนบอร์ด)
+                </p>
+                <ul>
+                    <li class="mb-1">ปิดระบบความปลอดภัย <strong>Secure Boot</strong> (ในบางกรณีเพื่อป้องกันปัญหาการบูตไดรเวอร์ของ Linux)</li>
+                    <li class="mb-1">ตั้งค่าลำดับการบูต (Boot Priority) ให้ USB Flash Drive อยู่ในลำดับแรก (USB Boot / UEFI USB)</li>
+                    <li class="mb-1">บันทึกการตั้งค่า (Save & Exit) เพื่อให้เครื่องบูตเข้าสู่หน้าจอติดตั้ง Ubuntu จาก USB</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">6. ขั้นตอนการติดตั้ง Ubuntu และการจัดการแบบ Something Else</h3>
+                <p style="text-indent: 30px;">
+                    เมื่อบูตเข้าสู่หน้าจอติดตั้งของ Ubuntu จะพบกับหน้าต้อนรับ (Welcome Screen) ให้เลือกภาษาที่ต้องการและรูปแบบคีย์บอร์ด จากนั้นเข้าสู่หน้าจอเชื่อมต่ออินเทอร์เน็ตและการเลือกรูปแบบการติดตั้ง (Normal installation / Minimal installation)
+                </p>
+                <p style="text-indent: 30px;">
+                    หัวใจสำคัญของการทำ Dual Boot คือหน้าต่าง <strong>Installation Type</strong> ซึ่งจะมีตัวเลือกให้ติดตั้ง Ubuntu ควบคู่ไปกับ Windows อัตโนมัติ หรือเลือกตัวเลือกขั้นสูงที่เรียกว่า <strong>"Something Else" (อย่างอื่น)</strong> ซึ่งแนะนำสำหรับผู้เรียนระดับ ปวส. เพื่อความปลอดภัยของข้อมูลและอิสระในการกำหนดพาร์ทิชันเอง:
+                </p>
+                <ul>
+                    <li class="mb-2"><strong>Root Partition (<code>/</code>):</strong> กำหนดจุดเชื่อมต่อเป็น <code>/</code> ใช้ระบบไฟล์ <code>Ext4</code> สำหรับเก็บไฟล์ระบบปฏิบัติการและโปรแกรมทั้งหมด (แนะนำพื้นที่อย่างน้อย 25-30 GB ขึ้นไป)</li>
+                    <li class="mb-2"><strong>Swap Area:</strong> พื้นที่หน่วยความจำเสมือนบนดิสก์ (แนะนำให้มีขนาดเท่ากับหรือใกล้เคียงกับ RAM จริง เช่น 4GB หรือ 8GB)</li>
+                    <li class="mb-2"><strong>EFI System Partition:</strong> สำหรับเครื่องระบบ UEFI ให้ใช้พาร์ทิชัน EFI ที่มีอยู่แล้วจาก Windows ห้ามลบเด็ดขาด (เลือกให้ติดตั้ง Boot loader ลงบนพาร์ทิชัน EFI นี้)</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">7. แผนภาพจำลองกระบวนการ Multi OS Dual Boot</h3>
+                <div class="my-4 p-4 border rounded-4 bg-light text-center">
+                    <h5 class="font-kanit mb-4 fw-bold text-dark"><i class="fas fa-network-wired me-2 text-primary"></i>โครงสร้างการจัดสรรพาร์ทิชันและ Boot Loader</h5>
+                    <div class="row justify-content-center align-items-center g-2 text-dark font-kanit">
+                        <div class="col-md-3 p-3 border rounded bg-white shadow-sm fw-bold" style="border-color:#0078d4;">
+                            <span style="color:#0078d4;">Windows Partition</span>
+                            <hr class="my-2">
+                            <small class="text-muted d-block font-sans">NTFS (C:, D:)</small>
+                        </div>
+                        <div class="col-md-1"><i class="fas fa-plus fa-lg text-muted"></i></div>
+                        <div class="col-md-3 p-3 border rounded bg-white shadow-sm fw-bold" style="border-color:#e95420;">
+                            <span style="color:#e95420;">Ubuntu Partition</span>
+                            <hr class="my-2">
+                            <small class="text-muted d-block font-sans">Ext4 (Root /) & Swap</small>
+                        </div>
+                        <div class="col-md-1"><i class="fas fa-plus fa-lg text-muted"></i></div>
+                        <div class="col-md-3 p-3 border rounded bg-white shadow-sm fw-bold" style="border-color:#10b981;">
+                            <span style="color:#10b981;">GRUB Bootloader</span>
+                            <hr class="my-2">
+                            <small class="text-muted d-block font-sans">EFI System Partition</small>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">8. แอนิเมชันจำลองขั้นตอนการเตรียมระบบ Multi OS</h3>
+                <p style="text-indent: 30px;">
+                    แบบจำลองสถานการณ์จำลองขั้นตอนการทำงานตั้งแต่การเตรียม Windows, การเบิร์น Rufus ลง USB, ไปจนถึงการติดตั้ง Ubuntu แบบ Dual Boot
+                </p>
+                <p class="small text-muted">นักศึกษาสามารถคลิกปุ่มจำลองการทำงานด้านล่างเพื่อดูขั้นตอนระบบ:</p>
+
+                <div class="simulation-space my-4 shadow-sm" id="process-anim-space">
+                    <div class="state-container-wrapper py-4">
+                        <div class="simulation-node" id="sim-node-win">1. Windows & Shrink</div>
+                        <div class="sim-arrow" id="arrow-1"></div>
+                        <div class="simulation-node" id="sim-node-rufus">2. Rufus USB</div>
+                        <div class="sim-arrow" id="arrow-2"></div>
+                        <div class="simulation-node" id="sim-node-ubuntu">3. Ubuntu Install</div>
+                    </div>
+                    <div class="row mt-4 pt-2 text-dark font-kanit">
+                        <div class="col-md-12 mb-2">
+                            <h6 class="text-white-50 small mb-2"><i class="fas fa-tasks me-2"></i>สถานะกระบวนการติดตั้ง Dual Boot</h6>
+                            <div class="queue-box-list" id="cpu-queue-injector">
+                                <span class="pcb-token win-slot">เตรียมพาร์ทิชัน Windows สำเร็จ</span>
+                                <span class="pcb-token" id="t-rufus">สร้าง Bootable USB ด้วย Rufus</span>
+                                <span class="pcb-token" id="t-ubuntu">ติดตั้ง Ubuntu (Something Else)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <button class="btn btn-primary font-kanit px-4 py-2 rounded-3 shadow" onclick="triggerMultiOSSimulation()">
+                            <i class="fas fa-play-circle me-2"></i>เริ่มจำลองขั้นตอนการติดตั้ง Multi OS Dual Boot
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row my-4 justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="ratio ratio-16x9 shadow-sm rounded-3 overflow-hidden border">
+                            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="วิดีโอประกอบบทเรียน Multi OS" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+
+            </article>
+
+            <section class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 border-top border-4 border-success" data-aos="fade-up">
+                <div class="d-flex align-items-center justify-content-between border-bottom pb-3 mb-4">
+                    <h3 class="font-kanit text-dark-primary font-weight-bold mb-0">
+                        <i class="fas fa-user-check me-2 text-success"></i>แบบทดสอบหลังเรียนประจำหน่วยการเรียนที่ 12
+                    </h3>
+                    <span class="badge bg-success px-3 py-2 fs-6" id="quiz-progress-badge">ข้อที่ 1 / 20</span>
+                </div>
+                <div id="quiz-question-container" class="my-3"></div>
+                <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-3">
+                    <button class="btn btn-outline-secondary px-4 py-2 rounded-3" id="prev-question-btn" disabled><i class="fas fa-arrow-left me-2"></i>ข้อก่อนหน้า</button>
+                    <button class="btn btn-primary px-4 py-2 rounded-3" id="next-question-btn">ส่งคำตอบและไปต่อ <i class="fas fa-arrow-right ms-2"></i></button>
+                </div>
+            </section>
+
+            <div class="d-flex justify-content-between align-items-center mb-5" data-aos="fade-up">
+                <a href="unit-11.html" class="btn btn-outline-dark px-4 py-2 rounded-3"><i class="fas fa-arrow-left me-2"></i>หน่วยก่อนหน้า</a>
+                <button class="btn btn-success btn-lg px-5 py-3 rounded-3 shadow font-kanit" id="mark-complete-btn">
+                    <i class="fas fa-check-double me-2"></i>ทำเครื่องหมายว่าเรียนจบหน่วยเรียนนี้แล้ว
+                </button>
+                <a href="unit-13.html" class="btn btn-outline-dark px-4 py-2 rounded-3">หน่วยถัดไป<i class="fas fa-arrow-right ms-2"></i></a>
+            </div>
+        </main>
+    </div>
+    <footer class="main-footer-section py-4 text-center mt-auto border-top">
+        <div class="container">
+            <p class="mb-0 text-secondary">© 2026 รายวิชา 31909-1001 ระบบปฏิบัติการ — แผงควบคุมเนื้อหาสถาปัตยกรรมระดับ ปวส.</p>
+        </div>
+    </footer>
+    <button id="back-to-top-btn" class="btn btn-primary rounded-circle shadow-lg"><i class="fas fa-chevron-up"></i></button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="D:\OS\js\data.js"></script>
+    <script src="D:\OS\js\storage.js"></script>
+    <script src="D:\OS\js\progress.js"></script>
+    <script src="D:\OS\js\main.js"></script>
+    <script src="D:\OS\js\quiz.js"></script>
+    <script>
+        function triggerMultiOSSimulation() {
+            const nodeWin = document.getElementById("sim-node-win");
+            const nodeRufus = document.getElementById("sim-node-rufus");
+            const nodeUbuntu = document.getElementById("sim-node-ubuntu");
+            const arr1 = document.getElementById("arrow-1");
+            const arr2 = document.getElementById("arrow-2");
+            const queueBox = document.getElementById("cpu-queue-injector");
+
+            document.querySelectorAll(".simulation-node").forEach(n => n.classList.remove("active-state"));
+            document.querySelectorAll(".sim-arrow").forEach(a => a.classList.remove("active-arrow"));
+
+            queueBox.innerHTML = '<span class="pcb-token win-slot">1. Windows Shrink Partition</span><span class="pcb-token">2. Rufus USB Bootable</span><span class="pcb-token">3. Ubuntu Installation</span>';
+
+            nodeWin.classList.add("active-state");
+
+            setTimeout(() => {
+                nodeWin.classList.remove("active-state");
+                arr1.classList.add("active-arrow");
+                nodeRufus.classList.add("active-state");
+                queueBox.innerHTML = '<span class="pcb-token win-slot">Windows Ready</span><span class="pcb-token" style="background:#f59e0b;">Rufus Burning ISO...</span><span class="pcb-token">Ubuntu Installation</span>';
+            }, 1200);
+
+            setTimeout(() => {
+                arr1.classList.remove("active-arrow");
+                arr2.classList.add("active-arrow");
+                nodeRufus.classList.remove("active-state");
+                nodeUbuntu.classList.add("active-state");
+                queueBox.innerHTML = '<span class="pcb-token win-slot">Windows Ready</span><span class="pcb-token" style="background:#f59e0b;">USB Bootable Ready</span><span class="pcb-token" style="background:#e95420;">Something Else Partitioning...</span>';
+            }, 2600);
+
+            setTimeout(() => {
+                nodeUbuntu.classList.remove("active-state");
+                arr2.classList.remove("active-arrow");
+                Swal.fire({
+                    toast: true,
+                    position: 'bottom-end',
+                    title: 'ติดตั้ง Multi OS Dual Boot สำเร็จ! พร้อมใช้งาน GRUB Bootloader',
+                    icon: 'success',
+                    showConfirmButton: false,
+                    timer: 2500
+                });
+            }, 3800);
+        }
+    </script>
+</body>
+</html>

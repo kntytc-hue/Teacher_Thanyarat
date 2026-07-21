@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หน่วยที่ 15 สรุปรายวิชา | วิชา 31909-1001 ระบบปฏิบัติการ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="D:\OS\css\style.css">
+    <link rel="stylesheet" href="D:\OS\css\responsive.css">
+    <link rel="stylesheet" href="D:\OS\css\dark-mode.css">
+    <style>
+        /* สไตล์จำลองการประเมินและการสรุปมวลรวมองค์ความรู้ */
+        .simulation-space {
+            background-color: #1e293b;
+            border-radius: 16px;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        body.light-mode .simulation-space {
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+        }
+        .state-container-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        .simulation-node {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Kanit', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            color: #ffffff;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 4px solid rgba(255,255,255,0.1);
+            text-align: center;
+            padding: 8px;
+        }
+        #sim-node-concept { background: linear-gradient(135deg, #0284c7, #0369a1); }
+        #sim-node-project { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
+        #sim-node-exam { background: linear-gradient(135deg, #059669, #047857); }
+
+        .simulation-node.active-state {
+            transform: scale(1.15);
+            box-shadow: 0 0 25px currentColor;
+            border-color: #ffffff;
+            animation: pulse-glow 1.5s infinite alternate;
+        }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 15px rgba(255,255,255,0.2); }
+            100% { box-shadow: 0 0 30px rgba(255,255,255,0.8); }
+        }
+        
+        .sim-arrow {
+            height: 4px;
+            background-color: #cbd5e1;
+            flex-grow: 1;
+            position: relative;
+            margin: 0 10px;
+            transition: all 0.3s;
+        }
+        body.dark-mode .sim-arrow { background-color: #475569; }
+        .sim-arrow::after {
+            content: '';
+            position: absolute;
+            right: -2px;
+            top: -6px;
+            width: 0; height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 12px solid #cbd5e1;
+        }
+        body.dark-mode .sim-arrow::after { border-left-color: #475569; }
+        .sim-arrow.active-arrow {
+            background-color: #10b981 !important;
+        }
+        .sim-arrow.active-arrow::after {
+            border-left-color: #10b981 !important;
+        }
+        
+        .queue-box-list {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 60px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            border: 1px dashed rgba(0,0,0,0.1);
+        }
+        body.dark-mode .queue-box-list { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); }
+        .pcb-token {
+            background: #4b5563;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            animation: bounceIn 0.5s;
+        }
+        .pcb-token.core-slot { background: #0284c7; }
+        .pcb-token.project-slot { background: #7c3aed; }
+        .pcb-token.exam-slot { background: #059669; }
+
+        .rubric-table th {
+            background-color: #0f172a;
+            color: #ffffff;
+            text-align: center;
+            vertical-align: middle;
+        }
+        body.light-mode .rubric-table th {
+            background-color: #1e293b;
+            color: #ffffff;
+        }
+        .rubric-table td {
+            vertical-align: top;
+            font-size: 0.95rem;
+        }
+        .concept-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .concept-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        }
+    </style>
+</head>
+<body class="light-mode">
+    
+    <div id="loading-screen">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    
+    <nav class="navbar navbar-expand-lg sticky-top main-navbar">
+        <div class="container-fluid">
+            <button class="btn text-white me-2" id="sidebar-toggle-btn" aria-label="เปิดเมนูด้านข้าง">
+                <i class="fas fa-bars fa-lg"></i>
+            </button>
+            <a class="navbar-brand d-flex align-items-center" href="../index.html">
+                <i class="fas fa-laptop-code me-2"></i>
+                <span>31909-1001 ระบบปฏิบัติการ</span>
+            </a>
+            <div class="ms-auto">
+                <button class="btn text-white" id="theme-toggle-btn" aria-label="เปลี่ยนโหมดหน้าจอ">
+                    <i class="fas fa-moon fa-lg"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="app-layout">
+        <aside class="sidebar-navigation" id="main-sidebar">
+            <div class="sidebar-profile text-center py-4">
+                <div class="avatar-container mb-2">
+                    <i class="fas fa-book-reader fa-3x text-white bg-primary p-3 rounded-circle"></i>
+                </div>
+                <h6 class="text-white mb-0">อาจารย์ธัญญรัตน์ ตาเล๊ะ</h6>
+                <small class="text-white-50">เทคโนโลยีคอมพิวเตอร์</small>
+            </div>
+            <ul class="sidebar-menu-list px-2" id="sidebar-menu-injector"></ul>
+        </aside>
+        
+        <main class="main-content-flow px-3 px-md-5 py-4">
+            
+            <nav aria-label="breadcrumb" class="mb-4" data-aos="fade-down">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="../index.html" class="text-decoration-none"><i class="fas fa-home me-1"></i>หน้าแรก</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">หน่วยที่ 15 สรุปรายวิชา</li>
+                </ol>
+            </nav>
+            
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light text-dark border-start border-5 border-primary" data-aos="fade-up">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <span class="text-primary fw-bold text-uppercase d-block mb-1">Unit 15: Course Summary & Capstone Integration</span>
+                        <h1 class="font-kanit font-weight-bold text-dark-primary mb-0">หน่วยที่ 15 สรุปรายวิชา</h1>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary btn-sm rounded-3 px-3" onclick="window.print()"><i class="fas fa-print me-1"></i>พิมพ์บทเรียน</button>
+                        <button class="btn btn-primary btn-sm rounded-3 px-3" id="bookmark-btn"><i class="far fa-bookmark me-1"></i>คั่นหน้าไว้</button>
+                    </div>
+                </div>
+            </div>
+            
+            <article class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 leading-relaxed text-secondary text-justify content-article-body" data-aos="fade-up" data-aos-delay="100">
+                
+                <h3 class="font-kanit text-dark-primary font-weight-bold mb-3 border-bottom pb-2">1. สรุปภาพรวมรายวิชา (Course Overview Summary)</h3>
+                <p style="text-indent: 30px;">
+                    วิชา **31909-1001 ระบบปฏิบัติการ (Operating Systems)** มุ่งเน้นการศึกษาสถาปัตยกรรม กลไกการทำงาน และการบริหารจัดการทรัพยากรของระบบคอมพิวเตอร์อย่างเป็นระบบ โดยระบบปฏิบัติการทำหน้าที่เป็นตัวกลาง (Intermediary) ระหว่างผู้ใช้/โปรแกรมประยุกต์ และฮาร์ดแวร์จริง ตลอดทั้งภาคเรียน ผู้เรียนได้ศึกษาครอบคลุมมิติสำคัญ 6 ด้านหลัก ได้แก่:
+                </p>
+                <div class="row g-3 my-3">
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded-3 bg-white shadow-sm h-100 border-start border-4 border-info">
+                            <h6 class="font-kanit fw-bold text-dark"><i class="fas fa-microchip me-2 text-info"></i>การบริหารโปรเซสและสเตรด</h6>
+                            <p class="small text-muted mb-0">การจัดการสถานะโปรเซส, สเก็ตจูลิง CPU, การสลับบริบท (Context Switch), และโครงสร้างแบบ Threads ในระบบมัลติคอร์</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded-3 bg-white shadow-sm h-100 border-start border-4 border-warning">
+                            <h6 class="font-kanit fw-bold text-dark"><i class="fas fa-sync me-2 text-warning"></i>การประมวลผลขนานและเดดล็อก</h6>
+                            <p class="small text-muted mb-0">ปัญหา Race Condition, กลไกการประสานเวลา (Semaphore, Mutex) และแนวทางจัดการ Deadlock (Banker's Algorithm)</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded-3 bg-white shadow-sm h-100 border-start border-4 border-primary">
+                            <h6 class="font-kanit fw-bold text-dark"><i class="fas fa-memory me-2 text-primary"></i>หน่วยความจำหลักและเสมือน</h6>
+                            <p class="small text-muted mb-0">การแบ่งหน้า (Paging), การแบ่งส่วน (Segmentation), Demand Paging, Page Fault Handling และอัลกอริทึมแทนที่หน้า (FIFO, LRU, OPT)</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded-3 bg-white shadow-sm h-100 border-start border-4 border-success">
+                            <h6 class="font-kanit fw-bold text-dark"><i class="fas fa-folder-open me-2 text-success"></i>ระบบไฟล์และดิสก์</h6>
+                            <p class="small text-muted mb-0">โครงสร้างไดเรกทอรี, การจัดสรรพื้นที่ดิสก์ (Contiguous, Linked, Indexed), และ Disk Scheduling (FCFS, SSTF, SCAN, C-SCAN)</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded-3 bg-white shadow-sm h-100 border-start border-4 border-danger">
+                            <h6 class="font-kanit fw-bold text-dark"><i class="fas fa-shield-alt me-2 text-danger"></i>ความปลอดภัยและการปกป้อง</h6>
+                            <p class="small text-muted mb-0">การพิสูจน์ตัวตน, การควบคุมการเข้าถึง (Access Control Matrix/ACL), มัลแวร์, และมาตรการรักษาความปลอดภัยระดับเคอร์เนล</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded-3 bg-white shadow-sm h-100 border-start border-4 border-purple" style="border-color: #8b5cf6 !important;">
+                            <h6 class="font-kanit fw-bold text-dark"><i class="fas fa-server me-2 text-purple" style="color: #8b5cf6;"></i>การจำลองระบบและคลาวด์</h6>
+                            <p class="small text-muted mb-0">แนวคิด Virtualization, Hypervisor (Type 1 & Type 2), Containerization (Docker), และสถาปัตยกรรมระบบคลาวด์ยุคใหม่</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">2. ทบทวนแนวคิดสำคัญ (Review of Key Concepts)</h3>
+                <p style="text-indent: 30px;">
+                    การสรุปองค์ความรู้ที่สำคัญจากการเรียนตลอดทั้งภาคเรียนเพื่อให้เห็นภาพรวมและจุดเชื่อมโยงของแต่ละทฤษฎี:
+                </p>
+                <div class="accordion my-4" id="conceptReviewAccordion">
+                    <div class="accordion-item border-0 shadow-sm mb-3 rounded-3 overflow-hidden">
+                        <h2 class="accordion-header" id="headingOne">
+                            <button class="accordion-button font-kanit fw-bold text-primary bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                <i class="fas fa-microchip me-2"></i>1. Process Management & CPU Scheduling
+                            </button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#conceptReviewAccordion">
+                            <div class="accordion-body font-sans text-secondary">
+                                Process คือโปรแกรมที่กำลังประมวลผลในหน่วยความจำ โดยมีโครงสร้าง PCB (Process Control Block) เก็บสถานะต่างๆ สเก็ตจูเลอร์ทำหน้าที่จัดสรร CPU ให้โปรเซสด้วยอัลกอริทึม เช่น **FCFS** (มาก่อนได้ก่อน เกิด Convoy Effect), **SJF/SRTF** (ได้เวลาเฉลี่ยดีที่สุดแต่ต้องรู้อนาคต), **Priority** (เสี่ยง Starvation แก้ด้วย Aging) และ **Round Robin (RR)** (เหมาะสมกับ Time-sharing ขึ้นกับขนาดของ Time Quantum)
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item border-0 shadow-sm mb-3 rounded-3 overflow-hidden">
+                        <h2 class="accordion-header" id="headingTwo">
+                            <button class="accordion-button collapsed font-kanit fw-bold text-primary bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                <i class="fas fa-lock me-2"></i>2. Concurrency, Synchronization & Deadlocks
+                            </button>
+                        </h2>
+                        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#conceptReviewAccordion">
+                            <div class="accordion-body font-sans text-secondary">
+                                เมื่อโปรเซสทำงานพร้อมกันและเข้าถึง Critical Section อาจเกิด Race Condition ต้องแก้ด้วยการใช้อุปกรณ์ประสานเวลา เช่น Mutex Lock และ Semaphore ส่วน Deadlock เกิดขึ้นเมื่อครบเงื่อนไข 4 ประการ (Mutual Exclusion, Hold and Wait, No Preemption, Circular Wait) สามารถหลีกเลี่ยงได้โดยใช้ **Banker's Algorithm** หรือใช้ Resource Allocation Graph ในการตรวจจับ
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item border-0 shadow-sm mb-3 rounded-3 overflow-hidden">
+                        <h2 class="accordion-header" id="headingThree">
+                            <button class="accordion-button collapsed font-kanit fw-bold text-primary bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                <i class="fas fa-memory me-2"></i>3. Memory Management & Virtual Memory
+                            </button>
+                        </h2>
+                        <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#conceptReviewAccordion">
+                            <div class="accordion-body font-sans text-secondary">
+                                Paging ช่วยแก้ปัญหา External Fragmentation โดยแปลง Logical Address เป็น Physical Address ผ่าน Page Table ร่วมกับ TLB สำหรับ Virtual Memory ใช้ Demand Paging ในการโหลดหน้าเข้ามาเมื่อต้องการใช้งานจริง หาก RAM เต็มจะเกิด Page Replacement ด้วยอัลกอริทึม **FIFO** (อาจเกิด Belady's Anomaly), **OPT** (เชิงอุดมคติ) หรือ **LRU** (ใช้งานจริงดีที่สุด) และต้องระวังการเกิด Thrashing
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item border-0 shadow-sm mb-3 rounded-3 overflow-hidden">
+                        <h2 class="accordion-header" id="headingFour">
+                            <button class="accordion-button collapsed font-kanit fw-bold text-primary bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                <i class="fas fa-hdd me-2"></i>4. Storage, File Systems & Disk Scheduling
+                            </button>
+                        </h2>
+                        <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#conceptReviewAccordion">
+                            <div class="accordion-body font-sans text-secondary">
+                                การจัดสรรพื้นที่ไฟล์มี 3 แบบหลัก (Contiguous, Linked, Indexed เช่น Inode ใน Unix) การบริหารหัวอ่านดิสก์ใช้ Disk Scheduling เช่น **SSTF** (เลือกหัวอ่านใกล้นิ้วที่สุด เสี่ยง Starvation), **SCAN** (อัลกอริทึม ลิฟต์) และ **C-SCAN** (กวาดทางเดียวสม่ำเสมอ) เพื่อลดระยะเวลา Seek Time
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">3. โครงงานประจำวิชา (Course Project)</h3>
+                <p style="text-indent: 30px;">
+                    **โครงงานระบบจำลองการทำงานของระบบปฏิบัติการ (Operating System Simulation Suite)** เป็นโครงงานกลุ่มเพื่อประยุกต์ทฤษฎีสู่การพัฒนาซอฟต์แวร์จริง นักศึกษาต้องเลือกพัฒนาแบบจำลองตามข้อกำหนดดังนี้:
+                </p>
+                <div class="p-4 bg-light rounded-4 border my-3">
+                    <h5 class="font-kanit fw-bold text-primary mb-3"><i class="fas fa-tasks me-2"></i>ข้อกำหนดหลักของโครงงาน (Project Core Specifications)</h5>
+                    <ul class="mb-3">
+                        <li class="mb-2"><strong>ขอบเขตผลงาน:</strong> สร้าง Web Application หรือ Desktop Application ที่สามารถจำลองการทำงานได้อย่างน้อย 2 โมดูลหลัก (เช่น CPU Scheduling Simulator ร่วมกับ Page Replacement Simulator)</li>
+                        <li class="mb-2"><strong>ความสามารถด้าน Interactive Visualization:</strong> ต้องแสดงขั้นตอนการประมวลผลแบบ Step-by-Step มี Gantt Chart สำหรับ CPU Scheduling หรือ Memory Map/State Diagram สำหรับ Virtual Memory</li>
+                        <li class="mb-2"><strong>การเปรียบเทียบประสิทธิภาพ (Performance Analysis):</strong> คำนวณค่าสถานะ เช่น Average Waiting Time, Turnaround Time, Page Fault Count หรือ Disk Seek Distance เปรียบเทียบอัลกอริทึมต่างๆ พร้อมกราฟสรุปผล</li>
+                        <li class="mb-2"><strong>สิ่งส่งมอบ (Deliverables):</strong> ซอร์สโค้ดฉบับสมบูรณ์บน GitHub/GitLab, เล่มรายงานโครงงาน (Project Documentation), และสไลด์พร้อมคลิปวิดีโอสาธิตการทำงาน</li>
+                    </ul>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">4. การมอบหมายงาน (Assignment Summary)</h3>
+                <p style="text-indent: 30px;">
+                    การประเมินผลระหว่างเรียนครอบคลุมภาระงานแบบบุคคลและแบบกลุ่มตลอด 15 หน่วยการเรียนรู้ เพื่อสะสมคะแนนทักษะปฏิบัติ ดังสรุปในตาราง:
+                </p>
+                <div class="table-responsive my-3">
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-dark text-center">
+                            <tr>
+                                <th style="width: 15%;">รหัสงาน</th>
+                                <th>ชื่อภาระงาน / หัวข้อการฝึกปฏิบัติ</th>
+                                <th style="width: 20%;">ลักษณะงาน</th>
+                                <th style="width: 15%;">สัดส่วนคะแนน</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="text-center font-monospace fw-bold">LAB-01</td>
+                                <td>การใช้งาน Shell Commands & Bash Scripting เบื้องต้น</td>
+                                <td class="text-center"><span class="badge bg-info text-dark">งานบุคคล</span></td>
+                                <td class="text-center font-weight-bold">5%</td>
+                            </tr>
+                            <tr>
+                                <td class="text-center font-monospace fw-bold">LAB-02</td>
+                                <td>การคำนวณเปรียบเทียบ CPU Scheduling Algorithms (FCFS, SJF, RR)</td>
+                                <td class="text-center"><span class="badge bg-info text-dark">งานบุคคล</span></td>
+                                <td class="text-center font-weight-bold">5%</td>
+                            </tr>
+                            <tr>
+                                <td class="text-center font-monospace fw-bold">LAB-03</td>
+                                <td>การแก้ปัญหา Producer-Consumer และ Synchronization ด้วย Semaphore</td>
+                                <td class="text-center"><span class="badge bg-secondary">งานคู่</span></td>
+                                <td class="text-center font-weight-bold">5%</td>
+                            </tr>
+                            <tr>
+                                <td class="text-center font-monospace fw-bold">LAB-04</td>
+                                <td>การจำลองคำนวณ Banker's Algorithm และ Page Replacement Tracing</td>
+                                <td class="text-center"><span class="badge bg-info text-dark">งานบุคคล</span></td>
+                                <td class="text-center font-weight-bold">5%</td>
+                            </tr>
+                            <tr>
+                                <td class="text-center font-monospace fw-bold">PRJ-01</td>
+                                <td>โครงงานจำลองระบบปฏิบัติการ (OS Simulator Project)</td>
+                                <td class="text-center"><span class="badge bg-primary">งานกลุ่ม</span></td>
+                                <td class="text-center font-weight-bold">20%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">5. แฟ้มสะสมงาน (Portfolio Guidance)</h3>
+                <p style="text-indent: 30px;">
+                    แฟ้มสะสมงาน (Portfolio) เป็นเอกสารรวบรวมชิ้นงาน รหัสพัฒนา และบันทึกการเรียนรู้ตลอดภาคเรียนเพื่อใช้เป็นหลักฐานแสดงสมรรถนะวิชาชีพ โครงสร้างแฟ้มสะสมงานดิจิทัลควรประกอบด้วย:
+                </p>
+                <div class="row g-3 my-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <h6 class="font-kanit fw-bold text-dark"><i class="fas fa-folder me-2 text-primary"></i>1. ส่วนประวัติและผลการเรียน (Profile & Track)</h6>
+                            <p class="small text-muted mb-0">ข้อมูลส่วนตัว, ประวัติตามสายวิชาชีพ, สรุปผลการทำแบบทดสอบประจำหน่วย (Unit Quiz Records)</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <h6 class="font-kanit fw-bold text-dark"><i class="fas fa-code me-2 text-success"></i>2. รวบรวมงานแล็บและซอร์สโค้ด (Lab Artifacts)</h6>
+                            <p class="small text-muted mb-0">ลิงก์แนบ GitHub Repository รวมโค้ดการทดลองพร้อมภาพบันทึกหน้าจอการทำงาน (Execution Screenshots)</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <h6 class="font-kanit fw-bold text-dark"><i class="fas fa-project-diagram me-2 text-purple" style="color: #8b5cf6;"></i>3. เอกสารโครงงานประจำวิชา (Capstone Project)</h6>
+                            <p class="small text-muted mb-0">คู่มือการใช้งาน, สถาปัตยกรรมระบบ (Architecture Diagram), และวิดีโอการนำเสนอโครงงาน</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <h6 class="font-kanit fw-bold text-dark"><i class="fas fa-brain me-2 text-danger"></i>4. บันทึกการสะท้อนคิด (Self-Reflection Log)</h6>
+                            <p class="small text-muted mb-0">บันทึกการเรียนรู้ ปัญหาที่พบระหว่างการทดลอง วิธีการแก้ไข และเป้าหมายการพัฒนาต่อยอด</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">6. การสอบปลายภาค (Final Exam Structure)</h3>
+                <p style="text-indent: 30px;">
+                    การประเมินผลการสอบปลายภาคเรียน (สัดส่วนคะแนน 30%) มีวัตถุประสงค์เพื่อวัดความรู้ความเข้าใจเชิงทฤษฎีและทักษะการคำนวณแก้ปัญหาทางสถาปัตยกรรมระบบ โดยมีโครงสร้างข้อสอบดังนี้:
+                </p>
+                <div class="p-4 border rounded-4 bg-light my-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-4 text-center border-end">
+                            <i class="fas fa-file-signature fa-4x text-primary mb-2"></i>
+                            <h5 class="font-kanit fw-bold mb-0">คะแนนเต็ม 100 คะแนน</h5>
+                            <small class="text-muted">(คิดเป็น 30% ของรายวิชา)</small>
+                        </div>
+                        <div class="col-md-8 ps-md-4">
+                            <ul class="mb-0">
+                                <li class="mb-2"><strong>ตอนที่ 1: แบบเลือกตอบ (Multiple Choice)</strong> — จำนวน 30 ข้อ (30 คะแนน) ครอบคลุมนิยามและแนวคิดพื้นฐานหน่วยที่ 1-14</li>
+                                <li class="mb-2"><strong>ตอนที่ 2: แบบเขียนตอบแนวคิด (Short Answer)</strong> — จำนวน 4 ข้อ (20 คะแนน) อธิบายหลักการทำงานและกลไกของระบบปฏิบัติการ</li>
+                                <li class="mb-0"><strong>ตอนที่ 3: แบบวิเคราะห์คำนวณ (Problem Solving)</strong> — จำนวน 3 ข้อใหญ่ (50 คะแนน) แสดงวิธีทำคำนวณ CPU Scheduling, Banker's Algorithm และ Page Replacement</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">7. การสะท้อนคิดการเรียนรู้ (Reflection Framework)</h3>
+                <p style="text-indent: 30px;">
+                    การสะท้อนคิด (Reflection) เป็นกระบวนการสำคัญในการแปลงประสบการณ์การเรียนรู้ไปสู่ความเข้าใจที่ลึกซึ้ง นักศึกษาควรทบทวนและประเมินตนเองตามกรอบแนวคิด 3D (Discover, Difficulties, Development):
+                </p>
+                <div class="row g-3 my-3">
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm bg-primary text-white p-3 h-100">
+                            <h5 class="font-kanit fw-bold mb-2"><i class="fas fa-search-location me-2"></i>1. Discover (สิ่งที่ค้นพบ)</h5>
+                            <p class="small mb-0">เข้าใจการทำงานเบื้องหลังเบื้องหลังระบบคอมพิวเตอร์ ว่าการจัดการทรัพยากร CPU, RAM, Disk มีอัลกอริทึมในการจัดสรรเพื่อให้เกิดประสิทธิภาพสูงสุดได้อย่างไร</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm bg-warning text-dark p-3 h-100">
+                            <h5 class="font-kanit fw-bold mb-2"><i class="fas fa-exclamation-triangle me-2"></i>2. Difficulties (อุปสรรค)</h5>
+                            <p class="small mb-0">ความท้าทายในหัวข้อคำนวณขั้นสูง เช่น สภาวะการแข่งขัน (Race Condition), การจำลองอัลกอริทึมการแทนที่หน้า และการทำความเข้าใจสถานะปลอดภัยใน Banker's Algorithm</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm bg-success text-white p-3 h-100">
+                            <h5 class="font-kanit fw-bold mb-2"><i class="fas fa-chart-line me-2"></i>3. Development (การพัฒนา)</h5>
+                            <p class="small mb-0">การนำความรู้การจัดสรรทรัพยากรและการจัดการระบบไปประยุกต์ใช้ในการเขียนโปรแกรมที่มีประสิทธิภาพ การปรับแต่งคอนฟิกเซิร์ฟเวอร์ และการวิเคราะห์ระบบ</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">8. แนวข้อสอบปลายภาค (Final Exam Guidelines & Sample Questions)</h3>
+                <p style="text-indent: 30px;">
+                    ตัวอย่างโจทย์คำนวณเน้นย้ำสำหรับการเตรียมตัวสอบปลายภาค พร้อมขั้นตอนการวิเคราะห์เฉลยแบบเป็นลำดับขั้นตอน:
+                </p>
+
+                <div class="p-3 bg-light rounded-3 border my-3">
+                    <h6 class="font-kanit fw-bold text-dark"><i class="fas fa-calculator me-2 text-danger"></i>ตัวอย่างโจทย์ที่ 1: การคำนวณสเก็ตจูลิง CPU แบบ Round Robin (Quantum = 4)</h6>
+                    <p class="small text-muted mb-2">กำหนดโปรเซส P1, P2, P3 มีเวลาประมวลผล (Burst Time) ดังนี้ P1 = 10ms, P2 = 3ms, P3 = 7ms (เดินทางมาถึงเวลา 0 พร้อมกัน)</p>
+                    <div class="bg-white p-3 rounded border font-monospace small mb-2">
+                        <strong>ลำดับการทำงานใน Gantt Chart:</strong><br>
+                        |-- P1 (0-4) --|-- P2 (4-7) --|-- P3 (7-11) --|-- P1 (11-15) --|-- P3 (15-18) --|-- P1 (18-20) --|<br><br>
+                        <strong>การคำนวณเวลารอคอย (Waiting Time):</strong><br>
+                        - P2 จบที่เวลา 7 -> Waiting Time = 4 - 0 = 4 ms<br>
+                        - P3 จบที่เวลา 18 (รันช่วง 7-11 และ 15-18) -> Waiting Time = (7-0) + (15-11) = 7 + 4 = 11 ms<br>
+                        - P1 จบที่เวลา 20 (รันช่วง 0-4, 11-15, 18-20) -> Waiting Time = 0 + (11-4) + (18-15) = 0 + 7 + 3 = 10 ms<br>
+                        <strong>Average Waiting Time</strong> = (10 + 4 + 11) / 3 = 25 / 3 = <strong>8.33 ms</strong>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-light rounded-3 border my-3">
+                    <h6 class="font-kanit fw-bold text-dark"><i class="fas fa-calculator me-2 text-danger"></i>ตัวอย่างโจทย์ที่ 2: การคำนวณ Page Replacement ด้วย LRU (ขนาดเฟรม = 3)</h6>
+                    <p class="small text-muted mb-2">ลำดับการเรียกหน้า (Page Reference String): 1, 2, 3, 4, 1, 2, 5, 1, 2, 3</p>
+                    <div class="bg-white p-3 rounded border font-monospace small mb-2">
+                        - หน้า 1 -> [1, -, -] (Fault 1)<br>
+                        - หน้า 2 -> [1, 2, -] (Fault 2)<br>
+                        - หน้า 3 -> [1, 2, 3] (Fault 3)<br>
+                        - หน้า 4 -> เต็ม! เตะหน้า 1 (ใช้ย้อนหลังเก่านานสุด) -> [4, 2, 3] (Fault 4)<br>
+                        - หน้า 1 -> เต็ม! เตะหน้า 2 -> [4, 1, 3] (Fault 5)<br>
+                        - หน้า 2 -> เต็ม! เตะหน้า 3 -> [4, 1, 2] (Fault 6)<br>
+                        - หน้า 5 -> เต็ม! เตะหน้า 4 -> [5, 1, 2] (Fault 7)<br>
+                        - หน้า 1 -> มีใน RAM อยู่แล้ว -> [5, 1, 2] (Hit!)<br>
+                        - หน้า 2 -> มีใน RAM อยู่แล้ว -> [5, 1, 2] (Hit!)<br>
+                        - หน้า 3 -> เต็ม! เตะหน้า 5 -> [3, 1, 2] (Fault 8)<br>
+                        <strong>สรุปจำนวน Page Fault ทั้งหมด = 8 ครั้ง</strong>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">9. แนวทางการนำความรู้ไปใช้จริง (Real-World Application)</h3>
+                <p style="text-indent: 30px;">
+                    องค์ความรู้จากวิชาระบบปฏิบัติการถือเป็นรากฐานสำคัญในการต่อยอดสู่สายงานอาชีพเทคโนโลยีชั้นนำ ตัวอย่างการประยุกต์ใช้งานในอุตสาหกรรม:
+                </p>
+                <div class="row g-3 my-3">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start gap-3 p-3 border rounded-3 bg-white shadow-sm">
+                            <i class="fas fa-server fa-2x text-primary mt-1"></i>
+                            <div>
+                                <h6 class="font-kanit fw-bold mb-1">Systems & Cloud Engineer</h6>
+                                <p class="small text-muted mb-0">เข้าใจการบริหาร CPU affinity, Memory Caching และ Kernel Tuning เพื่อปรับแต่งเซิร์ฟเวอร์ Linux/Windows ให้รองรับ Workload ขนาดใหญ่ในระบบ Cloud</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start gap-3 p-3 border rounded-3 bg-white shadow-sm">
+                            <i class="fas fa-cubes fa-2x text-purple mt-1" style="color: #8b5cf6;"></i>
+                            <div>
+                                <h6 class="font-kanit fw-bold mb-1">DevOps & Container Specialist</h6>
+                                <p class="small text-muted mb-0">ประยุกต์ใช้ Linux Namespaces และ Cgroups (พื้นฐานโครงสร้าง OS Isolation) ในการจัดการ Docker Containers และ Kubernetes Clusters</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start gap-3 p-3 border rounded-3 bg-white shadow-sm">
+                            <i class="fas fa-code-branch fa-2x text-success mt-1"></i>
+                            <div>
+                                <h6 class="font-kanit fw-bold mb-1">Backend & Systems Software Developer</h6>
+                                <p class="small text-muted mb-0">พัฒนาโปรแกรมที่รองรับ Concurrent Multi-threading ป้องกันปัญหา Race Condition และการเข้าถึงไฟล์ร่วมกันได้อย่างปลอดภัยและรวดเร็ว</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-start gap-3 p-3 border rounded-3 bg-white shadow-sm">
+                            <i class="fas fa-user-shield fa-2x text-danger mt-1"></i>
+                            <div>
+                                <h6 class="font-kanit fw-bold mb-1">Cybersecurity & Security Analyst</h6>
+                                <p class="small text-muted mb-0">เข้าใจสถาปัตยกรรม Kernel vs User Space, Memory Corruption (Buffer Overflow) และการควบคุมสิทธิ์ Access Control เพื่อป้องกันช่องโหว่ของระบบ</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">10. Rubric การประเมินโครงงาน (Project Assessment Rubric)</h3>
+                <p style="text-indent: 30px;">
+                    เกณฑ์การเกรดและประเมินผลคะแนนโครงงานประจำวิชา (คะแนนเต็ม 20 คะแนน) แบ่งออกเป็น 5 เกณฑ์หลัก ดังรายละเอียดต่อไปนี้:
+                </p>
+                <div class="table-responsive my-3">
+                    <table class="table table-bordered rubric-table align-middle">
+                        <thead>
+                            <tr>
+                                <th style="width: 20%;">เกณฑ์การประเมิน</th>
+                                <th style="width: 20%;">ดีมาก (4 คะแนน)</th>
+                                <th style="width: 20%;">ดี (3 คะแนน)</th>
+                                <th style="width: 20%;">พอใช้ (2 คะแนน)</th>
+                                <th style="width: 20%;">ปรับปรุง (1 คะแนน)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="fw-bold bg-light">1. ความถูกต้องทางอัลกอริทึม (Algorithm Accuracy)</td>
+                                <td>อัลกอริทึมทำงานถูกต้อง 100% ครอบคลุมทุก Edge Case และแสดงผลถูกต้องตามทฤษฎี</td>
+                                <td>อัลกอริทึมทำงานถูกต้องเป็นส่วนใหญ่ มีข้อผิดพลาดเล็กน้อยในกรณีซับซ้อน</td>
+                                <td>คำนวณผลลัพธ์ถูกต้องบางส่วน มีจุดผิดพลาดเชิงตรรกะในหลายกรณี</td>
+                                <td>ผลลัพธ์คำนวณไม่ถูกต้อง หรือซอฟต์แวร์เกิด Crash ระหว่างประมวลผล</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold bg-light">2. การออกแบบส่วนต่อประสานและ Animation (UI/UX)</td>
+                                <td>การแสดงผล Visualisation ชัดเจน เข้าใจง่าย สวยงาม มี Interactive ควบคุม Step-by-Step ได้ดีเยี่ยม</td>
+                                <td>หน้าจอเป็นระเบียบ สวยงาม มี Animation หรือภาพประกอบแสดงขั้นตอนครบถ้วน</td>
+                                <td>แสดงผลเป็นข้อความตารางพื้นฐาน ขาดความสวยงามหรือ Interactive animation</td>
+                                <td>หน้าจอใช้งานยาก ไม่มีการจัดรูปแบบ ขาดการแสดงผลเชิงภาพ</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold bg-light">3. คุณภาพโค้ดและโครงสร้าง (Code Quality)</td>
+                                <td>โค้ดจัดโครงสร้างเป็นโมดูลสะอาด อ่านง่าย มี Comment อธิบายชัดเจนตามมาตรฐาน Clean Code</td>
+                                <td>โค้ดมีการจัดกลุ่มฟังก์ชั่นเป็นระเบียบ มี Comment อธิบายในจุดสำคัญ</td>
+                                <td>โค้ดเขียนซ้ำซ้อน ขาดการจัดกลุ่มโมดูล มี Comment น้อย</td>
+                                <td>โค้ดอ่านยาก ไม่มีการจัดรูปหน้า ขาด Comment อธิบาย</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold bg-light">4. รายงานเอกสารประกอบ (Documentation)</td>
+                                <td>เอกสารสมบูรณ์ มีสถาปัตยกรรมระบบ Diagram, รายละเอียดทดสอบ และผลวิเคราะห์ครบถ้วน</td>
+                                <td>เอกสารเรียบร้อย มีเนื้อหาครอบคลุมสถาปัตยกรรมและการใช้งาน</td>
+                                <td>เอกสารขาดรายละเอียดบางส่วน ขาดรูปประกอบหรือการวิเคราะห์ผล</td>
+                                <td>เอกสารไม่ครบถ้วน ส่งช้ากว่ากำหนดหรือไม่ทำตามรูปแบบ</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold bg-light">5. การนำเสนอและการตอบคำถาม (Presentation)</td>
+                                <td>นำเสนอได้กระชับ ชัดเจน สาธิตซอฟต์แวร์ราบรื่น ตอบคำถามเชิงทฤษฎีได้ถูกต้องแม่นยำ</td>
+                                <td>นำเสนอเข้าใจง่าย สาธิตระบบได้ดี ตอบคำถามได้ถูกต้องส่วนใหญ่</td>
+                                <td>นำเสนอติดขัดบ้าง สาธิตระบบมีปัญหาเล็กน้อย ตอบคำถามได้บางส่วน</td>
+                                <td>นำเสนอไม่ชัดเจน ไม่สามารถสาธิตการทำงานได้ ตอบคำถามไม่ได้</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="my-4 p-4 border rounded-4 bg-light text-center">
+                    <h5 class="font-kanit mb-4 fw-bold text-dark"><i class="fas fa-graduation-cap me-2 text-primary"></i>สรุปการบูรณาการองค์ความรู้รายวิชา</h5>
+                    <div class="row justify-content-center align-items-center g-2 text-dark font-kanit">
+                        <div class="col-md-3 p-3 border rounded bg-white shadow-sm border-info fw-bold">
+                            <span class="text-info">1. Theory Core</span>
+                            <hr class="my-2">
+                            <small class="text-muted d-block font-sans">ทฤษฎี OS & การบริหารทรัพยากร</small>
+                        </div>
+                        <div class="col-md-1"><i class="fas fa-arrow-right fa-2x text-muted"></i></div>
+                        <div class="col-md-3 p-3 border rounded bg-purple text-white shadow-sm fw-bold" style="background-color: #7c3aed;">
+                            <span>2. Capstone Project</span>
+                            <hr class="my-2 bg-white">
+                            <small class="text-white-50 d-block font-sans">ซอฟต์แวร์จำลองและ UI Animation</small>
+                        </div>
+                        <div class="col-md-1"><i class="fas fa-arrow-right fa-2x text-muted"></i></div>
+                        <div class="col-md-3 p-3 border rounded bg-success text-white shadow-sm fw-bold">
+                            <span>3. Real-world Career</span>
+                            <hr class="my-2 bg-white">
+                            <small class="text-white-50 d-block font-sans">วิศวกรรมระบบและคลาวด์ยุคใหม่</small>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">11. แบบจำลองมวลรวมการประเมินวิชา (Course Mastery Simulation)</h3>
+                <p style="text-indent: 30px;">
+                    คลิกปุ่มเพื่อทดสอบจำลองกระบวนการประเมินและประมวลผลสัมฤทธิ์ทางการเรียนรู้ของรายวิชาตามลำดับขั้นตอน:
+                </p>
+
+                <div class="simulation-space my-4 shadow-sm" id="process-anim-space">
+                    <div class="state-container-wrapper py-4">
+                        <div class="simulation-node" id="sim-node-concept">Knowledge Core</div>
+                        <div class="sim-arrow" id="arrow-1"></div>
+                        <div class="simulation-node" id="sim-node-project">OS Project</div>
+                        <div class="sim-arrow" id="arrow-2"></div>
+                        <div class="simulation-node" id="sim-node-exam">Final Evaluation</div>
+                    </div>
+                    
+                    <div class="row mt-4 pt-2 text-dark font-kanit">
+                        <div class="col-md-12 mb-2">
+                            <h6 class="text-white-50 small mb-2"><i class="fas fa-stream me-2"></i>สถานะมวลรวมการผ่านสมรรถนะ (Competency Checklist)</h6>
+                            <div class="queue-box-list" id="cpu-queue-injector">
+                                <span class="pcb-token core-slot">Module 1-5: Process & CPU</span>
+                                <span class="pcb-token core-slot">Module 6-8: Memory & Virtual</span>
+                                <span class="pcb-token project-slot">Project: Simulator Built</span>
+                                <span class="pcb-token exam-slot">Exam: Final Ready</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <button class="btn btn-primary font-kanit px-4 py-2 rounded-3 shadow" onclick="triggerCourseMasterySimulation()">
+                            <i class="fas fa-play-circle me-2"></i>เริ่มจำลองกระบวนการประเมินสรุปมวลรวมองค์ความรู้
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row my-4 justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="ratio ratio-16x9 shadow-sm rounded-3 overflow-hidden border">
+                            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="วิดีโอสรุปภาพรวมรายวิชาและแนวทางการสอบปลายภาค" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+
+            </article>
+
+            <section class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 border-top border-4 border-success" data-aos="fade-up">
+                <div class="d-flex align-items-center justify-content-between border-bottom pb-3 mb-4">
+                    <h3 class="font-kanit text-dark-primary font-weight-bold mb-0">
+                        <i class="fas fa-user-check me-2 text-success"></i>แบบทดสอบสรุปประมวลความรู้ประจำหน่วยที่ 15
+                    </h3>
+                    <span class="badge bg-success px-3 py-2 fs-6" id="quiz-progress-badge">ข้อที่ 1 / 10</span>
+                </div>
+                
+                <div id="quiz-question-container" class="my-3"></div>
+                
+                <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-3">
+                    <button class="btn btn-outline-secondary px-4 py-2 rounded-3" id="prev-question-btn" disabled><i class="fas fa-arrow-left me-2"></i>ข้อก่อนหน้า</button>
+                    <button class="btn btn-primary px-4 py-2 rounded-3" id="next-question-btn">ส่งคำตอบและไปต่อ <i class="fas fa-arrow-right ms-2"></i></button>
+                </div>
+            </section>
+
+            <div class="d-flex justify-content-between align-items-center mb-5" data-aos="fade-up">
+                <a href="unit-14.html" class="btn btn-outline-dark px-4 py-2 rounded-3"><i class="fas fa-arrow-left me-2"></i>หน่วยก่อนหน้า</a>
+                <button class="btn btn-success btn-lg px-5 py-3 rounded-3 shadow font-kanit" id="mark-complete-btn">
+                    <i class="fas fa-check-double me-2"></i>ทำเครื่องหมายว่าเรียนจบรายวิชานี้สมบูรณ์แล้ว
+                </button>
+                <a href="../index.html" class="btn btn-outline-dark px-4 py-2 rounded-3">กลับหน้าแรก<i class="fas fa-home ms-2"></i></a>
+            </div>
+
+        </main>
+    </div>
+
+    <footer class="main-footer-section py-4 text-center mt-auto border-top">
+        <div class="container">
+            <p class="mb-0 text-secondary">© 2026 รายวิชา 31909-1001 ระบบปฏิบัติการ — แผงควบคุมเนื้อหาสถาปัตยกรรมระดับ ปวส.</p>
+        </div>
+    </footer>
+
+    <button id="back-to-top-btn" class="btn btn-primary rounded-circle shadow-lg"><i class="fas fa-chevron-up"></i></button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="D:\OS\js\data.js"></script>
+    <script src="D:\OS\js\storage.js"></script>
+    <script src="D:\OS\js\progress.js"></script>
+    <script src="D:\OS\js\main.js"></script>
+    <script src="D:\OS\js\quiz.js"></script>
+
+    <script>
+        function triggerCourseMasterySimulation() {
+            const nodeConcept = document.getElementById("sim-node-concept");
+            const nodeProject = document.getElementById("sim-node-project");
+            const nodeExam = document.getElementById("sim-node-exam");
+            
+            const arr1 = document.getElementById("arrow-1");
+            const arr2 = document.getElementById("arrow-2");
+            
+            const queueBox = document.getElementById("cpu-queue-injector");
+
+            document.querySelectorAll(".simulation-node").forEach(n => n.classList.remove("active-state"));
+            document.querySelectorAll(".sim-arrow").forEach(a => a.classList.remove("active-arrow"));
+            
+            queueBox.innerHTML = '<span class="pcb-token core-slot">Module 1-5: Process & CPU</span> <span class="pcb-token core-slot">Module 6-8: Memory & Virtual</span> <span class="pcb-token project-slot">Project: Simulator Built</span> <span class="pcb-token exam-slot">Exam: Final Ready</span>';
+
+            nodeConcept.classList.add("active-state");
+
+            setTimeout(() => {
+                nodeConcept.classList.remove("active-state");
+                arr1.classList.add("active-arrow");
+                nodeProject.classList.add("active-state");
+            }, 1200);
+
+            setTimeout(() => {
+                arr1.classList.remove("active-arrow");
+                arr2.classList.add("active-arrow");
+                nodeProject.classList.remove("active-state");
+                nodeExam.classList.add("active-state");
+                
+                queueBox.innerHTML = '<span class="pcb-token core-slot"><i class="fas fa-check me-1"></i>Core Verified</span> <span class="pcb-token project-slot"><i class="fas fa-check me-1"></i>Project Evaluation 100%</span> <span class="pcb-token exam-slot"><i class="fas fa-trophy me-1"></i>Course Completed!</span>';
+            }, 2600);
+
+            setTimeout(() => {
+                nodeExam.classList.remove("active-state");
+                arr2.classList.remove("active-arrow");
+                
+                Swal.fire({
+                    toast: true,
+                    position: 'bottom-end',
+                    title: 'ยินดีด้วย! ท่านผ่านการประเมินสมรรถนะมวลรวมรายวิชาระบบปฏิบัติการเรียบร้อยแล้ว',
+                    icon: 'success',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            }, 3800);
+        }
+    </script>
+</body>
+</html>

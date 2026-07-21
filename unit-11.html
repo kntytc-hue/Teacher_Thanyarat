@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หน่วยที่ 11 การเตรียมติดตั้งหลายระบบ | วิชา 31909-1001 ระบบปฏิบัติการ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="D:\OS\css\style.css">
+    <link rel="stylesheet" href="D:\OS\css\responsive.css">
+    <link rel="stylesheet" href="D:\OS\css\dark-mode.css">
+    <style>
+        /* สไตล์สำหรับการจำลอง Multi-OS Preparation Structure */
+        .simulation-space {
+            background-color: #1e293b;
+            border-radius: 16px;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        body.light-mode .simulation-space {
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+        }
+        .state-container-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        .simulation-node {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Kanit', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            color: #ffffff;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 4px solid rgba(255,255,255,0.1);
+            text-align: center;
+            padding: 5px;
+        }
+        #sim-node-firmware { background: linear-gradient(135deg, #0284c7, #0369a1); }
+        #sim-node-bootloader { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+        #sim-node-os { background: linear-gradient(135deg, #10b981, #059669); }
+
+        .simulation-node.active-state {
+            transform: scale(1.15);
+            box-shadow: 0 0 25px currentColor;
+            border-color: #ffffff;
+            animation: pulse-glow 1.5s infinite alternate;
+        }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 15px rgba(255,255,255,0.2); }
+            100% { box-shadow: 0 0 30px rgba(255,255,255,0.8); }
+        }
+        
+        .sim-arrow {
+            height: 4px;
+            background-color: #cbd5e1;
+            flex-grow: 1;
+            position: relative;
+            margin: 0 10px;
+            transition: all 0.3s;
+        }
+        body.dark-mode .sim-arrow { background-color: #475569; }
+        .sim-arrow::after {
+            content: '';
+            position: absolute;
+            right: -2px;
+            top: -6px;
+            width: 0; height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 12px solid #cbd5e1;
+        }
+        body.dark-mode .sim-arrow::after { border-left-color: #475569; }
+        .sim-arrow.active-arrow {
+            background-color: #10b981 !important;
+        }
+        .sim-arrow.active-arrow::after {
+            border-left-color: #10b981 !important;
+        }
+        
+        .queue-box-list {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 60px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            border: 1px dashed rgba(0,0,0,0.1);
+            flex-wrap: wrap;
+        }
+        body.dark-mode .queue-box-list { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.1); }
+        .pcb-token {
+            background: #4b5563;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            animation: bounceIn 0.5s;
+        }
+        .pcb-token.primary-slot { background: #2563eb; }
+        .pcb-token.extended-slot { background: #d97706; }
+        .pcb-token.logical-slot { background: #059669; }
+    </style>
+</head>
+<body class="light-mode">
+    
+    <div id="loading-screen">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    
+    <nav class="navbar navbar-expand-lg sticky-top main-navbar">
+        <div class="container-fluid">
+            <button class="btn text-white me-2" id="sidebar-toggle-btn" aria-label="เปิดเมนูด้านข้าง">
+                <i class="fas fa-bars fa-lg"></i>
+            </button>
+            <a class="navbar-brand d-flex align-items-center" href="../index.html">
+                <i class="fas fa-laptop-code me-2"></i>
+                <span>31909-1001 ระบบปฏิบัติการ</span>
+            </a>
+            <div class="ms-auto">
+                <button class="btn text-white" id="theme-toggle-btn" aria-label="เปลี่ยนโหมดหน้าจอ">
+                    <i class="fas fa-moon fa-lg"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="app-layout">
+        <aside class="sidebar-navigation" id="main-sidebar">
+            <div class="sidebar-profile text-center py-4">
+                <div class="avatar-container mb-2">
+                    <i class="fas fa-book-reader fa-3x text-white bg-primary p-3 rounded-circle"></i>
+                </div>
+                <h6 class="text-white mb-0">อาจารย์ธัญญรัตน์ ตาเล๊ะ</h6>
+                <small class="text-white-50">เทคโนโลยีคอมพิวเตอร์</small>
+            </div>
+            <ul class="sidebar-menu-list px-2" id="sidebar-menu-injector"></ul>
+        </aside>
+        
+        <main class="main-content-flow px-3 px-md-5 py-4">
+            
+            <nav aria-label="breadcrumb" class="mb-4" data-aos="fade-down">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="../index.html" class="text-decoration-none"><i class="fas fa-home me-1"></i>หน้าแรก</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">หน่วยที่ 11 การเตรียมติดตั้งหลายระบบ</li>
+                </ol>
+            </nav>
+            
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light text-dark border-start border-5 border-primary" data-aos="fade-up">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <span class="text-primary fw-bold text-uppercase d-block mb-1">Unit 11: Multi OS Preparation</span>
+                        <h1 class="font-kanit font-weight-bold text-dark-primary mb-0">หน่วยที่ 11 การเตรียมติดตั้งหลายระบบ</h1>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary btn-sm rounded-3 px-3" onclick="window.print()"><i class="fas fa-print me-1"></i>พิมพ์บทเรียน</button>
+                        <button class="btn btn-primary btn-sm rounded-3 px-3" id="bookmark-btn"><i class="far fa-bookmark me-1"></i>คั่นหน้าไว้</button>
+                    </div>
+                </div>
+            </div>
+            
+            <article class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 leading-relaxed text-secondary text-justify content-article-body" data-aos="fade-up" data-aos-delay="100">
+                
+                <h3 class="font-kanit text-dark-primary font-weight-bold mb-3 border-bottom pb-2">1. การเตรียมการติดตั้งหลายระบบปฏิบัติการ (Multi OS Preparation)</h3>
+                <p style="text-indent: 30px;">
+                    การติดตั้งหลายระบบปฏิบัติการในเครื่องเดียวกัน (Multi-boot / Dual Boot) คือกระบวนการจัดสรรทรัพยากรคอมพิวเตอร์ให้สามารถรองรับระบบปฏิบัติการมากกว่าหนึ่งระบบ เช่น Windows ร่วมกับ Linux (Ubuntu) หรือ Windows หลายเวอร์ชัน การเตรียมความพร้อมอย่างถูกต้องถือเป็นขั้นตอนสำคัญสูงสุด เนื่องจากหากไม่มีการวางแผนที่ดี อาจส่งผลให้ข้อมูลสูญหาย ตัวบูตระบบเสียหาย หรือไม่สามารถเข้าใช้งานระบบปฏิบัติการเดิมได้
+                </p>
+                <p style="text-indent: 30px;">
+                    ปัจจัยหลักในการเตรียมความพร้อมครอบคลุมการตรวจสอบสถาปัตยกรรมเฟิร์มแวร์ (BIOS/UEFI) รูปแบบโครงสร้างการจัดเก็บข้อมูลดิสก์ (MBR/GPT) การแบ่งพาร์ติชัน (Partitioning) การจัดการตัวบูตระบบ (Boot Manager) ตลอดจนการสำรองข้อมูลและการวางแผนพื้นที่จัดเก็บดิสก์อย่างเป็นระบบ
+                </p>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">2. โครงสร้างตารางพาร์ติชัน: MBR และ GPT</h3>
+                <p style="text-indent: 30px;">
+                    ตารางพาร์ติชัน (Partition Table) เป็นโครงสร้างข้อมูลที่จัดเก็บรายละเอียดเกี่ยวกับการแบ่งส่วนพื้นที่จัดเก็บข้อมูลบนฮาร์ดดิสก์หรือ SSD มี 2 รูปแบบหลัก ได้แก่:
+                </p>
+                <ul>
+                    <li class="mb-3"><strong>Master Boot Record (MBR):</strong> เป็นมาตรฐานดั้งเดิมที่ใช้กับระบบ BIOS พัฒนาขึ้นตั้งแต่ยุค IBM PC รองรับความจุฮาร์ดดิสก์สูงสุดไม่เกิน 2 Terabytes (TB) และจำกัดการสร้าง Primary Partition ได้ไม่เกิน 4 พาร์ติชัน ข้อมูล MBR ถูกเก็บไว้ที่ Sector แรกของดิสก์ หาก Sector นี้เสียหาย ระบบจะไม่สามารถบูตได้ทันที</li>
+                    <li class="mb-3"><strong>GUID Partition Table (GPT):</strong> เป็นมาตรฐานใหม่ที่พัฒนาขึ้นมาพร้อมกับ UEFI รองรับความจุฮาร์ดดิสก์ได้สูงถึง 9.4 Zettabytes (ZB) สามารถสร้าง Primary Partition ได้สูงสุดถึง 128 พาร์ติชัน (บน Windows) GPT มีการเก็บสำรองตารางพาร์ติชันไว้ที่ส่วนท้ายของดิสก์ (Backup Header) และใช้ระบบ CRC32 ในการตรวจสอบความสมบูรณ์ของข้อมูล</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">3. ประเภทของพาร์ติชัน (Partition Types)</h3>
+                <p style="text-indent: 30px;">
+                    การจัดแบ่งพื้นที่ดิสก์โดยเฉพาะในระบบ MBR จำเป็นต้องเข้าใจประเภทของพาร์ติชัน เพื่อก้าวข้ามข้อจำกัดการแบ่งพื้นที่ ได้แก่:
+                </p>
+                <ol>
+                    <li class="mb-2"><strong>Primary Partition (พาร์ติชันหลัก):</strong> พาร์ติชันที่ใช้สำหรับการติดตั้งระบบปฏิบัติการและไฟล์บูตหลัก ระบบ MBR สามารถมี Primary Partition ได้สูงสุด 4 พาร์ติชันต่อหนึ่งดิสก์</li>
+                    <li class="mb-2"><strong>Extended Partition (พาร์ติชันส่วนขยาย):</strong> พาร์ติชันพิเศษที่สร้างขึ้นมาทดแทน Primary Partition ได้ 1 ตำแหน่ง เพื่อข้ามข้อจำกัด 4 พาร์ติชันของ MBR โดย Extended Partition จะไม่เก็บข้อมูลโดยตรง แต่ทำหน้าที่เป็นคอนเทนเนอร์ครอบ Logical Partition ไว้ภายใน</li>
+                    <li class="mb-2"><strong>Logical Partition (พาร์ติชันตรรกะ):</strong> พาร์ติชันที่ถูกสร้างขึ้นอยู่ภายใน Extended Partition สามารถสร้างได้หลายพาร์ติชัน เหมาะสำหรับจัดเก็บข้อมูลทั่วไป หรือติดตั้งระบบปฏิบัติการรอง เช่น Linux</li>
+                </ol>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">4. สถาปัตยกรรมเฟิร์มแวร์: BIOS และ UEFI</h3>
+                <p style="text-indent: 30px;">
+                    เฟิร์มแวร์บนเมนบอร์ดทำหน้าที่ตรวจสอบอุปกรณ์ฮาร์ดแวร์ (POST) และส่งต่อการทำงานให้ตัวบูตระบบ มี 2 สถาปัตยกรรมหลัก:
+                </p>
+                <ul>
+                    <li class="mb-3"><strong>Legacy BIOS (Basic Input/Output System):</strong> ระบบอินเทอร์เฟซดั้งเดิม ประมวลผลแบบ 16-bit รองรับดิสก์แบบ MBR เท่านั้น ทำงานโดยอ่านรหัสบูตจาก Master Boot Record ที่ Sector แรก</li>
+                    <li class="mb-3"><strong>UEFI (Unified Extensible Firmware Interface):</strong> สถาปัตยกรรมสมัยใหม่ ทำงานแบบ 32-bit หรือ 64-bit รองรับกราฟิกอินเทอร์เฟซ การทำงานร่วมกับ GPT บูตรวดเร็ว มีไดรเวอร์ในตัว และสามารถอ่านระบบไฟล์ FAT32 ได้โดยตรงโดยไม่ต้องพึ่งพารหัส MBR</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">5. ตัวจัดการการบูตและฟีเจอร์ความปลอดภัย (Boot Manager & Secure Boot)</h3>
+                <p style="text-indent: 30px;">
+                    การรันหลายระบบปฏิบัติการจำต้องอาศัยกลไกการสลับและควบคุมความปลอดภัยในระดับบูตโหลดเดอร์:
+                </p>
+                <ul>
+                    <li class="mb-3"><strong>Boot Manager (ตัวจัดการการบูต):</strong> โปรแกรมระดับฐานรากที่ทำหน้าที่แสดงเมนูให้ผู้ใช้เลือกระบบปฏิบัติการที่ต้องการรันเมื่อเปิดเครื่อง เช่น Windows Boot Manager (BCD) สำหรับ Windows หรือ GRUB (Grand Unified Bootloader) สำหรับ Linux โดย GRUB สามารถตรวจพบและเรียกบูต Windows ได้อย่างมีประสิทธิภาพ</li>
+                    <li class="mb-3"><strong>Secure Boot:</strong> ฟีเจอร์ความปลอดภัยในมาตรฐาน UEFI ทำหน้าที่ตรวจสอบลายเซ็นดิจิทัล (Digital Signature) ของไดรเวอร์และตัวบูตระบบ เพื่อป้องกัน Malicious Code หรือ Rootkit แอบแฝงเข้ามาทำงานก่อนระบบปฏิบัติการจะโหลด อย่างไรก็ตาม ในการติดตั้ง Linux บางดิสโทร อาจจำเป็นต้องตั้งค่า Key หรือปิด Secure Boot ชั่วคราวเพื่อให้ติดตั้งสำเร็จ</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">6. การสำรองข้อมูลและการวางแผนพื้นที่ Disk</h3>
+                <p style="text-indent: 30px;">
+                    ก่อนดำเนินการปรับแต่งโครงสร้างพาร์ติชันและติดตั้ง Multi-OS จำเป็นต้องดำเนินการเตรียมการสำคัญ 2 ประการ:
+                </p>
+                <ul>
+                    <li class="mb-3"><strong>การสำรองข้อมูลก่อนติดตั้ง (Pre-installation Data Backup):</strong> ทำการสำรองข้อมูลสำคัญ (Full Backup หรือ Selective Backup) ลงในสื่อจัดเก็บภายนอก (External Hard Drive, Cloud Storage) รวมทั้งสร้าง System Restore Point หรือ Disk Image เพื่อรับมือกับกรณีเกิดความผิดพลาด MBR/GPT สดุดเสียหาย หรือการฟอร์แมตผิดพาร์ติชัน</li>
+                    <li class="mb-3"><strong>การวางแผนพื้นที่ Disk (Disk Space Allocation Planning):</strong> คำนวณและจัดสรรขนาดพาร์ติชันให้เหมาะสมตามความต้องการของแต่ละ OS เช่น Windows ต้องใช้พื้นที่อย่างน้อย 64 GB ขึ้นไปสำหรับ OS และโปรแกรมประยุกต์ ส่วน Linux ต้องจัดสรรพื้นที่สำหรับ Root Partition (/), Swap Space (หน่วยความจำเสมือนบนดิสก์) และ /home พาร์ติชันสำหรับการเก็บข้อมูลผู้ใช้</li>
+                </ul>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">7. ผังกระบวนการการทำงานและเปรียบเทียบสถาปัตยกรรม Multi-OS</h3>
+                <p style="text-indent: 30px;">
+                    เปรียบเทียบโครงสร้างการเชื่อมโยงการทำงานระหว่าง Legacy BIOS + MBR กับ UEFI + GPT ในการติดตั้งหลายระบบปฏิบัติการ:
+                </p>
+                
+                <div class="my-4 p-4 border rounded-4 bg-light text-center">
+                    <h5 class="font-kanit mb-4 fw-bold text-dark"><i class="fas fa-project-diagram me-2 text-primary"></i>เปรียบเทียบเส้นทางการบูต Multi-OS Architecture</h5>
+                    
+                    <div class="row justify-content-center align-items-center g-3 text-dark font-kanit">
+                        <div class="col-md-5 p-3 border rounded bg-white shadow-sm fw-bold border-primary">
+                            <span class="text-primary">Legacy Architecture (BIOS + MBR)</span>
+                            <hr class="my-2">
+                            <small class="text-muted d-block font-sans text-start">
+                                • เฟิร์มแวร์: Legacy BIOS<br>
+                                • โครงสร้างดิสก์: MBR (สูงสุด 4 Primary)<br>
+                                • ตัวสลับบูต: GRUB เขียนทับ MBR Sector 0<br>
+                                • ความปลอดภัย: ไม่มี Secure Boot
+                            </small>
+                        </div>
+                        <div class="col-md-1"><i class="fas fa-exchange-alt fa-2x text-muted"></i></div>
+                        <div class="col-md-5 p-3 border rounded bg-success text-white shadow-sm fw-bold">
+                            <span>Modern Architecture (UEFI + GPT)</span>
+                            <hr class="my-2 bg-white">
+                            <small class="text-white-50 d-block font-sans text-start">
+                                • เฟิร์มแวร์: UEFI (32/64-bit Execution)<br>
+                                • โครงสร้างดิสก์: GPT (รองรับ 128 Primary)<br>
+                                • ตัวสลับบูต: EFI System Partition (ESP)<br>
+                                • ความปลอดภัย: รองรับ Secure Boot
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">8. Animation แอนิเมชันจำลองขั้นตอนการเลือกบูตร่วม (Multi-OS Booting Flow)</h3>
+                <p style="text-indent: 30px;">
+                    แบบจำลองสถานการณ์จำลองขั้นตอนที่ระบบส่งต่อการทำงานจาก เฟิร์มแวร์ (UEFI/BIOS) ไปยัง Boot Manager (GRUB) เพื่อให้ผู้ใช้เลือกโหลด Windows หรือ Linux เข้าสู่ RAM
+                </p>
+                <p class="small text-muted">นักศึกษาสามารถคลิกปุ่มรันตัวจำลองเพื่อดูขั้นตอนการสลับระบบปฏิบัติการ:</p>
+                
+                <div class="simulation-space my-4 shadow-sm" id="process-anim-space">
+                    <div class="state-container-wrapper py-4">
+                        <div class="simulation-node" id="sim-node-firmware">Firmware (UEFI/BIOS)</div>
+                        <div class="sim-arrow" id="arrow-1"></div>
+                        <div class="simulation-node" id="sim-node-bootloader">Boot Manager (GRUB)</div>
+                        <div class="sim-arrow" id="arrow-2"></div>
+                        <div class="simulation-node" id="sim-node-os">Selected OS</div>
+                    </div>
+        
+                    <div class="row mt-4 pt-2 text-dark font-kanit">
+                        <div class="col-md-12 mb-2">
+                            <h6 class="text-white-50 small mb-2"><i class="fas fa-hdd me-2"></i>โครงสร้างพาร์ติชันดิสก์จำลอง (Partition Table Layout)</h6>
+                            <div class="queue-box-list" id="cpu-queue-injector">
+                                <span class="pcb-token primary-slot">Windows OS (Primary)</span>
+                                <span class="pcb-token extended-slot">Linux Root / (Extended/Logical)</span>
+                                <span class="pcb-token logical-slot">Linux Swap</span>
+                                <span class="pcb-token pcb-token">Data Partition</span>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <div class="text-center mt-4">
+                        <button class="btn btn-primary font-kanit px-4 py-2 rounded-3 shadow" onclick="triggerMultiOsSimulation()">
+                            <i class="fas fa-play-circle me-2"></i>เริ่มจำลองสถานการณ์เลือกระบบบูต (UEFI -> GRUB -> Boot Linux)
+                        </button>
+                    </div>
+                </div>
+
+                <h3 class="font-kanit text-dark-primary font-weight-bold mt-5 mb-3 border-bottom pb-2">9. ตัวอย่างตารางเปรียบเทียบการจัดสรรพื้นที่พาร์ติชัน (Disk Partition Planning)</h3>
+                <p style="text-indent: 30px;">
+                    พิจารณาสถานการณ์การวางแผนจัดสรรดิสก์ขนาด 500 GB สำหรับการทำ Dual Boot ระหว่าง Windows 11 และ Ubuntu Linux:
+                </p>
+                
+                <div class="p-3 bg-light rounded-3 border-start border-4 border-info my-3">
+                    <h6 class="font-kanit fw-bold text-dark mb-2">ตารางการจัดสรรดิสก์ (Disk Allocation Table Example):</h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered bg-white text-center mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>พาร์ติชัน</th>
+                                    <th>ระบบไฟล์ (File System)</th>
+                                    <th>ขนาดแนะนำ</th>
+                                    <th>จุดประสงค์การใช้งาน</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>EFI System Partition (ESP)</td>
+                                    <td>FAT32</td>
+                                    <td>100 - 512 MB</td>
+                                    <td>เก็บไฟล์ Bootloader (Windows Boot Manager / GRUB)</td>
+                                </tr>
+                                <tr>
+                                    <td>Windows (C:)</td>
+                                    <td>NTFS</td>
+                                    <td>200 GB</td>
+                                    <td>ติดตั้งระบบปฏิบัติการ Windows 11 และโปรแกรมหลัก</td>
+                                </tr>
+                                <tr>
+                                    <td>Linux Root (/)</td>
+                                    <td>ext4</td>
+                                    <td>80 GB</td>
+                                    <td>ติดตั้งระบบปฏิบัติการ Linux และแพ็กเกจซอฟต์แวร์</td>
+                                </tr>
+                                <tr>
+                                    <td>Linux Swap</td>
+                                    <td>swap</td>
+                                    <td>8 - 16 GB</td>
+                                    <td>พื้นที่จำลองหน่วยความจำเสมือนสำหรับ Linux</td>
+                                </tr>
+                                <tr>
+                                    <td>Data Drive (Shared)</td>
+                                    <td>NTFS / exFAT</td>
+                                    <td>~200 GB</td>
+                                    <td>พื้นที่จัดเก็บข้อมูลตรงกลางที่อ่าน-เขียนได้ทั้ง Windows และ Linux</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="row my-4 justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="ratio ratio-16x9 shadow-sm rounded-3 overflow-hidden border">
+                            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="วิดีโอประกอบบทเรียนการเตรียมติดตั้งหลายระบบ" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+
+            </article>
+
+            <section class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-5 border-top border-4 border-success" data-aos="fade-up">
+                <div class="d-flex align-items-center justify-content-between border-bottom pb-3 mb-4">
+                    <h3 class="font-kanit text-dark-primary font-weight-bold mb-0">
+                        <i class="fas fa-user-check me-2 text-success"></i>แบบทดสอบหลังเรียนประจำหน่วยการเรียนที่ 11
+                    </h3>
+                    <span class="badge bg-success px-3 py-2 fs-6" id="quiz-progress-badge">ข้อที่ 1 / 20</span>
+                </div>
+                
+                <div id="quiz-question-container" class="my-3"></div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-3">
+                    <button class="btn btn-outline-secondary px-4 py-2 rounded-3" id="prev-question-btn" disabled><i class="fas fa-arrow-left me-2"></i>ข้อก่อนหน้า</button>
+                    <button class="btn btn-primary px-4 py-2 rounded-3" id="next-question-btn">ส่งคำตอบและไปต่อ <i class="fas fa-arrow-right ms-2"></i></button>
+                </div>
+            </section>
+
+            <div class="d-flex justify-content-between align-items-center mb-5" data-aos="fade-up">
+                <a href="unit-10.html" class="btn btn-outline-dark px-4 py-2 rounded-3"><i class="fas fa-arrow-left me-2"></i>หน่วยก่อนหน้า</a>
+                <button class="btn btn-success btn-lg px-5 py-3 rounded-3 shadow font-kanit" id="mark-complete-btn">
+                    <i class="fas fa-check-double me-2"></i>ทำเครื่องหมายว่าเรียนจบหน่วยเรียนนี้แล้ว
+                </button>
+                <a href="unit-12.html" class="btn btn-outline-dark px-4 py-2 rounded-3">หน่วยถัดไป<i class="fas fa-arrow-right ms-2"></i></a>
+            </div>
+
+        </main>
+    </div>
+
+    <footer class="main-footer-section py-4 text-center mt-auto border-top">
+        <div class="container">
+            <p class="mb-0 text-secondary">© 2026 รายวิชา 31909-1001 ระบบปฏิบัติการ — แผงควบคุมเนื้อหาสถาปัตยกรรมระดับ ปวส.</p>
+        </div>
+    </footer>
+
+    <button id="back-to-top-btn" class="btn btn-primary rounded-circle shadow-lg"><i class="fas fa-chevron-up"></i></button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script src="D:\OS\js\data.js"></script>
+    <script src="D:\OS\js\storage.js"></script>
+    <script src="D:\OS\js\progress.js"></script>
+    <script src="D:\OS\js\main.js"></script>
+    <script src="D:\OS\js\quiz.js"></script>
+
+    <script>
+        function triggerMultiOsSimulation() {
+            const nodeFirmware = document.getElementById("sim-node-firmware");
+            const nodeBootloader = document.getElementById("sim-node-bootloader");
+            const nodeOs = document.getElementById("sim-node-os");
+            
+            const arr1 = document.getElementById("arrow-1");
+            const arr2 = document.getElementById("arrow-2");
+
+            document.querySelectorAll(".simulation-node").forEach(n => n.classList.remove("active-state"));
+            document.querySelectorAll(".sim-arrow").forEach(a => a.classList.remove("active-arrow"));
+
+            // เฟส 1: POST & Firmware Init
+            nodeFirmware.classList.add("active-state");
+            
+            setTimeout(() => {
+                nodeFirmware.classList.remove("active-state");
+                arr1.classList.add("active-arrow");
+                nodeBootloader.classList.add("active-state");
+            }, 1200);
+
+            // เฟส 2: GRUB Menu Execution
+            setTimeout(() => {
+                arr1.classList.remove("active-arrow");
+                arr2.classList.add("active-arrow");
+                nodeBootloader.classList.remove("active-state");
+                nodeOs.classList.add("active-state");
+            }, 2600);
+
+            // เฟส 3: โหลด OS สำเร็จ
+            setTimeout(() => {
+                nodeOs.classList.remove("active-state");
+                arr2.classList.remove("active-arrow");
+                
+                Swal.fire({
+                    toast: true,
+                    position: 'bottom-end',
+                    title: 'เรียกใช้งาน GRUB สำเร็จ! เลือกระบบปฏิบัติการ Linux Kernel สำเร็จ',
+                    icon: 'success',
+                    showConfirmButton: false,
+                    timer: 2500
+                });
+            }, 3800);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+/**
+ * @file css/dark-mode.css
+ * @description สลับโทนสีของแอปพลิเคชันทั้งหมดเป็นโหมดสีเข้มเมื่อคลาส .dark-mode ทำงานที่บอดี
+ */
+
+body.dark-mode {
+    background-color: #0F172A !important;
+    color: #E2E8F0 !important;
+}
+
+body.dark-mode .main-content-flow {
+    background-color: #0F172A !important;
+}
+
+/* การ์ดสไตล์กลาสมอร์ฟิกสำหรับธีมมืด */
+body.dark-mode .card,
+body.dark-mode .custom-card {
+    background-color: #1E293B !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    color: #F1F5F9 !important;
+}
+
+body.dark-mode .text-dark-primary {
+    color: #F1F5F9 !important;
+}
+
+body.dark-mode .text-secondary {
+    color: #94A3B8 !important;
+}
+
+body.dark-mode .bg-light-gray,
+body.dark-mode .main-footer-section {
+    background-color: #1E293B !important;
+    border-top-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* จัดสไตล์ตารางในโหมดมืด */
+body.dark-mode table,
+body.dark-mode th,
+body.dark-mode td {
+    color: #E2E8F0 !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode table.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(255, 255, 255, 0.02) !important;
+}
+
+/* จัดรูปแบบ Input ในโหมดมืด */
+body.dark-mode .form-control {
+    background-color: #334155 !important;
+    border-color: #475569 !important;
+    color: #FFFFFF !important;
+}
+body.dark-mode .form-control::placeholder {
+    color: #94A3B8 !important;
+}
